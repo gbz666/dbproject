@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.PaymentExpensesMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.PaymentExpenses">
+            <id property="id" column="id" />
+            <result property="paymentNo" column="payment_no" />
+            <result property="supplierId" column="supplier_id" />
+            <result property="purchaseInvoiceId" column="purchase_invoice_id" />
+            <result property="amount" column="amount" />
+            <result property="paymentDate" column="payment_date" />
+            <result property="method" column="method" />
+            <result property="remark" column="remark" />
+            <result property="createdAt" column="created_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="updatedById" column="updated_by_id" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,payment_no,supplier_id,purchase_invoice_id,amount,payment_date,
+        method,remark,created_at,created_by_id,updated_at,
+        updated_by_id
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from payment_expenses
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from payment_expenses
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PaymentExpenses" useGeneratedKeys="true">
+        insert into payment_expenses
+        ( id,payment_no,supplier_id,purchase_invoice_id,amount,payment_date,
+        method,remark,created_at,created_by_id,updated_at,
+        updated_by_id)
+        values (#{id},#{paymentNo},#{supplierId},#{purchaseInvoiceId},#{amount},#{paymentDate},
+        #{method},#{remark},#{createdAt},#{createdById},#{updatedAt},
+        #{updatedById})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PaymentExpenses" useGeneratedKeys="true">
+        insert into payment_expenses
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="paymentNo != null">payment_no,</if>
+                <if test="supplierId != null">supplier_id,</if>
+                <if test="purchaseInvoiceId != null">purchase_invoice_id,</if>
+                <if test="amount != null">amount,</if>
+                <if test="paymentDate != null">payment_date,</if>
+                <if test="method != null">method,</if>
+                <if test="remark != null">remark,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="paymentNo != null">#{paymentNo},</if>
+                <if test="supplierId != null">#{supplierId},</if>
+                <if test="purchaseInvoiceId != null">#{purchaseInvoiceId},</if>
+                <if test="amount != null">#{amount},</if>
+                <if test="paymentDate != null">#{paymentDate},</if>
+                <if test="method != null">#{method},</if>
+                <if test="remark != null">#{remark},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.PaymentExpenses">
+        update payment_expenses
+        <set>
+                <if test="paymentNo != null">
+                    payment_no = #{paymentNo},
+                </if>
+                <if test="supplierId != null">
+                    supplier_id = #{supplierId},
+                </if>
+                <if test="purchaseInvoiceId != null">
+                    purchase_invoice_id = #{purchaseInvoiceId},
+                </if>
+                <if test="amount != null">
+                    amount = #{amount},
+                </if>
+                <if test="paymentDate != null">
+                    payment_date = #{paymentDate},
+                </if>
+                <if test="method != null">
+                    method = #{method},
+                </if>
+                <if test="remark != null">
+                    remark = #{remark},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.PaymentExpenses">
+        update payment_expenses
+        set 
+            payment_no =  #{paymentNo},
+            supplier_id =  #{supplierId},
+            purchase_invoice_id =  #{purchaseInvoiceId},
+            amount =  #{amount},
+            payment_date =  #{paymentDate},
+            method =  #{method},
+            remark =  #{remark},
+            created_at =  #{createdAt},
+            created_by_id =  #{createdById},
+            updated_at =  #{updatedAt},
+            updated_by_id =  #{updatedById}
+        where   id = #{id} 
+    </update>
+</mapper>

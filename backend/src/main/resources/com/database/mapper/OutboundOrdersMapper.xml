@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.OutboundOrdersMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.OutboundOrders">
+            <id property="id" column="id" />
+            <result property="outboundCode" column="outbound_code" />
+            <result property="salesOrderId" column="sales_order_id" />
+            <result property="outboundDate" column="outbound_date" />
+            <result property="status" column="status" />
+            <result property="remark" column="remark" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,outbound_code,sales_order_id,outbound_date,status,remark,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from outbound_orders
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from outbound_orders
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.OutboundOrders" useGeneratedKeys="true">
+        insert into outbound_orders
+        ( id,outbound_code,sales_order_id,outbound_date,status,remark,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at)
+        values (#{id},#{outboundCode},#{salesOrderId},#{outboundDate},#{status},#{remark},
+        #{createdAt},#{updatedAt},#{createdById},#{updatedById},#{isDeleted},
+        #{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.OutboundOrders" useGeneratedKeys="true">
+        insert into outbound_orders
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="outboundCode != null">outbound_code,</if>
+                <if test="salesOrderId != null">sales_order_id,</if>
+                <if test="outboundDate != null">outbound_date,</if>
+                <if test="status != null">status,</if>
+                <if test="remark != null">remark,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="outboundCode != null">#{outboundCode},</if>
+                <if test="salesOrderId != null">#{salesOrderId},</if>
+                <if test="outboundDate != null">#{outboundDate},</if>
+                <if test="status != null">#{status},</if>
+                <if test="remark != null">#{remark},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.OutboundOrders">
+        update outbound_orders
+        <set>
+                <if test="outboundCode != null">
+                    outbound_code = #{outboundCode},
+                </if>
+                <if test="salesOrderId != null">
+                    sales_order_id = #{salesOrderId},
+                </if>
+                <if test="outboundDate != null">
+                    outbound_date = #{outboundDate},
+                </if>
+                <if test="status != null">
+                    status = #{status},
+                </if>
+                <if test="remark != null">
+                    remark = #{remark},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.OutboundOrders">
+        update outbound_orders
+        set 
+            outbound_code =  #{outboundCode},
+            sales_order_id =  #{salesOrderId},
+            outbound_date =  #{outboundDate},
+            status =  #{status},
+            remark =  #{remark},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+</mapper>

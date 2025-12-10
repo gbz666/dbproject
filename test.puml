@@ -1,0 +1,48 @@
+@startuml Staff_Roles_Classic_ERD
+' 设置图表和样式
+hide circle
+skinparam linetype ortho
+
+' ===================================
+' 定义实体 (Entity)
+' ===================================
+
+entity Staffs {
+  id : BIGINT
+  --
+  staff_code : VARCHAR(50)
+  staff_name : VARCHAR(100)
+}
+
+entity Roles {
+  id : INT
+  --
+  role_name : VARCHAR(50)
+  description : VARCHAR(255)
+}
+
+' ===================================
+' 定义联系集 (Relationship) - 强制菱形
+' ===================================
+
+' 使用 class 关键字和 <<R>> 构造型来强制渲染为菱形
+class ASSIGNMENT <<R>> {
+  ' 这里可以放置联系集自身的属性，对应 staff_roles 的非 FK 字段
+  assigned_at : DATETIME
+}
+
+' ===================================
+' 定义关系：多对多
+' ===================================
+' 使用 plantuml 的关联符号连接实体和菱形
+
+' Staffs (1) 拥有 (N) ASSIGNMENT
+Staffs "1" -- "N" ASSIGNMENT : has_assignment
+
+' Roles (1) 被分配给 (N) ASSIGNMENT
+Roles "1" -- "N" ASSIGNMENT : is_assigned_to
+
+@enduml
+
+
+mysql -u root -p dbproject --default-character-set=utf8mb4 < db.sql

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.CustomersMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.Customers">
+            <id property="id" column="id" />
+            <result property="customerCode" column="customer_code" />
+            <result property="customerName" column="customer_name" />
+            <result property="address" column="address" />
+            <result property="phone" column="phone" />
+            <result property="email" column="email" />
+            <result property="salesPersonId" column="sales_person_id" />
+            <result property="followUpPersonId" column="follow_up_person_id" />
+            <result property="ownerId" column="owner_id" />
+            <result property="paymentTermsDays" column="payment_terms_days" />
+            <result property="paymentTermsNotes" column="payment_terms_notes" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,customer_code,customer_name,address,phone,email,
+        sales_person_id,follow_up_person_id,owner_id,payment_terms_days,payment_terms_notes,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from customers
+        where  id = #{id} 
+    </select>
+    <select id="selectAllCustomers" resultType="com.database.pojo.Customers">
+        select * from customers
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from customers
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Customers" useGeneratedKeys="true">
+        insert into customers
+        ( id,customer_code,customer_name,address,phone,email,
+        sales_person_id,follow_up_person_id,owner_id,payment_terms_days,payment_terms_notes,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at)
+        values (#{id},#{customerCode},#{customerName},#{address},#{phone},#{email},
+        #{salesPersonId},#{followUpPersonId},#{ownerId},#{paymentTermsDays},#{paymentTermsNotes},
+        #{createdAt},#{updatedAt},#{createdById},#{updatedById},#{isDeleted},
+        #{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Customers" useGeneratedKeys="true">
+        insert into customers
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="customerCode != null">customer_code,</if>
+                <if test="customerName != null">customer_name,</if>
+                <if test="address != null">address,</if>
+                <if test="phone != null">phone,</if>
+                <if test="email != null">email,</if>
+                <if test="salesPersonId != null">sales_person_id,</if>
+                <if test="followUpPersonId != null">follow_up_person_id,</if>
+                <if test="ownerId != null">owner_id,</if>
+                <if test="paymentTermsDays != null">payment_terms_days,</if>
+                <if test="paymentTermsNotes != null">payment_terms_notes,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="customerCode != null">#{customerCode},</if>
+                <if test="customerName != null">#{customerName},</if>
+                <if test="address != null">#{address},</if>
+                <if test="phone != null">#{phone},</if>
+                <if test="email != null">#{email},</if>
+                <if test="salesPersonId != null">#{salesPersonId},</if>
+                <if test="followUpPersonId != null">#{followUpPersonId},</if>
+                <if test="ownerId != null">#{ownerId},</if>
+                <if test="paymentTermsDays != null">#{paymentTermsDays},</if>
+                <if test="paymentTermsNotes != null">#{paymentTermsNotes},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Customers">
+        update customers
+        <set>
+                <if test="customerCode != null">
+                    customer_code = #{customerCode},
+                </if>
+                <if test="customerName != null">
+                    customer_name = #{customerName},
+                </if>
+                <if test="address != null">
+                    address = #{address},
+                </if>
+                <if test="phone != null">
+                    phone = #{phone},
+                </if>
+                <if test="email != null">
+                    email = #{email},
+                </if>
+                <if test="salesPersonId != null">
+                    sales_person_id = #{salesPersonId},
+                </if>
+                <if test="followUpPersonId != null">
+                    follow_up_person_id = #{followUpPersonId},
+                </if>
+                <if test="ownerId != null">
+                    owner_id = #{ownerId},
+                </if>
+                <if test="paymentTermsDays != null">
+                    payment_terms_days = #{paymentTermsDays},
+                </if>
+                <if test="paymentTermsNotes != null">
+                    payment_terms_notes = #{paymentTermsNotes},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Customers">
+        update customers
+        set 
+            customer_code =  #{customerCode},
+            customer_name =  #{customerName},
+            address =  #{address},
+            phone =  #{phone},
+            email =  #{email},
+            sales_person_id =  #{salesPersonId},
+            follow_up_person_id =  #{followUpPersonId},
+            owner_id =  #{ownerId},
+            payment_terms_days =  #{paymentTermsDays},
+            payment_terms_notes =  #{paymentTermsNotes},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+</mapper>

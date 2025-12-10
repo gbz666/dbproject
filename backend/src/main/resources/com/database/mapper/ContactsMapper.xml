@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.ContactsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.Contacts">
+            <id property="id" column="id" />
+            <result property="contactName" column="contact_name" />
+            <result property="title" column="title" />
+            <result property="phone" column="phone" />
+            <result property="mobile" column="mobile" />
+            <result property="email" column="email" />
+            <result property="note" column="note" />
+            <result property="customerId" column="customer_id" />
+            <result property="supplierId" column="supplier_id" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,contact_name,title,phone,mobile,email,
+        note,customer_id,supplier_id,created_at,updated_at,
+        created_by_id,updated_by_id,is_deleted,deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from contacts
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from contacts
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Contacts" useGeneratedKeys="true">
+        insert into contacts
+        ( id,contact_name,title,phone,mobile,email,
+        note,customer_id,supplier_id,created_at,updated_at,
+        created_by_id,updated_by_id,is_deleted,deleted_at)
+        values (#{id},#{contactName},#{title},#{phone},#{mobile},#{email},
+        #{note},#{customerId},#{supplierId},#{createdAt},#{updatedAt},
+        #{createdById},#{updatedById},#{isDeleted},#{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Contacts" useGeneratedKeys="true">
+        insert into contacts
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="contactName != null">contact_name,</if>
+                <if test="title != null">title,</if>
+                <if test="phone != null">phone,</if>
+                <if test="mobile != null">mobile,</if>
+                <if test="email != null">email,</if>
+                <if test="note != null">note,</if>
+                <if test="customerId != null">customer_id,</if>
+                <if test="supplierId != null">supplier_id,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="contactName != null">#{contactName},</if>
+                <if test="title != null">#{title},</if>
+                <if test="phone != null">#{phone},</if>
+                <if test="mobile != null">#{mobile},</if>
+                <if test="email != null">#{email},</if>
+                <if test="note != null">#{note},</if>
+                <if test="customerId != null">#{customerId},</if>
+                <if test="supplierId != null">#{supplierId},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Contacts">
+        update contacts
+        <set>
+                <if test="contactName != null">
+                    contact_name = #{contactName},
+                </if>
+                <if test="title != null">
+                    title = #{title},
+                </if>
+                <if test="phone != null">
+                    phone = #{phone},
+                </if>
+                <if test="mobile != null">
+                    mobile = #{mobile},
+                </if>
+                <if test="email != null">
+                    email = #{email},
+                </if>
+                <if test="note != null">
+                    note = #{note},
+                </if>
+                <if test="customerId != null">
+                    customer_id = #{customerId},
+                </if>
+                <if test="supplierId != null">
+                    supplier_id = #{supplierId},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Contacts">
+        update contacts
+        set 
+            contact_name =  #{contactName},
+            title =  #{title},
+            phone =  #{phone},
+            mobile =  #{mobile},
+            email =  #{email},
+            note =  #{note},
+            customer_id =  #{customerId},
+            supplier_id =  #{supplierId},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+</mapper>

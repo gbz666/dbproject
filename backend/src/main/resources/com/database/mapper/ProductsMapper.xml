@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.ProductsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.Products">
+            <id property="id" column="id" />
+            <result property="productCode" column="product_code" />
+            <result property="productName" column="product_name" />
+            <result property="categoryId" column="category_id" />
+            <result property="sku" column="sku" />
+            <result property="unit" column="unit" />
+            <result property="specification" column="specification" />
+            <result property="description" column="description" />
+            <result property="costPrice" column="cost_price" />
+            <result property="listPrice" column="list_price" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,product_code,product_name,category_id,sku,unit,
+        specification,description,cost_price,list_price,created_at,
+        updated_at,created_by_id,updated_by_id,is_deleted,deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from products
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from products
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Products" useGeneratedKeys="true">
+        insert into products
+        ( id,product_code,product_name,category_id,sku,unit,
+        specification,description,cost_price,list_price,created_at,
+        updated_at,created_by_id,updated_by_id,is_deleted,deleted_at)
+        values (#{id},#{productCode},#{productName},#{categoryId},#{sku},#{unit},
+        #{specification},#{description},#{costPrice},#{listPrice},#{createdAt},
+        #{updatedAt},#{createdById},#{updatedById},#{isDeleted},#{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Products" useGeneratedKeys="true">
+        insert into products
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="productCode != null">product_code,</if>
+                <if test="productName != null">product_name,</if>
+                <if test="categoryId != null">category_id,</if>
+                <if test="sku != null">sku,</if>
+                <if test="unit != null">unit,</if>
+                <if test="specification != null">specification,</if>
+                <if test="description != null">description,</if>
+                <if test="costPrice != null">cost_price,</if>
+                <if test="listPrice != null">list_price,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="productCode != null">#{productCode},</if>
+                <if test="productName != null">#{productName},</if>
+                <if test="categoryId != null">#{categoryId},</if>
+                <if test="sku != null">#{sku},</if>
+                <if test="unit != null">#{unit},</if>
+                <if test="specification != null">#{specification},</if>
+                <if test="description != null">#{description},</if>
+                <if test="costPrice != null">#{costPrice},</if>
+                <if test="listPrice != null">#{listPrice},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Products">
+        update products
+        <set>
+                <if test="productCode != null">
+                    product_code = #{productCode},
+                </if>
+                <if test="productName != null">
+                    product_name = #{productName},
+                </if>
+                <if test="categoryId != null">
+                    category_id = #{categoryId},
+                </if>
+                <if test="sku != null">
+                    sku = #{sku},
+                </if>
+                <if test="unit != null">
+                    unit = #{unit},
+                </if>
+                <if test="specification != null">
+                    specification = #{specification},
+                </if>
+                <if test="description != null">
+                    description = #{description},
+                </if>
+                <if test="costPrice != null">
+                    cost_price = #{costPrice},
+                </if>
+                <if test="listPrice != null">
+                    list_price = #{listPrice},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Products">
+        update products
+        set 
+            product_code =  #{productCode},
+            product_name =  #{productName},
+            category_id =  #{categoryId},
+            sku =  #{sku},
+            unit =  #{unit},
+            specification =  #{specification},
+            description =  #{description},
+            cost_price =  #{costPrice},
+            list_price =  #{listPrice},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+</mapper>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="TemplatesSettings">
+    <option name="templateConfigs">
+      <TemplateContext>
+        <option name="generateConfig">
+          <GenerateConfig>
+            <option name="annotationType" value="NONE" />
+            <option name="basePackage" value="com.database" />
+            <option name="basePath" value="src/main/java" />
+            <option name="classNameStrategy" value="camel" />
+            <option name="encoding" value="UTF-8" />
+            <option name="extraClassSuffix" value="" />
+            <option name="ignoreFieldPrefix" value="" />
+            <option name="ignoreFieldSuffix" value="" />
+            <option name="ignoreTablePrefix" value="" />
+            <option name="ignoreTableSuffix" value="" />
+            <option name="moduleName" value="backend" />
+            <option name="modulePath" value="$PROJECT_DIR$" />
+            <option name="moduleUIInfoList">
+              <list>
+                <ModuleInfoGo>
+                  <option name="basePath" value="${domain.basePath}" />
+                  <option name="configFileName" value="mapperInterface.ftl" />
+                  <option name="configName" value="mapperInterface" />
+                  <option name="encoding" value="${domain.encoding}" />
+                  <option name="fileName" value="${domain.fileName}Mapper" />
+                  <option name="fileNameWithSuffix" value="${domain.fileName}Mapper.java" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
+                  <option name="packageName" value="${domain.basePackage}.mapper" />
+                </ModuleInfoGo>
+                <ModuleInfoGo>
+                  <option name="basePath" value="src/main/resources" />
+                  <option name="configFileName" value="mapperXml.ftl" />
+                  <option name="configName" value="mapperXml" />
+                  <option name="encoding" value="${domain.encoding}" />
+                  <option name="fileName" value="${domain.fileName}Mapper" />
+                  <option name="fileNameWithSuffix" value="${domain.fileName}Mapper.xml" />
+                  <option name="modulePath" value="$PROJECT_DIR$" />
+                  <option name="packageName" value="${domain.basePackage}.mapper" />
+                </ModuleInfoGo>
+              </list>
+            </option>
+            <option name="needToStringHashcodeEquals" value="true" />
+            <option name="needsComment" value="true" />
+            <option name="needsModel" value="true" />
+            <option name="relativePackage" value="pojo" />
+            <option name="superClass" value="" />
+            <option name="tableUIInfoList">
+              <list>
+                <TableUIInfo>
+                  <option name="className" value="Contacts" />
+                  <option name="tableName" value="contacts" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Customers" />
+                  <option name="tableName" value="customers" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Inventory" />
+                  <option name="tableName" value="inventory" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="OutboundOrderItems" />
+                  <option name="tableName" value="outbound_order_items" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="OutboundOrders" />
+                  <option name="tableName" value="outbound_orders" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PaymentExpenses" />
+                  <option name="tableName" value="payment_expenses" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PaymentReceipts" />
+                  <option name="tableName" value="payment_receipts" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="ProductCategories" />
+                  <option name="tableName" value="product_categories" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Products" />
+                  <option name="tableName" value="products" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PurchaseInvoiceDetails" />
+                  <option name="tableName" value="purchase_invoice_details" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PurchaseInvoices" />
+                  <option name="tableName" value="purchase_invoices" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PurchaseOrderItems" />
+                  <option name="tableName" value="purchase_order_items" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="PurchaseOrders" />
+                  <option name="tableName" value="purchase_orders" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Roles" />
+                  <option name="tableName" value="roles" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="SalesInvoiceDetails" />
+                  <option name="tableName" value="sales_invoice_details" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="SalesInvoices" />
+                  <option name="tableName" value="sales_invoices" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="SalesOrderItems" />
+                  <option name="tableName" value="sales_order_items" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="SalesOrders" />
+                  <option name="tableName" value="sales_orders" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="StaffRoles" />
+                  <option name="tableName" value="staff_roles" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Staffs" />
+                  <option name="tableName" value="staffs" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="StockInItems" />
+                  <option name="tableName" value="stock_in_items" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="StockIns" />
+                  <option name="tableName" value="stock_ins" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Suppliers" />
+                  <option name="tableName" value="suppliers" />
+                </TableUIInfo>
+                <TableUIInfo>
+                  <option name="className" value="Warehouses" />
+                  <option name="tableName" value="warehouses" />
+                </TableUIInfo>
+              </list>
+            </option>
+            <option name="templatesName" value="default-all" />
+            <option name="useLombokPlugin" value="true" />
+          </GenerateConfig>
+        </option>
+        <option name="moduleName" value="backend" />
+        <option name="projectPath" value="$PROJECT_DIR$" />
+        <option name="templateName" value="default-all" />
+      </TemplateContext>
+    </option>
+  </component>
+</project>

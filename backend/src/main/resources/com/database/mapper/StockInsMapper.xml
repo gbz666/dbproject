@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.StockInsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.StockIns">
+            <id property="id" column="id" />
+            <result property="stockInCode" column="stock_in_code" />
+            <result property="purchaseOrderId" column="purchase_order_id" />
+            <result property="stockInDate" column="stock_in_date" />
+            <result property="note" column="note" />
+            <result property="createdAt" column="created_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="updatedById" column="updated_by_id" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,stock_in_code,purchase_order_id,stock_in_date,note,created_at,
+        created_by_id,updated_at,updated_by_id
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_ins
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from stock_ins
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.StockIns" useGeneratedKeys="true">
+        insert into stock_ins
+        ( id,stock_in_code,purchase_order_id,stock_in_date,note,created_at,
+        created_by_id,updated_at,updated_by_id)
+        values (#{id},#{stockInCode},#{purchaseOrderId},#{stockInDate},#{note},#{createdAt},
+        #{createdById},#{updatedAt},#{updatedById})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.StockIns" useGeneratedKeys="true">
+        insert into stock_ins
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="stockInCode != null">stock_in_code,</if>
+                <if test="purchaseOrderId != null">purchase_order_id,</if>
+                <if test="stockInDate != null">stock_in_date,</if>
+                <if test="note != null">note,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="stockInCode != null">#{stockInCode},</if>
+                <if test="purchaseOrderId != null">#{purchaseOrderId},</if>
+                <if test="stockInDate != null">#{stockInDate},</if>
+                <if test="note != null">#{note},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.StockIns">
+        update stock_ins
+        <set>
+                <if test="stockInCode != null">
+                    stock_in_code = #{stockInCode},
+                </if>
+                <if test="purchaseOrderId != null">
+                    purchase_order_id = #{purchaseOrderId},
+                </if>
+                <if test="stockInDate != null">
+                    stock_in_date = #{stockInDate},
+                </if>
+                <if test="note != null">
+                    note = #{note},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.StockIns">
+        update stock_ins
+        set 
+            stock_in_code =  #{stockInCode},
+            purchase_order_id =  #{purchaseOrderId},
+            stock_in_date =  #{stockInDate},
+            note =  #{note},
+            created_at =  #{createdAt},
+            created_by_id =  #{createdById},
+            updated_at =  #{updatedAt},
+            updated_by_id =  #{updatedById}
+        where   id = #{id} 
+    </update>
+</mapper>
