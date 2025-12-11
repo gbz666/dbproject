@@ -2,6 +2,8 @@ package com.database.mapper;
 
 import com.database.pojo.Suppliers;
 
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【suppliers(供应商基础信息表)】的数据库操作Mapper
@@ -22,4 +24,5 @@ public interface SuppliersMapper {
 
     int updateByPrimaryKey(Suppliers record);
 
+    List<Suppliers> selectAllSuppliers();
 }

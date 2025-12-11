@@ -38,6 +38,9 @@
         from suppliers
         where  id = #{id} 
     </select>
+    <select id="selectAllSuppliers" resultType="com.database.pojo.Suppliers">
+        select * from suppliers where is_deleted=false
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from suppliers
