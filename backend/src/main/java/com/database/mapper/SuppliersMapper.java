@@ -1,28 +1,54 @@
 package com.database.mapper;
 
+import com.database.dto.SupplierDetailDTO;
 import com.database.pojo.Suppliers;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
-* @author 高柏舟
-* @description 针对表【suppliers(供应商基础信息表)】的数据库操作Mapper
-* @createDate 2025-12-10 19:58:56
-* @Entity com.database.pojo.Suppliers
-*/
+@Mapper
 public interface SuppliersMapper {
 
-    int deleteByPrimaryKey(Long id);
+    // ----------------- Select -----------------
+    /**
+     * 分页查询供应商详情列表 (包含关联员工姓名)
+     */
+    List<SupplierDetailDTO> selectSupplierDetailsByPage();
 
-    int insert(Suppliers record);
+    /**
+     * 根据业务编号查询供应商实体（用于校验/获取ID）
+     */
+    Suppliers selectBySupplierCode(@Param("supplierCode") String supplierCode);
 
-    int insertSelective(Suppliers record);
+    /**
+     * 根据业务编号查询供应商详情 DTO
+     */
+    SupplierDetailDTO selectSupplierDtoBySupplierCode(@Param("supplierCode") String supplierCode);
 
-    Suppliers selectByPrimaryKey(Long id);
 
-    int updateByPrimaryKeySelective(Suppliers record);
+    // ----------------- Insert/Update/Delete -----------------
+    /**
+     * 插入新的供应商记录，并自动回填 ID
+     */
+    void insertSupplier(Suppliers supplier);
 
-    int updateByPrimaryKey(Suppliers record);
+    /**
+     * 更新供应商的业务编号（创建后调用）
+     */
+    int updateSupplierCode(Suppliers supplier);
 
-    List<Suppliers> selectAllSuppliers();
+    /**
+     * 根据 ID 动态更新供应商信息 (忽略 POJO 中为 null 的字段)
+     */
+    int updateSupplier(Suppliers supplier);
+
+    /**
+     * 软删除供应商
+     * @return 影响的行数
+     */
+    Long updateToDeletedBySupplierCode(
+            @Param("supplierCode") String supplierCode,
+            @Param("currentStaffId") Long currentStaffId
+    );
 }

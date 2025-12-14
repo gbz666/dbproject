@@ -1,182 +1,123 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.database.mapper.SuppliersMapper">
 
     <resultMap id="BaseResultMap" type="com.database.pojo.Suppliers">
-            <id property="id" column="id" />
-            <result property="supplierCode" column="supplier_code" />
-            <result property="supplierName" column="supplier_name" />
-            <result property="shortName" column="short_name" />
-            <result property="mainBusiness" column="main_business" />
-            <result property="taxNo" column="tax_no" />
-            <result property="address" column="address" />
-            <result property="phone" column="phone" />
-            <result property="email" column="email" />
-            <result property="salesPersonId" column="sales_person_id" />
-            <result property="followUpPersonId" column="follow_up_person_id" />
-            <result property="ownerId" column="owner_id" />
-            <result property="createdAt" column="created_at" />
-            <result property="updatedAt" column="updated_at" />
-            <result property="createdById" column="created_by_id" />
-            <result property="updatedById" column="updated_by_id" />
-            <result property="isDeleted" column="is_deleted" />
-            <result property="deletedAt" column="deleted_at" />
+        <id column="id" property="id"/>
+        <result column="supplier_code" property="supplierCode"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by_id" property="createdById"/>
+        <result column="updated_by_id" property="updatedById"/>
+        <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id,supplier_code,supplier_name,short_name,main_business,tax_no,
-        address,phone,email,sales_person_id,follow_up_person_id,
-        owner_id,created_at,updated_at,created_by_id,updated_by_id,
-        is_deleted,deleted_at
+    <resultMap id="SupplierDetailDTOMap" type="com.database.dto.SupplierDetailDTO">
+        <id column="s_id" property="id"/>
+        <result column="supplier_code" property="supplierCode"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="short_name" property="shortName"/>
+        <result column="main_business" property="mainBusiness"/>
+        <result column="tax_no" property="taxNo"/>
+        <result column="address" property="address"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+
+        <result column="sales_person_name" property="salesPersonName"/>
+        <result column="follow_up_person_name" property="followUpPersonName"/>
+        <result column="owner_name" property="ownerName"/>
+
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by_staff_name" property="createdByStaffName"/>
+        <result column="updated_by_staff_name" property="updatedByStaffName"/>
+    </resultMap>
+
+    <sql id="Base_Detail_Column_List">
+        s.id AS s_id, s.supplier_code, s.supplier_name, s.short_name, s.main_business,
+        s.tax_no, s.address, s.phone, s.email,
+        s.created_at, s.updated_at,
+        t_sales.staff_name AS sales_person_name,
+        t_follow.staff_name AS follow_up_person_name,
+        t_owner.staff_name AS owner_name,
+        t_created.staff_name AS created_by_staff_name,
+        t_updated.staff_name AS updated_by_staff_name
     </sql>
 
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List" />
-        from suppliers
-        where  id = #{id} 
-    </select>
-    <select id="selectAllSuppliers" resultType="com.database.pojo.Suppliers">
-        select * from suppliers where is_deleted=false
+    <select id="selectSupplierDetailsByPage" resultMap="SupplierDetailDTOMap">
+        SELECT
+        <include refid="Base_Detail_Column_List"/>
+        FROM suppliers s
+        LEFT JOIN staffs t_sales ON s.sales_person_id = t_sales.id
+        LEFT JOIN staffs t_follow ON s.follow_up_person_id = t_follow.id
+        LEFT JOIN staffs t_owner ON s.owner_id = t_owner.id
+        LEFT JOIN staffs t_created ON s.created_by_id = t_created.id
+        LEFT JOIN staffs t_updated ON s.updated_by_id = t_updated.id
+        WHERE s.is_deleted = 0
+        ORDER BY s.updated_at DESC
     </select>
 
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-        delete from suppliers
-        where  id = #{id} 
-    </delete>
-    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Suppliers" useGeneratedKeys="true">
-        insert into suppliers
-        ( id,supplier_code,supplier_name,short_name,main_business,tax_no,
-        address,phone,email,sales_person_id,follow_up_person_id,
-        owner_id,created_at,updated_at,created_by_id,updated_by_id,
-        is_deleted,deleted_at)
-        values (#{id},#{supplierCode},#{supplierName},#{shortName},#{mainBusiness},#{taxNo},
-        #{address},#{phone},#{email},#{salesPersonId},#{followUpPersonId},
-        #{ownerId},#{createdAt},#{updatedAt},#{createdById},#{updatedById},
-        #{isDeleted},#{deletedAt})
+    <select id="selectSupplierDtoBySupplierCode" resultMap="SupplierDetailDTOMap">
+        SELECT
+        <include refid="Base_Detail_Column_List"/>
+        FROM suppliers s
+        LEFT JOIN staffs t_sales ON s.sales_person_id = t_sales.id
+        LEFT JOIN staffs t_follow ON s.follow_up_person_id = t_follow.id
+        LEFT JOIN staffs t_owner ON s.owner_id = t_owner.id
+        LEFT JOIN staffs t_created ON s.created_by_id = t_created.id
+        LEFT JOIN staffs t_updated ON s.updated_by_id = t_updated.id
+        WHERE s.supplier_code = #{supplierCode} AND s.is_deleted = 0
+    </select>
+
+    <insert id="insertSupplier" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO suppliers (
+            supplier_name, short_name, main_business, tax_no, address, phone, email,
+            sales_person_id, follow_up_person_id, owner_id,
+            created_by_id, updated_by_id
+        ) VALUES (
+                     #{supplierName}, #{shortName}, #{mainBusiness}, #{taxNo}, #{address}, #{phone}, #{email},
+                     #{salesPersonId}, #{followUpPersonId}, #{ownerId},
+                     #{createdById}, #{updatedById}
+                 )
     </insert>
-    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Suppliers" useGeneratedKeys="true">
-        insert into suppliers
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-                <if test="id != null">id,</if>
-                <if test="supplierCode != null">supplier_code,</if>
-                <if test="supplierName != null">supplier_name,</if>
-                <if test="shortName != null">short_name,</if>
-                <if test="mainBusiness != null">main_business,</if>
-                <if test="taxNo != null">tax_no,</if>
-                <if test="address != null">address,</if>
-                <if test="phone != null">phone,</if>
-                <if test="email != null">email,</if>
-                <if test="salesPersonId != null">sales_person_id,</if>
-                <if test="followUpPersonId != null">follow_up_person_id,</if>
-                <if test="ownerId != null">owner_id,</if>
-                <if test="createdAt != null">created_at,</if>
-                <if test="updatedAt != null">updated_at,</if>
-                <if test="createdById != null">created_by_id,</if>
-                <if test="updatedById != null">updated_by_id,</if>
-                <if test="isDeleted != null">is_deleted,</if>
-                <if test="deletedAt != null">deleted_at,</if>
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-                <if test="id != null">#{id},</if>
-                <if test="supplierCode != null">#{supplierCode},</if>
-                <if test="supplierName != null">#{supplierName},</if>
-                <if test="shortName != null">#{shortName},</if>
-                <if test="mainBusiness != null">#{mainBusiness},</if>
-                <if test="taxNo != null">#{taxNo},</if>
-                <if test="address != null">#{address},</if>
-                <if test="phone != null">#{phone},</if>
-                <if test="email != null">#{email},</if>
-                <if test="salesPersonId != null">#{salesPersonId},</if>
-                <if test="followUpPersonId != null">#{followUpPersonId},</if>
-                <if test="ownerId != null">#{ownerId},</if>
-                <if test="createdAt != null">#{createdAt},</if>
-                <if test="updatedAt != null">#{updatedAt},</if>
-                <if test="createdById != null">#{createdById},</if>
-                <if test="updatedById != null">#{updatedById},</if>
-                <if test="isDeleted != null">#{isDeleted},</if>
-                <if test="deletedAt != null">#{deletedAt},</if>
-        </trim>
-    </insert>
-    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Suppliers">
-        update suppliers
+
+    <update id="updateSupplierCode">
+        UPDATE suppliers
+        SET supplier_code = #{supplierCode}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSupplier">
+        UPDATE suppliers
         <set>
-                <if test="supplierCode != null">
-                    supplier_code = #{supplierCode},
-                </if>
-                <if test="supplierName != null">
-                    supplier_name = #{supplierName},
-                </if>
-                <if test="shortName != null">
-                    short_name = #{shortName},
-                </if>
-                <if test="mainBusiness != null">
-                    main_business = #{mainBusiness},
-                </if>
-                <if test="taxNo != null">
-                    tax_no = #{taxNo},
-                </if>
-                <if test="address != null">
-                    address = #{address},
-                </if>
-                <if test="phone != null">
-                    phone = #{phone},
-                </if>
-                <if test="email != null">
-                    email = #{email},
-                </if>
-                <if test="salesPersonId != null">
-                    sales_person_id = #{salesPersonId},
-                </if>
-                <if test="followUpPersonId != null">
-                    follow_up_person_id = #{followUpPersonId},
-                </if>
-                <if test="ownerId != null">
-                    owner_id = #{ownerId},
-                </if>
-                <if test="createdAt != null">
-                    created_at = #{createdAt},
-                </if>
-                <if test="updatedAt != null">
-                    updated_at = #{updatedAt},
-                </if>
-                <if test="createdById != null">
-                    created_by_id = #{createdById},
-                </if>
-                <if test="updatedById != null">
-                    updated_by_id = #{updatedById},
-                </if>
-                <if test="isDeleted != null">
-                    is_deleted = #{isDeleted},
-                </if>
-                <if test="deletedAt != null">
-                    deleted_at = #{deletedAt},
-                </if>
+            <if test="supplierName != null">supplier_name = #{supplierName},</if>
+            <if test="shortName != null">short_name = #{shortName},</if>
+            <if test="mainBusiness != null">main_business = #{mainBusiness},</if>
+            <if test="taxNo != null">tax_no = #{taxNo},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="salesPersonId != null">sales_person_id = #{salesPersonId},</if>
+            <if test="followUpPersonId != null">follow_up_person_id = #{followUpPersonId},</if>
+            <if test="ownerId != null">owner_id = #{ownerId},</if>
+            updated_by_id = #{updatedById},
+            updated_at = CURRENT_TIMESTAMP
         </set>
-        where   id = #{id} 
+        WHERE id = #{id}
     </update>
-    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Suppliers">
-        update suppliers
-        set 
-            supplier_code =  #{supplierCode},
-            supplier_name =  #{supplierName},
-            short_name =  #{shortName},
-            main_business =  #{mainBusiness},
-            tax_no =  #{taxNo},
-            address =  #{address},
-            phone =  #{phone},
-            email =  #{email},
-            sales_person_id =  #{salesPersonId},
-            follow_up_person_id =  #{followUpPersonId},
-            owner_id =  #{ownerId},
-            created_at =  #{createdAt},
-            updated_at =  #{updatedAt},
-            created_by_id =  #{createdById},
-            updated_by_id =  #{updatedById},
-            is_deleted =  #{isDeleted},
-            deleted_at =  #{deletedAt}
-        where   id = #{id} 
+
+    <update id="updateToDeletedBySupplierCode">
+        UPDATE suppliers
+        SET is_deleted = 1,
+            deleted_at = CURRENT_TIMESTAMP,
+            updated_by_id = #{currentStaffId},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE supplier_code = #{supplierCode} AND is_deleted = 0
     </update>
+
+    <select id="selectBySupplierCode" resultMap="BaseResultMap">
+        SELECT * FROM suppliers WHERE supplier_code = #{supplierCode} AND is_deleted = 0
+    </select>
+
 </mapper>
