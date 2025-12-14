@@ -217,7 +217,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useSalesOrderStore } from '@/stores/salesOrderStore';
-import type { SalesOrder } from '@/types/models';
+import type { SalesOrder } from '@/types/pojo';
 // 导入 Element Plus 组件类型和消息提示
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import 'element-plus/es/components/message/style/css';

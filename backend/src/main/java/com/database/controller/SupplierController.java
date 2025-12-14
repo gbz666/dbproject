@@ -7,10 +7,7 @@ import com.database.vo.Result;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class SupplierController {
@@ -18,7 +15,7 @@ public class SupplierController {
     public SupplierController(SupplierService supplierService) {
         this.supplierService = supplierService;
     }
-    @GetMapping("/supplier/all")
+    @GetMapping("/api/suppliers")
     public ResponseEntity<Result<PageInfo<Suppliers>>> getCustomersByPage(@RequestParam(defaultValue = "1") int pageNum,
                                                                             @RequestParam(defaultValue = "10") int pageSize) {
 
@@ -32,5 +29,12 @@ public class SupplierController {
         //    真正的业务状态码由 Result 内部的 code 字段决定。
         return ResponseEntity.ok(result);
 
+    }
+    @PostMapping("/api/suppliers")
+    public ResponseEntity<Result<Suppliers>> createSuppliers(@RequestBody Suppliers suppliers) {
+        //注意供应商暂时没有什么跟进人员啥的
+        Suppliers newsupplier= supplierService.createSupplier(suppliers);
+        Result<Suppliers> result = Result.success(newsupplier);
+        return ResponseEntity.ok(result);
     }
 }

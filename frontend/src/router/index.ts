@@ -1,76 +1,37 @@
+// src/router/index.ts (完善后)
 import { createRouter, createWebHistory } from 'vue-router'
-import Layout from '@/components/Layout.vue'
+import HomeView from '@/views/HomeView.vue' 
+import CustomerListView from '@/views/customer/CustomerList.vue'
+import SupplierListView from '@/views/supplier/SupplierList.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/auth/login.vue')
-    },
-    {
       path: '/',
-      component: Layout,
-      redirect: '/dashboard',
+      name: 'Layout',
+      component: HomeView, // HomeView 现在是布局组件
+      redirect: '/basic/customer', // 默认重定向到客户列表
       children: [
         {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('@/views/Dashboard.vue')
+          path: '/basic/customer',
+          name: 'CustomerList',
+          component: CustomerListView // 直接使用您需要的视图
         },
         {
-          path: 'customers',
-          name: 'customers',
-          component: () => import('@/views/customer/CustomerList.vue')
+          path: '/basic/supplier',
+          name: 'SupplierList',
+          component: SupplierListView // 直接使用您需要的视图
         },
-        {
-          path: 'suppliers',
-          name: 'suppliers',
-          component: () => import('@/views/supplier/SupplierList.vue')
-        },
-        {
-          path: 'products',
-          name: 'products',
-          component: () => import('@/views/product/ProductList.vue')
-        },
-        {
-          path: 'sales-orders',
-          name: 'sales-orders',
-          component: () => import('@/views/sales/SalesOrderList.vue')
-        },
-        {
-          path: 'purchase-orders',
-          name: 'purchase-orders',
-          component: () => import('@/views/purchase/PurchaseOrderList.vue')
-        },
-        {
-          path: 'stock',
-          name: 'stock',
-          component: () => import('@/views/stock/StockManagement.vue')
-        },
-        {
-          path: 'receipts',
-          name: 'receipts',
-          component: () => import('@/views/finance/ReceiptList.vue')
-        },
-        {
-          path: 'payments',
-          name: 'payments',
-          component: () => import('@/views/finance/PaymentList.vue')
-        },
-        {
-          path: 'sales-invoices',
-          name: 'sales-invoices',
-          component: () => import('@/views/invoice/SalesInvoiceList.vue')
-        },
-        {
-          path: 'purchase-invoices',
-          name: 'purchase-invoices',
-          component: () => import('@/views/invoice/PurchaseInvoiceList.vue')
-        }
+        // 其他模块的路由...
       ]
-    }
+    },
+    // 如果有登录页等非布局页面，可以放在这里
+    // {
+    //   path: '/login',
+    //   name: 'Login',
+    //   component: () => import('@/views/LoginView.vue')
+    // }
   ]
 })
 

@@ -1,81 +1,120 @@
 <template>
-  <div class="customer-list">
-    <div class="page-header">
-      <h1>客户管理</h1>
-      <button @click="showCreateDialog = true" class="btn-primary">新增客户</button>
-    </div>
-    
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>客户ID</th>
-            <th>客户名称</th>
-            <th>销售人员</th>
-            <th>跟进人员</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="customer in customerStore.customers" :key="customer.customer_id">
-            <td>{{ customer.customer_id }}</td>
-            <td>{{ customer.customer_name }}</td>
-            <td>{{ customer.sales_person }}</td>
-            <td>{{ customer.follow_up_person }}</td>
-            <td>
-              <button @click="editCustomer(customer)" class="btn-edit">编辑</button>
-              <button @click="deleteCustomer(customer.customer_id)" class="btn-delete">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- 创建/编辑对话框 -->
-    <CustomerDialog 
-      v-model="showCreateDialog"
-      :customer="editingCustomer"
-      @save="handleSaveCustomer"
-    />
+  <div class="customer-list-page">
+    <el-card shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>客户列表</span>
+          <el-button type="primary" @click="handleCreate">新增客户</el-button>
+        </div>
+      </template>
+
+      <el-table 
+        :data="customerStore.customers" 
+        v-loading="customerStore.isLoading"
+        border 
+        stripe 
+        style="width: 100%"
+        max-height="650"
+      >
+        <el-table-column type="index" label="序号" width="60" align="center" />
+        <el-table-column prop="customerCode" label="客户编号" width="120" sortable />
+        <el-table-column prop="customerName" label="客户名称" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="phone" label="联系电话" width="130" />
+        <el-table-column prop="email" label="邮箱" min-width="150" show-overflow-tooltip />
+        
+        <el-table-column prop="salesPersonName" label="负责销售" width="100" />
+        <el-table-column prop="followUpPersonName" label="跟进人员" width="100" />
+        <el-table-column prop="ownerName" label="业绩" width="100" />
+        
+        <el-table-column prop="paymentTermsDays" label="账期(天)" width="100" align="center" />
+        <el-table-column prop="paymentTermsNotes" label="账期备注" min-width="120" show-overflow-tooltip />
+        
+        <el-table-column prop="createdByName" label="创建人" width="100" />
+        
+        <el-table-column label="创建时间" width="160">
+          <template #default="{ row }">
+            {{ row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' }}
+          </template>
+        </el-table-column>
+        
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default>
+            <el-button link type="primary" size="small">编辑</el-button>
+            <el-button link type="danger" size="small">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-footer">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="customerStore.pageInfo.pageNum"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="customerStore.pageInfo.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="customerStore.pageInfo.total"
+          background
+        />
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useCustomerStore } from '@/stores/customerStore'
-import type { Customer } from '@/types/models'
-// import CustomerDialog from './components/CustomerDialog.vue'
+import { onMounted } from 'vue';
+import { useCustomerStore } from '@/stores/customerStore';
+import { ElMessage } from 'element-plus';
 
-const customerStore = useCustomerStore()
-const showCreateDialog = ref(false)
-const editingCustomer = ref<Customer | null>(null)
+// 使用 Pinia store
+const customerStore = useCustomerStore();
+
+// --- 组合式 API 核心逻辑 (保持不变) ---
+
+const handleSizeChange = (val: number) => {
+  if (customerStore.pageInfo.pageSize !== val) {
+    customerStore.pageInfo.pageSize = val;
+    customerStore.getCustomers(1, val);
+  }
+};
+
+const handleCurrentChange = (val: number) => {
+  if (customerStore.pageInfo.pageNum !== val) {
+    customerStore.pageInfo.pageNum = val;
+    customerStore.getCustomers(val, customerStore.pageInfo.pageSize);
+  }
+};
+
+const handleCreate = () => {
+    ElMessage.info('新增功能待实现');
+};
 
 onMounted(() => {
-  customerStore.fetchCustomers()
-})
-
-const editCustomer = (customer: Customer) => {
-  editingCustomer.value = { ...customer }
-  showCreateDialog.value = true
-}
-
-const deleteCustomer = async (id: number) => {
-  if (confirm('确定要删除这个客户吗？')) {
-    await customerStore.deleteCustomer(id)
-  }
-}
-
-const handleSaveCustomer = async (customerData: Omit<Customer, 'customer_id'>) => {
-  if (editingCustomer.value) {
-    await customerStore.updateCustomer(editingCustomer.value.customer_id, customerData)
-  } else {
-    const newCustomerData = {
-      ...customerData,
-      create_at: new Date().toISOString() 
-    }
-    await customerStore.createCustomer(newCustomerData)
-  }
-  showCreateDialog.value = false
-  editingCustomer.value = null
-}
+  customerStore.getCustomers(); 
+});
 </script>
+
+<style scoped>
+/* 样式保持不变 */
+.customer-list-page {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+.pagination-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 调整表格行高，使其更像 Excel */
+:deep(.el-table .el-table__cell) {
+  padding: 8px 0; /* 减小上下内边距 */
+}
+</style>

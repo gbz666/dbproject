@@ -1,6 +1,7 @@
 package com.database.mapper;
 
 import com.database.pojo.Staffs;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author 高柏舟
@@ -22,4 +23,5 @@ public interface StaffsMapper {
 
     int updateByPrimaryKey(Staffs record);
 
+    Long selectByStaffName(@Param("staffName") String staffName);
 }

@@ -1,67 +1,45 @@
-// frontend/src/stores/customerStore.ts
+// src/stores/customerStore.ts
 import { defineStore } from 'pinia';
-import type { Customer } from '@/types/models';
+import type { Customer, CustomerDetailDTO } from '@/types/pojo';
 import { customerService } from '@/service/customerService';
+import type { PageInfo } from '@/types/api';
+import { reactive, ref } from 'vue';
 
-export const useCustomerStore = defineStore('customer', {
-  state: () => ({
-    customers: [] as Customer[],
-    loading: false,
-    error: null as string | null,
-  }),
+export const useCustomerStore = defineStore('customer', () => {
+    // 状态 (State)
+    const customers = ref<Customer[]>([]);
+    const pageInfo = reactive<Partial<PageInfo<CustomerDetailDTO>>>({
+        pageNum: 1,
+        pageSize: 10,
+        total: 0,
+        pages: 1
+    });
+    const isLoading = ref(false);
 
-  getters: {
-    getCustomerById: (state) => (id: number) => {
-      return state.customers.find(customer => customer.customer_id === id);
-    },
-  },
+    // 操作 (Actions)
+    async function getCustomers(pageNum: number = pageInfo.pageNum!, pageSize: number = pageInfo.pageSize!) {
+        isLoading.value = true;
+        
+        const result = await customerService.fetchCustomers(pageNum, pageSize);
 
-  actions: {
-    async fetchCustomers() {
-      this.loading = true;
-      this.error = null;
-      try {
-        this.customers = await customerService.getCustomers();
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : '获取客户列表失败';
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async createCustomer(customer: Omit<Customer, 'customer_id'>) {
-      try {
-        const newCustomer = await customerService.createCustomer(customer);
-        this.customers.push(newCustomer);
-        return newCustomer;
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : '创建客户失败';
-        throw error;
-      }
-    },
-
-    async updateCustomer(id: number, customer: Partial<Customer>) {
-      try {
-        const updatedCustomer = await customerService.updateCustomer(id, customer);
-        const index = this.customers.findIndex(c => c.customer_id === id);
-        if (index !== -1) {
-          this.customers[index] = { ...this.customers[index], ...updatedCustomer };
+        if (result) {
+            customers.value = result.list;
+            // 更新分页信息
+            Object.assign(pageInfo, result);
+        } else {
+            // 清空列表，保持当前分页参数
+            customers.value = [];
+            pageInfo.total = 0;
         }
-        return updatedCustomer;
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : '更新客户失败';
-        throw error;
-      }
-    },
+        
+        isLoading.value = false;
+    }
 
-    async deleteCustomer(id: number) {
-      try {
-        await customerService.deleteCustomer(id);
-        this.customers = this.customers.filter(customer => customer.customer_id !== id);
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : '删除客户失败';
-        throw error;
-      }
-    },
-  },
+    // 暴露给外部的属性和方法
+    return {
+        customers,
+        pageInfo,
+        isLoading,
+        getCustomers,
+    };
 });

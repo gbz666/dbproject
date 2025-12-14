@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useProductStore } from '@/stores/productStore';
-import type { Product } from '@/types/models'; // 假设 Product 接口已包含
+import type { Product } from '@/types/pojo'; // 假设 Product 接口已包含
 // 导入 Element Plus 组件类型和消息提示
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
 import 'element-plus/es/components/message/style/css';

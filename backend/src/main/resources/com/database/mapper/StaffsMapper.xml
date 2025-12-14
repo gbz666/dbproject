@@ -27,10 +27,17 @@
         where  id = #{id} 
     </select>
 
+
+    <select id="selectByStaffName" resultType="java.lang.Long">
+        select id from staffs where staff_name=#{staffName}
+    </select>
+
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from staffs
         where  id = #{id} 
     </delete>
+
+
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Staffs" useGeneratedKeys="true">
         insert into staffs
         ( id,staff_code,staff_name,email,phone,title,
@@ -38,6 +45,8 @@
         values (#{id},#{staffCode},#{staffName},#{email},#{phone},#{title},
         #{createdById},#{updatedById})
     </insert>
+
+
     <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Staffs" useGeneratedKeys="true">
         insert into staffs
         <trim prefix="(" suffix=")" suffixOverrides=",">

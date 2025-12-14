@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -22,6 +23,7 @@ public class SupplierService {
     SupplierService(SuppliersMapper suppliersMapper) {
         this.suppliersMapper = suppliersMapper;
     }
+    @Transactional
     public PageInfo<Suppliers> getSuppliersByPage(int pageNum, int pageSize) {
         // 核心步骤 1: 启动分页，接下来的第一次 MyBatis 查询会被拦截并分页
         PageHelper.startPage(pageNum, pageSize);
@@ -31,5 +33,12 @@ public class SupplierService {
 
         // 核心步骤 3: 使用 PageInfo 封装结果，它包含了总页数、总条数等信息
         return new PageInfo<>(supplierList);
+    }
+    @Transactional
+    public Suppliers createSupplier(Suppliers suppliers) {
+        Long id = (long) suppliersMapper.insert(suppliers);
+        Suppliers supplier = suppliersMapper.selectByPrimaryKey(id);
+
+        return supplier;
     }
 }

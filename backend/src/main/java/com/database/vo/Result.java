@@ -50,6 +50,9 @@ public class Result<T> {
     public static <T> Result<T> success(T data) {
         return new Result<>(200, "操作成功", data);
     }
+    public static <T> Result<T> createsuccess(T data) {
+        return new Result<>(201, "创建成功", data);
+    }
 
     /**
      * 成功，带自定义消息和数据
@@ -63,7 +66,7 @@ public class Result<T> {
     /**
      * 业务失败，带默认消息
      */
-    public static Result<Void> failure(String message) {
+    public static Result<Void> fail(int code,String message) {
         // 通常使用 400 或业务自定义状态码
         return new Result<>(400, message, null);
     }
