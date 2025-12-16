@@ -22,19 +22,84 @@
             <result property="isDeleted" column="is_deleted" />
             <result property="deletedAt" column="deleted_at" />
     </resultMap>
-
+    <resultMap id="ProductVOResultMap" type="com.database.vo.ProductVO">
+        <id property="id" column="p_id" />
+        <result property="productCode" column="p_product_code" />
+        <result property="productName" column="p_product_name" />
+        <result property="sku" column="p_sku" />
+        <result property="unit" column="p_unit" />
+        <result property="specification" column="p_specification" />
+        <result property="description" column="p_description" />
+        <result property="costPrice" column="p_cost_price" />
+        <result property="listPrice" column="p_list_price" />
+        <result property="createdAt" column="p_created_at" />
+        <result property="updatedAt" column="p_updated_at" />
+        <result property="categoryName" column="c_category_name" />
+    </resultMap>
     <sql id="Base_Column_List">
         id,product_code,product_name,category_id,sku,unit,
         specification,description,cost_price,list_price,created_at,
         updated_at,created_by_id,updated_by_id,is_deleted,deleted_at
     </sql>
+    <sql id="Products_Column_Alias">
+        p.id AS p_id, p.product_code AS p_product_code, p.product_name AS p_product_name,
+        p.sku AS p_sku, p.unit AS p_unit, p.specification AS p_specification, p.description AS p_description,
+        p.cost_price AS p_cost_price, p.list_price AS p_list_price, p.created_at AS p_created_at,
+        p.updated_at AS p_updated_at
+    </sql>
 
+    <select id="selectVOByPrimaryKey" parameterType="java.lang.Long" resultMap="ProductVOResultMap">
+        SELECT
+        <include refid="Products_Column_Alias" />, c.category_name AS c_category_name
+        FROM products p
+        LEFT JOIN product_categories c ON p.category_id = c.id
+        WHERE p.id = #{id} AND p.is_deleted = 0
+    </select>
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
         from products
         where  id = #{id} 
     </select>
+    <select id="selectProductsList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM products
+        <where>
+            is_deleted = 0
+            <if test="productName != null and productName != ''">
+                AND product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY updated_at DESC
+    </select>
+    <select id="selectVOList" resultMap="ProductVOResultMap">
+        SELECT
+        <include refid="Products_Column_Alias" />, c.category_name AS c_category_name
+        FROM products p
+        LEFT JOIN product_categories c ON p.category_id = c.id
+        <where>
+            p.is_deleted = 0
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="categoryName != null and categoryName != ''">
+                AND c.category_name LIKE CONCAT('%', #{categoryName}, '%')
+            </if>
+            <if test="productCode != null and productCode != ''">
+                AND c.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+        </where>
+        ORDER BY p.updated_at ASC
+    </select>
+    <update id="softDeleteByPrimaryKey" parameterType="java.lang.Long">
+        UPDATE products
+        SET is_deleted = 1, deleted_at = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from products
@@ -158,5 +223,27 @@
             is_deleted =  #{isDeleted},
             deleted_at =  #{deletedAt}
         where   id = #{id} 
+    </update>
+
+
+    <select id="selectByProductCode" parameterType="string" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM products
+        WHERE product_code = #{productCode} AND is_deleted = 0
+    </select>
+
+    <select id="selectVOByProductCode" parameterType="string" resultMap="ProductVOResultMap">
+        SELECT
+        <include refid="Products_Column_Alias" />, c.category_name AS c_category_name
+        FROM products p
+        LEFT JOIN product_categories c ON p.category_id = c.id
+        WHERE p.product_code = #{productCode} AND p.is_deleted = 0
+    </select>
+
+    <update id="softDeleteByProductCode" parameterType="string">
+        UPDATE products
+        SET is_deleted = 1, deleted_at = NOW()
+        WHERE product_code = #{productCode} AND is_deleted = 0
     </update>
 </mapper>

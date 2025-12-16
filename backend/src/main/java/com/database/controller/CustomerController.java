@@ -1,6 +1,6 @@
 package com.database.controller;
 
-import com.database.dto.CustomerDetailDTO;
+import com.database.vo.CustomerDetailVO;
 import com.database.dto.CustomerCreateRequest; // 引入用于创建的 DTO
 import com.database.dto.CustomerUpdateRequest;
 import com.database.pojo.Customers;
@@ -29,11 +29,13 @@ public class CustomerController {
      * @return 200 OK
      */
     @GetMapping
-    public ResponseEntity<Result<PageInfo<CustomerDetailDTO>>> getCustomersByPage(
+    public ResponseEntity<Result<PageInfo<CustomerDetailVO>>> getCustomersByPage(
             @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) String customerCode) {
 
-        PageInfo<CustomerDetailDTO> pageInfo = customerService.getCustomersByPage(pageNum, pageSize);
+        PageInfo<CustomerDetailVO> pageInfo = customerService.getCustomersByPage(pageNum, pageSize,customerName,customerCode);
 
         // 状态码：200 OK
         return ResponseEntity.ok(Result.success(pageInfo));
@@ -79,20 +81,20 @@ public class CustomerController {
     /**
      * PUT /api/customers/{customerCode}：更新客户信息
      * @param customerCode 客户业务编号 (Path 路径)
-     * @param customerDTO 待更新的客户数据（使用 CustomerDetailDTO，Service 层需处理转换）
+     * @param customerDTO 待更新的客户数据（使用 CustomerDetailVO，Service 层需处理转换）
      * @param currentStaffId 当前操作员ID
      * @return 200 OK
      */
     @PutMapping("/{customerCode}")
-    public ResponseEntity<Result<CustomerDetailDTO>> updateCustomer(
+    public ResponseEntity<Result<CustomerDetailVO>> updateCustomer(
             @PathVariable String customerCode,
             @RequestBody CustomerUpdateRequest customerDTO,
             @RequestParam Long currentStaffId) {
 
-        CustomerDetailDTO updatedCustomer = customerService.updateCustomer(customerCode, customerDTO, currentStaffId);
+        CustomerDetailVO updatedCustomer = customerService.updateCustomer(customerCode, customerDTO, currentStaffId);
 
         // 构造成功响应：200 OK
-        Result<CustomerDetailDTO> result = Result.success(updatedCustomer);
+        Result<CustomerDetailVO> result = Result.success(updatedCustomer);
         result.setMessage("客户信息更新成功");
 
         return ResponseEntity.ok(result);

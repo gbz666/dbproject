@@ -1,7 +1,7 @@
 package com.database.service;
 
 import com.database.dto.CustomerCreateRequest; // 【新】引入用于创建的 DTO
-import com.database.dto.CustomerDetailDTO;
+import com.database.vo.CustomerDetailVO;
 import com.database.dto.CustomerUpdateRequest; // 【新】引入用于更新的 DTO (假设已创建)
 import com.database.exception.BusinessException;
 import com.database.mapper.CustomersMapper;
@@ -32,10 +32,10 @@ public class CustomerService {
         this.staffsMapper = staffsMapper;
     }
 
-    public PageInfo<CustomerDetailDTO> getCustomersByPage(int pageNum, int pageSize) {
+    public PageInfo<CustomerDetailVO> getCustomersByPage(int pageNum, int pageSize,String customerName,String customerCode) {
         PageHelper.startPage(pageNum, pageSize);
         // 调用 MyBatis 关联查询方法
-        List<CustomerDetailDTO> customerDetailList = customersMapper.selectCustomerDetailsByPage();
+        List<CustomerDetailVO> customerDetailList = customersMapper.selectCustomerDetailsByPage(customerName,customerCode);
         return new PageInfo<>(customerDetailList);
     }
 
@@ -127,7 +127,7 @@ public class CustomerService {
      * @return 更新后的完整客户对象 DTO
      */
     @Transactional
-    public CustomerDetailDTO updateCustomer(String customerCode, CustomerUpdateRequest request, Long currentStaffId) { // 【注意】参数类型改为 CustomerUpdateRequest
+    public CustomerDetailVO updateCustomer(String customerCode, CustomerUpdateRequest request, Long currentStaffId) { // 【注意】参数类型改为 CustomerUpdateRequest
 
         // --- 1. 业务校验与 ID 获取 ---
         Objects.requireNonNull(customerCode, "客户编号不能为空。");

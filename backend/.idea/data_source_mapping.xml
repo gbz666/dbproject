@@ -5,7 +5,9 @@
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/43aa7742-be4d-4bee-b29c-d80301cd8a93/console_1.sql" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/43aa7742-be4d-4bee-b29c-d80301cd8a93/console_2.sql" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/43aa7742-be4d-4bee-b29c-d80301cd8a93/console_3.sql" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/43aa7742-be4d-4bee-b29c-d80301cd8a93/console_4.sql" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$PROJECT_DIR$/src/main/resources/com/database/mapper/CustomersMapper.xml" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/com/database/mapper/ProductCategoriesMapper.xml" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$PROJECT_DIR$/src/main/resources/com/database/mapper/ProductsMapper.xml" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$PROJECT_DIR$/src/main/resources/com/database/mapper/StaffsMapper.xml" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />
     <file url="file://$PROJECT_DIR$/src/main/resources/com/database/mapper/SuppliersMapper.xml" value="43aa7742-be4d-4bee-b29c-d80301cd8a93" />

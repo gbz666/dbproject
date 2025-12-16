@@ -1,6 +1,6 @@
 package com.database.controller;
 
-import com.database.dto.SupplierDetailDTO;
+import com.database.vo.SupplierDetailVO;
 import com.database.dto.SupplierRequest;
 import com.database.pojo.Suppliers;
 import com.database.service.SupplierService;
@@ -26,13 +26,15 @@ public class SupplierController {
      * 分页查询供应商列表
      */
     @GetMapping
-    public ResponseEntity<Result<PageInfo<SupplierDetailDTO>>> getSuppliersByPage(
+    public ResponseEntity<Result<PageInfo<SupplierDetailVO>>> getSuppliersByPage(
             @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String supplierCode,
+            @RequestParam(required = false) String supplierName) {
 
-        PageInfo<SupplierDetailDTO> pageInfo = supplierService.getSuppliersByPage(pageNum, pageSize);
+        PageInfo<SupplierDetailVO> pageInfo = supplierService.getSuppliersByPage(pageNum, pageSize,supplierCode,supplierName);
 
-        Result<PageInfo<SupplierDetailDTO>> result = Result.success(pageInfo);
+        Result<PageInfo<SupplierDetailVO>> result = Result.success(pageInfo);
         return ResponseEntity.ok(result);
     }
 
@@ -56,14 +58,14 @@ public class SupplierController {
      * 更新供应商信息，接收 currentStaffId 作为请求参数
      */
     @PutMapping("/{supplierCode}")
-    public ResponseEntity<Result<SupplierDetailDTO>> updateSupplier(
+    public ResponseEntity<Result<SupplierDetailVO>> updateSupplier(
             @PathVariable String supplierCode,
             @RequestBody SupplierRequest request,
             @RequestParam Long currentStaffId) { // <-- 更改点 2: 接收操作员 ID
 
         // 调用 Service 层方法，传入操作员 ID
-        SupplierDetailDTO updatedDto = supplierService.updateSupplier(supplierCode, request, currentStaffId);
-        Result<SupplierDetailDTO> result = Result.success(updatedDto);
+        SupplierDetailVO updatedDto = supplierService.updateSupplier(supplierCode, request, currentStaffId);
+        Result<SupplierDetailVO> result = Result.success(updatedDto);
         return ResponseEntity.ok(result);
     }
 

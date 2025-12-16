@@ -1,6 +1,6 @@
 package com.database.mapper;
 
-import com.database.dto.CustomerDetailDTO;
+import com.database.vo.CustomerDetailVO;
 import com.database.pojo.Customers;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,7 +18,7 @@ public interface CustomersMapper {
     /**
      * 分页查询客户详情列表，关联员工姓名
      */
-    List<CustomerDetailDTO> selectCustomerDetailsByPage();
+    List<CustomerDetailVO> selectCustomerDetailsByPage(@Param("customerName") String customerName,@Param("customerCode") String customerCode);
 
     /**
      * 第一次插入客户记录（不含业务编码），用于获取自增主键ID
@@ -56,5 +56,5 @@ public interface CustomersMapper {
     /**
      * 根据客户业务编码查询客户详情 DTO，关联员工姓名
      */
-    CustomerDetailDTO selectCustomerDtoByCustomerCode(String customerCode);
+    CustomerDetailVO selectCustomerDtoByCustomerCode(String customerCode);
 }

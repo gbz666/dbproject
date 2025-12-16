@@ -1,6 +1,7 @@
 package com.database.mapper;
 
 import com.database.pojo.ProductCategories;
+import org.apache.ibatis.annotations.Param;
 
 /**
 * @author 高柏舟
@@ -21,5 +22,5 @@ public interface ProductCategoriesMapper {
     int updateByPrimaryKeySelective(ProductCategories record);
 
     int updateByPrimaryKey(ProductCategories record);
-
+    ProductCategories selectByName(@Param("categoryName") String categoryName);
 }

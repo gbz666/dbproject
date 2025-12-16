@@ -1,4 +1,4 @@
-package com.database.dto;
+package com.database.vo;
 
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * 供应商详情返回 DTO (包含关联员工姓名)
  */
 @Data
-public class SupplierDetailDTO {
+public class SupplierDetailVO {
     private Long id;
     private String supplierCode; // 业务编号
     private String supplierName;

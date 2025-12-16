@@ -13,7 +13,7 @@
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
-    <resultMap id="SupplierDetailDTOMap" type="com.database.dto.SupplierDetailDTO">
+    <resultMap id="SupplierDetailDTOMap" type="com.database.vo.SupplierDetailVO">
         <id column="s_id" property="id"/>
         <result column="supplier_code" property="supplierCode"/>
         <result column="supplier_name" property="supplierName"/>
@@ -54,8 +54,17 @@
         LEFT JOIN staffs t_owner ON s.owner_id = t_owner.id
         LEFT JOIN staffs t_created ON s.created_by_id = t_created.id
         LEFT JOIN staffs t_updated ON s.updated_by_id = t_updated.id
-        WHERE s.is_deleted = 0
-        ORDER BY s.updated_at DESC
+        <where>
+            s.is_deleted = 0
+            <if test="supplierCode != null and supplierCode != ''">
+                AND s.supplier_code Like CONCAT('%', #{supplierCode}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+
+        </where>
+        ORDER BY s.updated_at ASC
     </select>
 
     <select id="selectSupplierDtoBySupplierCode" resultMap="SupplierDetailDTOMap">

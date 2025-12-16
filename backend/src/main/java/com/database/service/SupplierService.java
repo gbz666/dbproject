@@ -1,6 +1,6 @@
 package com.database.service;
 
-import com.database.dto.SupplierDetailDTO;
+import com.database.vo.SupplierDetailVO;
 import com.database.dto.SupplierRequest;
 import com.database.exception.BusinessException;
 import com.database.mapper.StaffsMapper;
@@ -33,9 +33,9 @@ public class SupplierService {
     /**
      * 分页查询供应商列表
      */
-    public PageInfo<SupplierDetailDTO> getSuppliersByPage(int pageNum, int pageSize) {
+    public PageInfo<SupplierDetailVO> getSuppliersByPage(int pageNum, int pageSize,String supplierCode,String supplierName) {
         PageHelper.startPage(pageNum, pageSize);
-        List<SupplierDetailDTO> supplierDetailList = suppliersMapper.selectSupplierDetailsByPage();
+        List<SupplierDetailVO> supplierDetailList = suppliersMapper.selectSupplierDetailsByPage(supplierCode,supplierName);
         return new PageInfo<>(supplierDetailList);
     }
 
@@ -109,7 +109,7 @@ public class SupplierService {
      * 更新供应商信息
      */
     @Transactional
-    public SupplierDetailDTO updateSupplier(String supplierCode, SupplierRequest request, Long currentStaffId) {
+    public SupplierDetailVO updateSupplier(String supplierCode, SupplierRequest request, Long currentStaffId) {
 
         // --- 1. 业务校验与 ID 获取 ---
         Objects.requireNonNull(supplierCode, "供应商编号不能为空。");

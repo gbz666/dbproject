@@ -1,9 +1,10 @@
 package com.database.mapper;
 
-import com.database.dto.SupplierDetailDTO;
+import com.database.vo.SupplierDetailVO;
 import com.database.pojo.Suppliers;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public interface SuppliersMapper {
     /**
      * 分页查询供应商详情列表 (包含关联员工姓名)
      */
-    List<SupplierDetailDTO> selectSupplierDetailsByPage();
+    List<SupplierDetailVO> selectSupplierDetailsByPage(@RequestParam("supplierCode")String supplierCode,@RequestParam("supplierName") String supplierName);
 
     /**
      * 根据业务编号查询供应商实体（用于校验/获取ID）
@@ -24,7 +25,7 @@ public interface SuppliersMapper {
     /**
      * 根据业务编号查询供应商详情 DTO
      */
-    SupplierDetailDTO selectSupplierDtoBySupplierCode(@Param("supplierCode") String supplierCode);
+    SupplierDetailVO selectSupplierDtoBySupplierCode(@Param("supplierCode") String supplierCode);
 
 
     // ----------------- Insert/Update/Delete -----------------

@@ -24,7 +24,7 @@
         <result property="deletedAt" column="deleted_at" />
     </resultMap>
 
-    <resultMap id="CustomerDetailDTOMap" type="com.database.dto.CustomerDetailDTO" extends="BaseResultMap">
+    <resultMap id="CustomerDetailDTOMap" type="com.database.vo.CustomerDetailVO" extends="BaseResultMap">
         <result column="sales_person_name" property="salesPersonName"/>
         <result column="follow_up_person_name" property="followUpPersonName"/>
         <result column="owner_name" property="ownerName"/>
@@ -65,8 +65,16 @@
                  LEFT JOIN staffs s3 ON c.owner_id = s3.id
                  LEFT JOIN staffs s4 ON c.created_by_id = s4.id
                  LEFT JOIN staffs s5 ON c.updated_by_id = s5.id
-        WHERE c.is_deleted = 0
-        ORDER BY c.id DESC
+        <where>
+            c.is_deleted = 0
+            <if test="customerCode != null and customerCode != ''">
+                AND c.customer_code Like CONCAT('%', #{customerCode}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+        </where>
+        ORDER BY c.id ASC
     </select>
 
     <select id="selectByCustomerCode" resultMap="BaseResultMap">

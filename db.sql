@@ -187,7 +187,6 @@ CREATE TABLE contacts (
 
 CREATE TABLE product_categories (
     id INT PRIMARY KEY AUTO_INCREMENT COMMENT '商品分类主键ID',
-    category_code VARCHAR(50) UNIQUE COMMENT '分类编码(展示用)',
     category_name VARCHAR(100) NOT NULL COMMENT '分类名称',
     description TEXT COMMENT '分类描述',
 

@@ -23,6 +23,9 @@
         from product_categories
         where  id = #{id} 
     </select>
+    <select id="selectByName" resultType="com.database.pojo.ProductCategories">
+        select * from product_categories where category_name=#{categoryName}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from product_categories
@@ -30,7 +33,7 @@
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.ProductCategories" useGeneratedKeys="true">
         insert into product_categories
-        ( id,category_code,category_name,description,created_at,is_deleted)
+        ( id,category_name,description,created_at,is_deleted)
         values (#{id},#{categoryCode},#{categoryName},#{description},#{createdAt},#{isDeleted})
     </insert>
     <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.ProductCategories" useGeneratedKeys="true">
@@ -75,8 +78,7 @@
     </update>
     <update id="updateByPrimaryKey" parameterType="com.database.pojo.ProductCategories">
         update product_categories
-        set 
-            category_code =  #{categoryCode},
+        set
             category_name =  #{categoryName},
             description =  #{description},
             created_at =  #{createdAt},

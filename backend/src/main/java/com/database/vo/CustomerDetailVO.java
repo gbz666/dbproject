@@ -1,4 +1,4 @@
-package com.database.dto;
+package com.database.vo;
 
 import lombok.Data; // 确保导入了 Lombok
 import java.io.Serializable;
@@ -8,7 +8,7 @@ import java.util.Date;
  * 客户详情 DTO: 用于查询响应，必须包含主键ID和业务Code。
  */
 @Data
-public class CustomerDetailDTO implements Serializable {
+public class CustomerDetailVO implements Serializable {
     private Long id;
     private String customerCode;
 
