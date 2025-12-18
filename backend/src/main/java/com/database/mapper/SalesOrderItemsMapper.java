@@ -22,4 +22,8 @@ public interface SalesOrderItemsMapper {
 
     int updateByPrimaryKey(SalesOrderItems record);
 
+        // 根据订单 ID 删除所有明细
+    int deleteByOrderId(Long salesOrderId);
+
+    int updateToDeleteByOrderId(Long salesOrderId);
 }

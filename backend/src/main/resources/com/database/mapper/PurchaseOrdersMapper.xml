@@ -152,4 +152,70 @@
             deleted_at =  #{deletedAt}
         where   id = #{id} 
     </update>
+    <update id="updateToDeleteByPrimaryKey">
+        update purchase_orders as po set po.is_deleted=1,deleted_at=NOW() where po.id=#{id}
+    </update>
+
+
+    <resultMap id="PurchaseOrderVOResultMap" type="com.database.vo.PurchaseOrderVO">
+        <id property="id" column="id" />
+        <result property="purchaseCode" column="purchase_code" />
+        <result property="orderDate" column="order_date" />
+        <result property="note" column="note" />
+
+        <result property="supplierCode" column="supplier_code" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="totalAmount" column="total_amount"/>
+        <collection property="items" ofType="com.database.vo.PurchaseOrderVO$OrderItemDTO">
+            <result property="productCode" column="product_code" />
+            <result property="productName" column="product_name" />
+            <result property="quantity" column="quantity" />
+            <result property="unitPrice" column="unit_price" />
+            <result property="lineTotal" column="line_total" />
+        </collection>
+    </resultMap>
+
+    <select id="selectPurchaseOrderVOByPage" resultMap="PurchaseOrderVOResultMap">
+        SELECT
+            po.id,
+            po.purchase_code,
+            po.order_date,
+            po.note,
+            po.total_amount,
+            s.supplier_code,
+            s.supplier_name,
+            p.product_code,
+            p.product_name,
+            poi.quantity,
+            poi.unit_price,
+            poi.line_total
+# - 这里对应 VO 中的 totalAmount (Long/BigDecimal 需注意类型匹配)
+        FROM purchase_orders po
+                 LEFT JOIN suppliers s ON po.supplier_id = s.id
+                 LEFT JOIN purchase_order_items poi ON po.id = poi.purchase_order_id
+                 LEFT JOIN products p ON poi.product_id = p.id
+        <where>
+            po.is_deleted = 0
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                AND s.supplier_code LIKE CONCAT('%', #{supplierCode}, '%')
+            </if>
+            <if test="productCode != null and productCode != ''">
+                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="purchaseOrderCode != null and purchaseOrderCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{purchaseOrderCode}, '%')
+            </if>
+        </where>
+    </select>
+    <select id="countOrdersByMonth" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM purchase_orders
+        WHERE purchase_code LIKE CONCAT('cg', #{monthStr}, '%')
+    </select>
 </mapper>

@@ -34,6 +34,9 @@
         delete from purchase_order_items
         where  id = #{id} 
     </delete>
+    <delete id="deleteByPurchaseOrderId">
+        delete from purchase_order_items  as poi where poi.purchase_order_id=#{id}
+    </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PurchaseOrderItems" useGeneratedKeys="true">
         insert into purchase_order_items
         ( id,purchase_order_id,product_id,quantity,unit_price,line_total,

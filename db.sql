@@ -203,7 +203,7 @@ CREATE TABLE products (
     unit VARCHAR(50) COMMENT '计量单位(如 件、kg)',
     specification VARCHAR(255) COMMENT '规格型号',
     description TEXT COMMENT '产品描述/备注',
-
+    
     -- 建议维护默认成本与参考售价
     cost_price DECIMAL(18,2) DEFAULT 0.00 COMMENT '默认成本价(金额，单位元)',
     list_price DECIMAL(18,2) DEFAULT 0.00 COMMENT '参考售价(金额，单位元)',
@@ -471,6 +471,7 @@ CREATE TABLE stock_in_items (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '入库行项目主键ID',
     stock_in_id BIGINT NOT NULL COMMENT '入库单ID(stock_ins.id)',
     product_id BIGINT NOT NULL COMMENT '产品ID(products.id)',
+
     warehouse_id BIGINT NOT NULL COMMENT '入库仓库ID(warehouses.id)',
     quantity DECIMAL(18,4) DEFAULT 0.0000 COMMENT '入库数量',
     serial_numbers JSON NULL COMMENT '序列号数组(JSON)',

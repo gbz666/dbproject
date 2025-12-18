@@ -1,6 +1,9 @@
 package com.database.mapper;
 
 import com.database.pojo.PurchaseOrders;
+import com.database.vo.PurchaseOrderVO;
+
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -22,4 +25,11 @@ public interface PurchaseOrdersMapper {
 
     int updateByPrimaryKey(PurchaseOrders record);
 
+
+
+    List<PurchaseOrderVO> selectPurchaseOrderVOByPage(String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode);
+
+    void updateToDeleteByPrimaryKey(Long id);
+
+    int countOrdersByMonth(String yearMonth);
 }

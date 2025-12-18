@@ -37,11 +37,59 @@
         from sales_orders
         where  id = #{id} 
     </select>
-
-    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-        delete from sales_orders
+    <select id="selectSalesOrderByPage" resultType="com.database.vo.SalesOrderVO">
+        SELECT
+        so.order_code AS orderCode,
+        so.order_date AS orderDate,
+        c.customer_code AS customerCode,
+        c.customer_name AS customerName,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        soi.quantity AS quantity,
+        soi.unit_price AS unitPrice,
+        -- 销售额计算 (数量 * 单价)
+        (soi.quantity * soi.unit_price) AS salesCount,
+        -- 员工姓名关联
+        s1.staff_name AS salesPersonName,
+        s2.staff_name AS followUpPersonName,
+        s3.staff_name AS ownerName,
+        so.note AS note
+        FROM sales_orders so
+        INNER JOIN sales_order_items soi ON so.id = soi.sales_order_id
+        INNER JOIN customers c ON so.customer_id = c.id
+        INNER JOIN products p ON soi.product_id = p.id
+        -- 关联员工表获取姓名
+        LEFT JOIN staffs s1 ON so.sales_person_id = s1.id
+        LEFT JOIN staffs s2 ON so.follow_up_person_id = s2.id
+        LEFT JOIN staffs s3 ON so.owner_id = s3.id
+        <where>
+            so.is_deleted = 0
+            <if test="customerName != null and customerName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+            <if test="customerCode != null and customerCode != ''">
+                AND c.customer_code LIKE CONCAT('%', #{customerCode}, '%')
+            </if>
+            <if test="productCode != null and productCode != ''">
+                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="salesOrderCode != null and salesOrderCode != ''">
+                AND so.order_code LIKE CONCAT('%', #{salesOrderCode}, '%')
+            </if>
+        </where>
+    </select>
+    <select id="countOrdersByMonth" resultType="int">
+        SELECT COUNT(*)
+        FROM sales_orders
+        WHERE order_code LIKE CONCAT('xs', #{monthStr}, '%')
+    </select>
+    <update id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        update  sales_orders set is_deleted=1,deleted_at=NOW()
         where  id = #{id} 
-    </delete>
+    </update>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.SalesOrders" useGeneratedKeys="true">
         insert into sales_orders
         ( id,order_code,order_date,customer_id,order_status,total_amount,
@@ -53,45 +101,31 @@
         #{createdAt},#{updatedAt},#{createdById},#{updatedById},#{isDeleted},
         #{deletedAt})
     </insert>
-    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.SalesOrders" useGeneratedKeys="true">
+    <insert id="insertSelective" parameterType="com.database.pojo.SalesOrders" useGeneratedKeys="true" keyProperty="id">
         insert into sales_orders
         <trim prefix="(" suffix=")" suffixOverrides=",">
-                <if test="id != null">id,</if>
-                <if test="orderCode != null">order_code,</if>
-                <if test="orderDate != null">order_date,</if>
-                <if test="customerId != null">customer_id,</if>
-                <if test="orderStatus != null">order_status,</if>
-                <if test="totalAmount != null">total_amount,</if>
-                <if test="currency != null">currency,</if>
-                <if test="salesPersonId != null">sales_person_id,</if>
-                <if test="followUpPersonId != null">follow_up_person_id,</if>
-                <if test="ownerId != null">owner_id,</if>
-                <if test="note != null">note,</if>
-                <if test="createdAt != null">created_at,</if>
-                <if test="updatedAt != null">updated_at,</if>
-                <if test="createdById != null">created_by_id,</if>
-                <if test="updatedById != null">updated_by_id,</if>
-                <if test="isDeleted != null">is_deleted,</if>
-                <if test="deletedAt != null">deleted_at,</if>
+            <if test="orderCode != null">order_code,</if>
+            <if test="orderDate != null">order_date,</if>
+            <if test="customerId != null">customer_id,</if>
+            <if test="salesPersonId != null">sales_person_id,</if>
+            <if test="followUpPersonId != null">follow_up_person_id,</if>
+            <if test="ownerId != null">owner_id,</if>
+            <if test="createdById != null">created_by_id,</if>
+            <if test="updatedById != null">updated_by_id,</if>
+            <if test="note != null">note,</if>
+            <if test="totalAmount != null">total_amount,</if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-                <if test="id != null">#{id},</if>
-                <if test="orderCode != null">#{orderCode},</if>
-                <if test="orderDate != null">#{orderDate},</if>
-                <if test="customerId != null">#{customerId},</if>
-                <if test="orderStatus != null">#{orderStatus},</if>
-                <if test="totalAmount != null">#{totalAmount},</if>
-                <if test="currency != null">#{currency},</if>
-                <if test="salesPersonId != null">#{salesPersonId},</if>
-                <if test="followUpPersonId != null">#{followUpPersonId},</if>
-                <if test="ownerId != null">#{ownerId},</if>
-                <if test="note != null">#{note},</if>
-                <if test="createdAt != null">#{createdAt},</if>
-                <if test="updatedAt != null">#{updatedAt},</if>
-                <if test="createdById != null">#{createdById},</if>
-                <if test="updatedById != null">#{updatedById},</if>
-                <if test="isDeleted != null">#{isDeleted},</if>
-                <if test="deletedAt != null">#{deletedAt},</if>
+            <if test="orderCode != null">#{orderCode},</if>
+            <if test="orderDate != null">#{orderDate},</if>
+            <if test="customerId != null">#{customerId},</if>
+            <if test="salesPersonId != null">#{salesPersonId},</if>
+            <if test="followUpPersonId != null">#{followUpPersonId},</if>
+            <if test="ownerId != null">#{ownerId},</if>
+            <if test="createdById != null">#{createdById},</if>
+            <if test="updatedById != null">#{updatedById},</if>
+            <if test="note != null">#{note},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
         </trim>
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.SalesOrders">

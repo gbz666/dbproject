@@ -49,7 +49,7 @@ public class SalesOrderItems {
      * 行合计(生成列，含税)
      */
     private BigDecimal lineTotal;
-
+    private BigDecimal costPrice;
     /**
      * 行备注
      */
