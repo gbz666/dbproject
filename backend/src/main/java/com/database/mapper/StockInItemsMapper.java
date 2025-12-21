@@ -2,6 +2,9 @@ package com.database.mapper;
 
 import com.database.pojo.StockInItems;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【stock_in_items(入库行项目表)】的数据库操作Mapper
@@ -22,4 +25,7 @@ public interface StockInItemsMapper {
 
     int updateByPrimaryKey(StockInItems record);
 
+    void insertItemDetail(Long stockInId, Long productId, Long warehouseId, BigDecimal quantity, String serialNumbers, Long creatorId);
+
+    List<StockInItems> selectByStockInId(Long stockInId);
 }

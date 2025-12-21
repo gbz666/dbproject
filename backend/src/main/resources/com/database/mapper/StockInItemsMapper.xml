@@ -29,6 +29,9 @@
         from stock_in_items
         where  id = #{id} 
     </select>
+    <select id="selectByStockInId" resultType="com.database.pojo.StockInItems">
+        select * from stock_in_items where stock_in_id=#{id}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from stock_in_items
@@ -69,6 +72,15 @@
                 <if test="updatedAt != null">#{updatedAt},</if>
                 <if test="updatedById != null">#{updatedById},</if>
         </trim>
+    </insert>
+    <insert id="insertItemDetail">
+        INSERT INTO stock_in_items (
+            stock_in_id, product_id, warehouse_id, quantity,
+            serial_numbers, created_by_id, created_at
+        ) VALUES (
+                     #{stockInId}, #{productId}, #{warehouseId}, #{quantity},
+                     #{serialNumbers}, #{creatorId}, NOW()
+                 )
     </insert>
     <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.StockInItems">
         update stock_in_items

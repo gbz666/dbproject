@@ -2,6 +2,8 @@ package com.database.mapper;
 
 import com.database.pojo.Inventory;
 
+import java.math.BigDecimal;
+
 /**
 * @author 高柏舟
 * @description 针对表【inventory(库存表(复合主键 product_id+warehouse_id))】的数据库操作Mapper
@@ -22,4 +24,7 @@ public interface InventoryMapper {
 
     int updateByPrimaryKey(Inventory record);
 
+    Long selectProductNum(Long id);
+
+    void updateInventory(Long productId, Long warehouseId, BigDecimal quantity);
 }

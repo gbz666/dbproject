@@ -218,4 +218,7 @@
         FROM purchase_orders
         WHERE purchase_code LIKE CONCAT('cg', #{monthStr}, '%')
     </select>
+    <select id="selectOrderIdByCode" resultType="java.lang.Long">
+        select id from purchase_orders where purchase_code=#{purchaseOrderCode}
+    </select>
 </mapper>

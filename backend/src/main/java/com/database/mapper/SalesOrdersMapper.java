@@ -31,4 +31,5 @@ public interface SalesOrdersMapper {
     // 查单条
     SalesOrders selectByPrimaryKey(Long id);
 
+    Long selectOrderIdByCode(String salesOrderCode);
 }

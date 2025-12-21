@@ -246,4 +246,7 @@
         SET is_deleted = 1, deleted_at = NOW()
         WHERE product_code = #{productCode} AND is_deleted = 0
     </update>
+    <update id="updateProductCostPrice">
+        update products set cost_price=#{newCostPrice} where id=#{productId}
+    </update>
 </mapper>

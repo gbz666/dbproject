@@ -1,298 +1,283 @@
 <template>
-  <div class="product-management">
-    <h2>产品管理</h2>
-
-    <div class="header-actions">
-      <el-button @click="productStore.fetchProducts" :loading="productStore.loading" icon="Refresh">
-        刷新数据
-      </el-button>
-      <el-button type="primary" @click="openCreateDialog" icon="Plus">
-        创建新产品
-      </el-button>
-    </div>
-
-    <el-alert 
-      v-if="productStore.error" 
-      title="数据加载/操作错误" 
-      type="error" 
-      :description="productStore.error" 
-      show-icon 
-      closable 
-      style="margin-bottom: 15px;"
-    />
+  <div class="app-container" style="padding: 20px">
+    <el-card shadow="never" style="margin-bottom: 20px">
+      <el-form :inline="true" :model="store.queryParams">
+        <el-form-item label="产品编码">
+          <el-input 
+            v-model="store.queryParams.productCode" 
+            placeholder="请输入编码" 
+            clearable 
+            @clear="handleSearch" 
+          />
+        </el-form-item>
+        <el-form-item label="产品名称">
+          <el-input 
+            v-model="store.queryParams.productName" 
+            placeholder="请输入名称" 
+            clearable 
+            @clear="handleSearch" 
+          />
+        </el-form-item>
+        <el-form-item label="分类名称">
+          <el-input 
+            v-model="store.queryParams.categoryName" 
+            placeholder="请输入分类" 
+            clearable 
+            @clear="handleSearch" 
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="resetFilters">重置</el-button>
+        </el-form-item>
+        <el-form-item style="float: right">
+          <el-button type="success" @click="openDialog()">新增产品</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
     <el-table 
-      v-loading="productStore.loading"
-      :data="productStore.products" 
-      style="width: 100%" 
-      border
-      stripe
+      v-loading="store.loading" 
+      :data="store.products" 
+      border 
+      stripe 
+      style="width: 100%"
     >
-      <el-table-column prop="product_id" label="产品ID" width="100" />
-      <el-table-column prop="product_name" label="产品名称" width="180" show-overflow-tooltip />
-      <el-table-column prop="category" label="类别" width="120" />
-      <el-table-column prop="product_description" label="描述" min-width="250" show-overflow-tooltip />
-      <el-table-column prop="created_at" label="创建日期" width="180">
-        <template #default="{ row }">
-          {{ formatDateTime(row.created_at) }}
-        </template>
+      <el-table-column prop="productCode" label="产品编码" width="120" align="center" />
+      <el-table-column prop="productName" label="产品名称" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="categoryName" label="分类" width="120" align="center" />
+      <el-table-column prop="sku" label="SKU" width="120" />
+      <el-table-column prop="specification" label="规格" show-overflow-tooltip />
+      <el-table-column prop="costPrice" label="成本价" width="110" align="right">
+        <template #default="{ row }">¥{{ row.costPrice?.toFixed(2) }}</template>
       </el-table-column>
-      
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column prop="listPrice" label="建议售价" width="110" align="right">
+        <template #default="{ row }">¥{{ row.listPrice?.toFixed(2) }}</template>
+      </el-table-column>
+      <el-table-column label="操作" width="150" fixed="right" align="center">
         <template #default="{ row }">
-          <el-button size="small" type="primary" link @click="openEditDialog(row)">编辑</el-button>
-          <el-button size="small" type="danger" link @click="handleDelete(row.product_id)">删除</el-button>
+          <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
+          <el-popconfirm 
+            :title="`确定删除产品 ${row.productName} 吗？`" 
+            @confirm="handleDelete(row.productCode)"
+          >
+            <template #reference>
+              <el-button link type="danger">删除</el-button>
+            </template>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog 
-      :title="isEditMode ? '编辑产品信息' : '创建新产品'" 
-      v-model="dialogVisible" 
-      width="50%"
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end">
+      <el-pagination
+        v-model:current-page="store.queryParams.pageNum"
+        v-model:page-size="store.queryParams.pageSize"
+        :total="store.total"
+        layout="total, prev, pager, next, jumper"
+        @current-change="store.loadPage"
+      />
+    </div>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '编辑产品' : '新增产品 (已开启自动暂存)'"
+      width="800px"
       destroy-on-close
     >
-      <el-form 
-        :model="currentProduct" 
-        :rules="formRules" 
-        ref="productFormRef" 
-        label-width="100px"
-      >
-        <el-form-item label="产品名称" prop="product_name">
-          <el-input v-model="currentProduct.product_name" placeholder="请输入产品名称" />
+      <el-form :model="form" ref="formRef" :rules="formRules" label-width="100px">
+        <el-form-item label="产品名称" prop="productName">
+          <el-input v-model="form.productName" placeholder="请输入产品全称" />
         </el-form-item>
 
-        <el-form-item label="产品类别" prop="category">
-          <el-input v-model="currentProduct.category" placeholder="请输入产品类别" />
-        </el-form-item>
-        
-        <el-form-item label="产品描述" prop="product_description">
-          <el-input 
-            v-model="currentProduct.product_description" 
-            type="textarea" 
-            :rows="3" 
-            placeholder="请输入详细描述"
-          />
-        </el-form-item>
-        
-        <el-form-item label="产品ID" v-if="isEditMode">
-          <el-input v-model="currentProduct.product_id" readonly />
-        </el-form-item>
-        <el-form-item label="创建时间" v-if="isEditMode">
-          <el-input :model-value="formatDateTime(currentProduct.created_at)" readonly />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="所属分类" prop="categoryName">
+              <el-input v-model="form.categoryName" placeholder="分类名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="SKU" prop="sku">
+              <el-input v-model="form.sku" placeholder="库存单位" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="单位" prop="unit">
+              <el-input v-model="form.unit" placeholder="如：个/箱" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="规格" prop="specification">
+              <el-input v-model="form.specification" placeholder="规格型号" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="成本价" prop="costPrice">
+              <el-input-number v-model="form.costPrice" :precision="2" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="建议售价" prop="listPrice">
+              <el-input-number v-model="form.listPrice" :precision="2" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="产品描述" prop="description">
+          <el-input v-model="form.description" type="textarea" :rows="3" />
+        </el-form-item>
       </el-form>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
+        <div style="display: flex; justify-content: space-between">
+          <el-button v-if="!isEdit" type="info" plain @click="clearDraft">清空草稿</el-button>
+          <div style="flex: 1; text-align: right">
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button type="primary" :loading="submitting" @click="submitForm">确认保存</el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
 import { useProductStore } from '@/stores/productStore';
-import type { Product } from '@/types/pojo'; // 假设 Product 接口已包含
-// 导入 Element Plus 组件类型和消息提示
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus';
-import 'element-plus/es/components/message/style/css';
-import 'element-plus/es/components/message-box/style/css';
+import type { ProductRequest } from '@/types/dto';
 
-// --- Pinia Store ---
-const productStore = useProductStore();
+const store = useProductStore();
+const formRef = ref<FormInstance>();
+const CURRENT_STAFF_ID = 1;
+const STORAGE_KEY = 'product_form_draft';
 
-// --- 响应式状态 ---
+// 状态
 const dialogVisible = ref(false);
-const isEditMode = ref(false);
-const productFormRef = ref<FormInstance>();
+const isEdit = ref(false);
+const submitting = ref(false);
+const currentProductCode = ref(''); 
 
-// 默认产品结构，用于表单重置
-const createDefaultProduct = (): Omit<Product, 'product_id' | 'created_at'> => ({
-  product_name: '',
-  product_description: '',
-  category: '',
-});
-
-// 当前正在编辑/创建的产品数据 (使用 reactive 包装，包含所有字段)
-const currentProduct = reactive<Partial<Product>>({ 
-    ...createDefaultProduct(),
-    product_id: undefined, // 保持可选
-    created_at: undefined, // 保持可选
-});
-
-
-// --- 表单校验规则 ---
-const formRules: FormRules = {
-  product_name: [
-    { required: true, message: '请输入产品名称', trigger: 'blur' },
-    { max: 100, message: '产品名称不能超过100个字符', trigger: 'blur' },
-  ],
-  category: [
-    { required: true, message: '请输入产品类别', trigger: 'blur' },
-  ],
-  product_description: [
-    { required: true, message: '请输入产品描述', trigger: 'blur' },
-  ],
+// 1. 定义空的初始结构
+const initialEmptyForm: ProductRequest = {
+  id: null,
+  productName: '',
+  categoryName: '',
+  sku: '',
+  unit: '',
+  specification: '',
+  description: '',
+  costPrice: 0,
+  listPrice: 0
 };
 
+// 2. 初始化逻辑：从本地恢复
+const getStoredForm = () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  return saved ? JSON.parse(saved) : { ...initialEmptyForm };
+};
 
-// --- 辅助方法 ---
+const form = reactive<ProductRequest>(getStoredForm());
 
-/** 格式化日期时间显示 */
-const formatDateTime = (dateTimeStr: string | undefined) => {
-  if (!dateTimeStr) return '';
-  try {
-    // 格式化为本地易读格式
-    return new Date(dateTimeStr).toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
+// 3. 监听：自动保存草稿
+watch(
+  form,
+  (newVal) => {
+    if (!isEdit.value) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
+    }
+  },
+  { deep: true }
+);
+
+const formRules = reactive<FormRules>({
+  productName: [{ required: true, message: '产品名称必填', trigger: 'blur' }],
+  categoryName: [{ required: true, message: '分类必填', trigger: 'blur' }],
+  sku: [{ required: true, message: 'SKU必填', trigger: 'blur' }]
+});
+
+onMounted(() => store.loadPage());
+
+const handleSearch = () => {
+  store.queryParams.pageNum = 1;
+  store.loadPage();
+};
+
+const resetFilters = () => {
+  store.queryParams.productCode = '';
+  store.queryParams.productName = '';
+  store.queryParams.categoryName = '';
+  handleSearch();
+};
+
+const openDialog = (row?: any) => {
+  isEdit.value = !!row;
+  if (row) {
+    currentProductCode.value = row.productCode;
+    // 编辑模式：直接加载行数据
+    Object.keys(initialEmptyForm).forEach(key => {
+      (form as any)[key] = row[key] ?? (initialEmptyForm as any)[key];
     });
-  } catch {
-    return dateTimeStr;
+  } else {
+    // 新增模式：不做 Object.assign 重置，保留草稿内容
+    currentProductCode.value = '';
   }
-};
-
-/**
- * 重置表单数据到默认状态
- */
-const resetCurrentProduct = () => {
-  // 使用 Object.assign 确保 currentProduct 仍然是同一个响应式对象
-  Object.assign(currentProduct, createDefaultProduct());
-  currentProduct.product_id = undefined;
-  currentProduct.created_at = undefined;
-};
-
-// --- CRUD 操作 ---
-
-/**
- * 打开创建产品对话框
- */
-const openCreateDialog = () => {
-  isEditMode.value = false;
-  resetCurrentProduct();
-  // 延迟重置表单校验
-  setTimeout(() => {
-    productFormRef.value?.resetFields();
-  }, 0);
   dialogVisible.value = true;
 };
 
-/**
- * 打开编辑产品对话框
- */
-const openEditDialog = (product: Product) => {
-  isEditMode.value = true;
-  // 复制产品数据到 currentProduct
-  Object.assign(currentProduct, { ...product }); 
-  dialogVisible.value = true;
-};
-
-/**
- * 处理表单提交 (创建或更新)
- */
-const handleSubmit = async () => {
-  if (!productFormRef.value) return;
-
-  // 1. 校验表单
-  await productFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        if (isEditMode.value) {
-          // 2. 更新模式
-          const id = currentProduct.product_id;
-          if (typeof id !== 'number') {
-            throw new Error("更新失败：产品ID缺失或无效");
-          }
-          // 排除不需要提交给后端的字段 (如 created_at, product_id)
-          const updateData: Partial<Product> = {
-            product_name: currentProduct.product_name,
-            product_description: currentProduct.product_description,
-            category: currentProduct.category,
-            // 可以在这里添加其他需要更新的字段
-          };
-
-          await productStore.updateProduct(id, updateData);
-          ElMessage.success('产品信息更新成功！');
-
-        } else {
-          // 3. 创建模式
-          // Omit<Product, 'product_id'> 保证只有可创建字段
-          const createData: Omit<Product, 'product_id'> = {
-            product_name: currentProduct.product_name!,
-            product_description: currentProduct.product_description!,
-            category: currentProduct.category!,
-            // 关键修正：自动填充当前时间
-            created_at: new Date().toISOString(), 
-          };
-          await productStore.createProduct(createData);
-          ElMessage.success('新产品创建成功！');
-        }
-
-        dialogVisible.value = false; // 关闭对话框
-        resetCurrentProduct(); // 重置表单
-      } catch (e) {
-        // 错误已在 store 中处理，这里只做额外提示
-        ElMessage.error(`操作失败: ${productStore.error || '未知错误'}`);
+const submitForm = async () => {
+  if (!formRef.value) return;
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    submitting.value = true;
+    try {
+      if (isEdit.value) {
+        await store.updateProduct(currentProductCode.value, { ...form }, CURRENT_STAFF_ID);
+        ElMessage.success('更新成功');
+      } else {
+        await store.addProduct({ ...form }, CURRENT_STAFF_ID);
+        ElMessage.success('新增成功');
+        // 保存成功后清空草稿
+        clearDraft(false);
       }
-    } else {
-      ElMessage.warning('请检查表单中的必填项！');
+      dialogVisible.value = false;
+    } catch (err: any) {
+      ElMessage.error(err.message || '操作失败');
+    } finally {
+      submitting.value = false;
     }
   });
 };
 
-/**
- * 处理删除产品
- */
-const handleDelete = async (id: number) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除产品ID为 ${id} 的产品吗？此操作不可逆！`,
-      '警告',
-      {
-        confirmButtonText: '确定删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-    
-    // 调用 store 的删除 action
-    await productStore.deleteProduct(id);
-    ElMessage.success(`产品 ID: ${id} 删除成功！`);
-  } catch (error) {
-    // 捕获用户点击取消时的错误（Promise.reject('cancel')）
-    if (error !== 'cancel') {
-      console.error('删除操作失败:', error);
-      ElMessage.error(`删除失败: ${productStore.error || '未知错误'}`);
-    }
+// 清空草稿方法
+const clearDraft = (needConfirm = true) => {
+  const doClear = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    Object.assign(form, initialEmptyForm);
+  };
+
+  if (needConfirm) {
+    ElMessageBox.confirm('确定要清空已填写的产品信息吗？', '提示', { type: 'warning' })
+      .then(doClear);
+  } else {
+    doClear();
   }
 };
 
-// --- 生命周期钩子 ---
-onMounted(() => {
-  // 组件挂载时自动加载数据
-  productStore.fetchProducts();
-});
+const handleDelete = async (code: string) => {
+  try {
+    await store.deleteItem(code);
+    ElMessage.success('删除成功');
+  } catch (err: any) {
+    ElMessage.error(err.message || '删除失败');
+  }
+};
 </script>
-
-<style scoped>
-.product-management {
-  padding: 20px;
-}
-
-.header-actions {
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: flex-end; /* 按钮靠右对齐 */
-  gap: 10px;
-}
-
-.el-table {
-  margin-top: 20px;
-}
-</style>

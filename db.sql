@@ -454,6 +454,8 @@ CREATE TABLE stock_ins (
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     created_by_id BIGINT NULL COMMENT '操作人(staffs.id)',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否软删除',
+    deleted_at DATETIME NULL COMMENT '删除时间(软删除)',
 
     -- 修正:添加 updated_at/updated_by_id 审计字段
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',

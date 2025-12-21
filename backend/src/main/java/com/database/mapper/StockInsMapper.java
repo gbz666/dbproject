@@ -1,6 +1,9 @@
 package com.database.mapper;
 
 import com.database.pojo.StockIns;
+import com.database.vo.StockInVO;
+
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -22,4 +25,7 @@ public interface StockInsMapper {
 
     int updateByPrimaryKey(StockIns record);
 
+    void softDeleteStockIn(Long id, Long operatorId);
+
+    List<StockInVO> selectStockInDetails(String purchaseOrderCode, String supplierName, String productName,String serialNumber);
 }

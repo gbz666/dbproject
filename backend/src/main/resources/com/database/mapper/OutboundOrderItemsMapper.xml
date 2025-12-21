@@ -121,4 +121,33 @@
             updated_by_id =  #{updatedById}
         where   id = #{id} 
     </update>
+
+
+    <insert id="insertItemDetail">
+        INSERT INTO outbound_order_items (
+            outbound_order_id,
+            product_id,
+            warehouse_id,
+            quantity,
+            serial_numbers,
+            created_by_id
+        ) VALUES (
+                     #{orderId},
+                     #{productId},
+                     #{warehouseId},
+                     #{quantity},
+                     #{serialNumbers},
+                     #{operatorId}
+                 )
+    </insert>
+
+    <delete id="deleteByOutboundOrderId">
+        DELETE FROM outbound_order_items
+        WHERE outbound_order_id = #{id}
+    </delete>
+
+    <select id="selectByOutboundOrderId" resultType="com.database.pojo.OutboundOrderItems">
+        SELECT * FROM outbound_order_items
+        WHERE outbound_order_id = #{orderId}
+    </select>
 </mapper>

@@ -31,6 +31,12 @@
         from inventory
         where  product_id = #{productId} AND warehouse_id = #{warehouseId} 
     </select>
+    <select id="selectProductNum" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(quantity), 0)
+        FROM inventory
+        WHERE product_id = #{productId}
+          AND is_deleted = 0
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from inventory
@@ -126,5 +132,12 @@
             is_deleted =  #{isDeleted},
             deleted_at =  #{deletedAt}
         where   product_id = #{productId} AND warehouse_id = #{warehouseId} 
+    </update>
+    <update id="updateInventory">
+        INSERT INTO inventory (product_id, warehouse_id, quantity, updated_at)
+        VALUES (#{productId}, #{warehouseId}, #{quantity}, NOW())
+        ON DUPLICATE KEY UPDATE
+                             quantity = quantity + VALUES(quantity),
+                             updated_at = NOW()
     </update>
 </mapper>

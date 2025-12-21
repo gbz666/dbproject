@@ -4,6 +4,7 @@ import com.database.pojo.Products;
 import com.database.vo.ProductVO;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -53,4 +54,6 @@ public interface ProductsMapper {
 
     // 【新增】根据业务编码进行逻辑删除
     int softDeleteByProductCode(String productCode);
+
+    int updateProductCostPrice(Long productId, BigDecimal newCostPrice);
 }

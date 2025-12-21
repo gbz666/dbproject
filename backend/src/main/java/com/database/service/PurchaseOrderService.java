@@ -2,10 +2,7 @@ package com.database.service;
 
 import com.database.dto.PurchaseOrderDto;
 import com.database.exception.BusinessException;
-import com.database.mapper.ProductsMapper;
-import com.database.mapper.PurchaseOrderItemsMapper;
-import com.database.mapper.PurchaseOrdersMapper;
-import com.database.mapper.SuppliersMapper;
+import com.database.mapper.*;
 import com.database.pojo.Products;
 import com.database.pojo.PurchaseOrderItems;
 import com.database.pojo.PurchaseOrders;
@@ -21,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 
@@ -31,15 +29,18 @@ public class PurchaseOrderService {
     private SuppliersMapper suppliersMapper;
     private PurchaseOrderItemsMapper purchaseOrderItemsMapper;
     private ProductsMapper productsMapper;
+    private InventoryMapper inventoryMapper;
     @Autowired
     public PurchaseOrderService(PurchaseOrdersMapper purchaseOrdersMapper,
                                 SuppliersMapper suppliersMapper,
                                 PurchaseOrderItemsMapper purchaseOrderItemsMapper,
-                                ProductsMapper productsMapper) {
+                                ProductsMapper productsMapper,
+                                InventoryMapper inventoryMapper) {
         this.purchaseOrdersMapper = purchaseOrdersMapper;
         this.suppliersMapper = suppliersMapper;
         this.purchaseOrderItemsMapper = purchaseOrderItemsMapper;
         this.productsMapper = productsMapper;
+        this.inventoryMapper = inventoryMapper;
     }
     @Transactional(rollbackFor = Exception.class)
     public PageInfo<PurchaseOrderVO> getPurchaseOrderByPage(int pageNum, int pageSize, String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode) {
@@ -119,8 +120,10 @@ public class PurchaseOrderService {
     /**
      * 处理采购明细
      */
+    @Transactional(rollbackFor = Exception.class)
     private void processPurchaseItems(Long orderId, List<PurchaseOrderDto.ItemDTO> items, Long currentUserId) {
-        if (items == null || items.isEmpty()) return;
+        if (items == null || items.isEmpty())
+            return;
 
         for (PurchaseOrderDto.ItemDTO itemDto : items) {
             Products product = productsMapper.selectByProductCode(itemDto.getProductCode());
@@ -134,6 +137,29 @@ public class PurchaseOrderService {
             detail.setRemark(itemDto.getRemark());
             detail.setCreatedById(currentUserId);
             detail.setUpdatedById(currentUserId);
+            Long productNum = inventoryMapper.selectProductNum(product.getId());
+            BigDecimal currentQty = (productNum == null) ? BigDecimal.ZERO : new BigDecimal(productNum);
+            BigDecimal inboundQty = itemDto.getQuantity();
+            BigDecimal currentCost = product.getCostPrice();
+            BigDecimal inboundPrice = itemDto.getUnitPrice();
+            // 2. 计算分母：总数量
+            BigDecimal totalQty = currentQty.add(inboundQty);
+            BigDecimal newCostPrice=inboundPrice;
+            // 3. 安全校验：确保总数量大于 0
+            log.info(totalQty.toString());
+            if (totalQty.compareTo(BigDecimal.ZERO) > 0) {
+                // 计算总价值
+                BigDecimal totalValue = currentCost.multiply(currentQty)
+                        .add(inboundPrice.multiply(inboundQty));
+
+                // 计算新成本：保留 4 位小数，使用 HALF_UP（四舍五入）
+                // 注意：divide 必须传 scale 和 roundingMode
+                newCostPrice = totalValue.divide(totalQty, 4, RoundingMode.HALF_UP);
+
+            }
+            log.info(newCostPrice.toString());
+            productsMapper.updateProductCostPrice(product.getId(),newCostPrice);
+
 //            detail.setLineTotal(itemDto.getUnitPrice().multiply(itemDto.getQuantity()));
             purchaseOrderItemsMapper.insertSelective(detail);
         }

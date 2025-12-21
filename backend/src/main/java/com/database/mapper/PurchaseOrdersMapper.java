@@ -29,7 +29,9 @@ public interface PurchaseOrdersMapper {
 
     List<PurchaseOrderVO> selectPurchaseOrderVOByPage(String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode);
 
-    void updateToDeleteByPrimaryKey(Long id);
+    void updateToDeleteByPrimaryKey(Long id,Long currentUserId);
 
     int countOrdersByMonth(String yearMonth);
+
+    Long selectOrderIdByCode(String purchaseOrderCode);
 }

@@ -3,7 +3,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue' 
 import CustomerListView from '@/views/customer/CustomerList.vue'
 import SupplierListView from '@/views/supplier/SupplierList.vue'
-
+import ProductList from '@/views/product/ProductList.vue'
+import SalesOrderList from '@/views/salesOrder/salesOrderList.vue'
+import PurchaseOrderList from '@/views/purchaseOrder/purchaseOrderList.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -23,7 +25,21 @@ const router = createRouter({
           name: 'SupplierList',
           component: SupplierListView // 直接使用您需要的视图
         },
-        // 其他模块的路由...
+                {
+          path: '/basic/product',
+          name: 'productList',
+          component: ProductList // 直接使用您需要的视图
+        },
+                       {
+          path: '/basic/salesOrder',
+          name: 'salesOrderList',
+          component: SalesOrderList // 直接使用您需要的视图
+        },
+                               {
+          path: '/basic/purchaseOrder',
+          name: 'purchaseOrderList',
+          component: PurchaseOrderList // 直接使用您需要的视图
+        },
       ]
     },
     // 如果有登录页等非布局页面，可以放在这里

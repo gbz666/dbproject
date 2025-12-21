@@ -2,6 +2,9 @@ package com.database.mapper;
 
 import com.database.pojo.OutboundOrderItems;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【outbound_order_items(出库单行项目表)】的数据库操作Mapper
@@ -22,4 +25,9 @@ public interface OutboundOrderItemsMapper {
 
     int updateByPrimaryKey(OutboundOrderItems record);
 
+    void deleteByOutboundOrderId(Long id);
+
+    List<OutboundOrderItems> selectByOutboundOrderId(Long orderId);
+
+    void insertItemDetail(Long orderId, Long productId, Long warehouseId, BigDecimal quantity, String serialNumbers, Long operatorId);
 }

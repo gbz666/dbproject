@@ -1,6 +1,11 @@
 package com.database.mapper;
 
 import com.database.pojo.OutboundOrders;
+import com.database.vo.OutboundDetailVO;
+import com.database.vo.WarehouseStockVO;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -22,4 +27,8 @@ public interface OutboundOrdersMapper {
 
     int updateByPrimaryKey(OutboundOrders record);
 
+
+    void softDeleteOrder(Long id, Long operatorId);
+
+    List<OutboundDetailVO> selectOutboundDetails(String salesOrderCode, String customerName, String productName, String serialNumber);
 }

@@ -97,9 +97,7 @@
                 <if test="createdAt != null">
                     created_at = #{createdAt},
                 </if>
-                <if test="updatedAt != null">
-                    updated_at = #{updatedAt},
-                </if>
+
                 <if test="createdById != null">
                     created_by_id = #{createdById},
                 </if>
@@ -112,6 +110,7 @@
                 <if test="deletedAt != null">
                     deleted_at = #{deletedAt},
                 </if>
+                updated_at = NOW()
         </set>
         where   id = #{id} 
     </update>
@@ -131,4 +130,73 @@
             deleted_at =  #{deletedAt}
         where   id = #{id} 
     </update>
+
+
+
+
+    <update id="softDeleteOrder">
+        UPDATE outbound_orders
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by_id = #{operatorId}
+        WHERE id = #{id}
+    </update>
+
+    <resultMap id="OutboundDetailMap" type="com.database.vo.OutboundDetailVO">
+        <result column="order_code" property="salesOrderCode"/>
+        <result column="order_date" property="orderDate"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="product_code" property="productCode"/>
+        <result column="order_qty" property="orderQuantity"/>
+        <result column="order_remark" property="orderRemark"/>
+        <result column="first_out_date" property="firstOutboundDate"/>
+        <result column="serial_numbers" property="serialNumbers"/>
+        <collection property="warehouseDetails" ofType="com.database.vo.WarehouseStockVO">
+            <result column="warehouse_id" property="warehouseId"/>
+            <result column="warehouse_name" property="warehouseName"/>
+            <result column="item_qty" property="quantity"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectOutboundDetails" resultMap="OutboundDetailMap">
+        SELECT
+        so.order_code,
+        so.order_date,
+        c.customer_name,
+        p.product_code,
+        soi.quantity AS order_qty,
+        so.note AS order_remark,
+        (SELECT MIN(oo_sub.outbound_date)
+        FROM outbound_orders oo_sub
+        WHERE oo_sub.sales_order_id = so.id AND oo_sub.is_deleted = 0) AS first_out_date,
+        w.id AS warehouse_id,
+        w.warehouse_name,
+        ooi.quantity AS item_qty,
+        ooi.serial_numbers
+        FROM sales_orders so
+        JOIN customers c ON so.customer_id = c.id
+        JOIN sales_order_items soi ON so.id = soi.sales_order_id
+        JOIN products p ON soi.product_id = p.id
+        -- 使用 LEFT JOIN 确保即便没有出库记录也能查到订单，若只需查已出库的改为 INNER JOIN
+        LEFT JOIN outbound_orders oo ON oo.sales_order_id = so.id AND oo.is_deleted = 0
+        LEFT JOIN outbound_order_items ooi ON oo.id = ooi.outbound_order_id AND ooi.product_id = p.id
+        LEFT JOIN warehouses w ON ooi.warehouse_id = w.id
+        <where>
+            AND so.is_deleted = 0
+            <if test="salesOrderCode != null and salesOrderCode != ''">
+                AND so.order_code LIKE CONCAT('%', #{salesOrderCode}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                AND ooi.serial_numbers LIKE CONCAT('%', #{serialNumber}, '%')
+            </if>
+
+        </where>
+        ORDER BY so.order_date DESC, so.order_code DESC
+    </select>
 </mapper>

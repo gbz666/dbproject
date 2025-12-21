@@ -27,6 +27,65 @@
         from stock_ins
         where  id = #{id} 
     </select>
+    <resultMap id="StockInVOResultMap" type="com.database.vo.StockInVO">
+        <id property="id" column="stock_in_id" />
+        <result property="stockInCode" column="stock_in_code" />
+        <result property="purchaseOrderCode" column="purchaseOrderCode" />
+        <result property="supplierName" column="supplierName" />
+        <result property="orderDate" column="orderDate" />
+        <result property="productCode" column="productCode" />
+        <result property="productName" column="productName" />
+        <result property="purchaseQuantity" column="purchaseQuantity" />
+        <result property="note" column="note" />
+        <result property="creatorName" column="creatorName" />
+
+        <collection property="warehouseDetails" ofType="com.database.vo.WarehouseStockVO">
+            <result property="warehouseId" column="warehouse_id" />
+            <result property="warehouseName" column="warehouse_name" />
+            <result property="quantity" column="item_qty" />
+        </collection>
+    </resultMap>
+    <select id="selectStockInDetails" resultMap="StockInVOResultMap">
+        SELECT
+        si.id AS stock_in_id,
+        si.stock_in_code,
+        po.purchase_code AS purchaseOrderCode,
+        po.order_date AS orderDate,
+        s.supplier_name AS supplierName,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        poi.quantity AS purchaseQuantity,
+        si.note,
+        st.staff_name AS creatorName,
+        -- 仓库明细字段
+        w.id AS warehouse_id,
+        w.warehouse_name,
+        sii.quantity AS item_qty
+        FROM purchase_orders po
+        JOIN suppliers s ON po.supplier_id = s.id
+        JOIN purchase_order_items poi ON po.id = poi.purchase_order_id
+        JOIN products p ON poi.product_id = p.id
+        LEFT JOIN stock_ins si ON si.purchase_order_id = po.id AND si.is_deleted = 0
+        LEFT JOIN stock_in_items sii ON si.id = sii.stock_in_id AND sii.product_id = p.id
+        LEFT JOIN warehouses w ON sii.warehouse_id = w.id
+        LEFT JOIN staffs st ON si.created_by_id = st.id
+        <where>
+            AND po.is_deleted = 0
+            <if test="purchaseOrderCode != null and purchaseOrderCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{purchaseOrderCode}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                AND sii.serial_numbers LIKE CONCAT('%', #{serialNumber}, '%')
+            </if>
+        </where>
+        order by si.id DESC
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from stock_ins
@@ -106,5 +165,12 @@
             updated_at =  #{updatedAt},
             updated_by_id =  #{updatedById}
         where   id = #{id} 
+    </update>
+    <update id="softDeleteStockIn">
+        UPDATE stock_ins
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by_id = #{updatedBy}
+        WHERE id = #{id}
     </update>
 </mapper>

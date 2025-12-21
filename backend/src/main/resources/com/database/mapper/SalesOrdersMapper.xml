@@ -37,8 +37,29 @@
         from sales_orders
         where  id = #{id} 
     </select>
-    <select id="selectSalesOrderByPage" resultType="com.database.vo.SalesOrderVO">
+    <resultMap id="SalesOrderVOResultMap" type="com.database.vo.SalesOrderVO">
+        <id property="id" column="orderId" />
+        <result property="orderCode" column="orderCode" />
+        <result property="orderDate" column="orderDate" />
+        <result property="customerCode" column="customerCode" />
+        <result property="customerName" column="customerName" />
+        <result property="salesPersonName" column="salesPersonName" />
+        <result property="followUpPersonName" column="followUpPersonName" />
+        <result property="ownerName" column="ownerName" />
+        <result property="note" column="note" />
+
+        <collection property="items" ofType="com.database.vo.SalesOrderVO$OrderItemDTO">
+            <result property="productCode" column="productCode" />
+            <result property="productName" column="productName" />
+            <result property="quantity" column="quantity" />
+            <result property="unitPrice" column="unitPrice" />
+            <result property="salesCount" column="salesCount" />
+        </collection>
+    </resultMap>
+
+    <select id="selectSalesOrderByPage" resultMap="SalesOrderVOResultMap">
         SELECT
+        so.id AS orderId,  -- 必须查出ID，否则MyBatis无法分组
         so.order_code AS orderCode,
         so.order_date AS orderDate,
         c.customer_code AS customerCode,
@@ -47,9 +68,7 @@
         p.product_name AS productName,
         soi.quantity AS quantity,
         soi.unit_price AS unitPrice,
-        -- 销售额计算 (数量 * 单价)
         (soi.quantity * soi.unit_price) AS salesCount,
-        -- 员工姓名关联
         s1.staff_name AS salesPersonName,
         s2.staff_name AS followUpPersonName,
         s3.staff_name AS ownerName,
@@ -58,7 +77,6 @@
         INNER JOIN sales_order_items soi ON so.id = soi.sales_order_id
         INNER JOIN customers c ON so.customer_id = c.id
         INNER JOIN products p ON soi.product_id = p.id
-        -- 关联员工表获取姓名
         LEFT JOIN staffs s1 ON so.sales_person_id = s1.id
         LEFT JOIN staffs s2 ON so.follow_up_person_id = s2.id
         LEFT JOIN staffs s3 ON so.owner_id = s3.id
@@ -66,15 +84,6 @@
             so.is_deleted = 0
             <if test="customerName != null and customerName != ''">
                 AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
-            </if>
-            <if test="customerCode != null and customerCode != ''">
-                AND c.customer_code LIKE CONCAT('%', #{customerCode}, '%')
-            </if>
-            <if test="productCode != null and productCode != ''">
-                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
-            </if>
-            <if test="productName != null and productName != ''">
-                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
             </if>
             <if test="salesOrderCode != null and salesOrderCode != ''">
                 AND so.order_code LIKE CONCAT('%', #{salesOrderCode}, '%')
@@ -85,6 +94,9 @@
         SELECT COUNT(*)
         FROM sales_orders
         WHERE order_code LIKE CONCAT('xs', #{monthStr}, '%')
+    </select>
+    <select id="selectOrderIdByCode" resultType="java.lang.Long">
+        select id from sales_orders where order_code=#{salesOrderCode}
     </select>
     <update id="deleteByPrimaryKey" parameterType="java.lang.Long">
         update  sales_orders set is_deleted=1,deleted_at=NOW()

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.database.mapper.CommonMapper">
+
+    <select id="selectCustomerOptions" resultType="com.database.vo.BaseSelectVO">
+        SELECT
+        customer_code AS code,
+        customer_name AS name
+        FROM customers
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            customer_name LIKE CONCAT('%', #{keyword}, '%')
+            OR customer_code LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY customer_name ASC
+    </select>
+
+    <select id="selectProductOptions" resultType="com.database.vo.BaseSelectVO">
+        SELECT
+        product_code AS code,
+        product_name AS name
+        FROM products
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            product_name LIKE CONCAT('%', #{keyword}, '%')
+            OR product_code LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY product_name ASC
+    </select>
+    <select id="selectSupplierOptions" resultType="com.database.vo.BaseSelectVO">
+        SELECT
+        supplier_code AS code,
+        supplier_name AS name
+        FROM suppliers
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            supplier_name LIKE CONCAT('%', #{keyword}, '%')
+            OR supplier_code LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY supplier_name ASC
+    </select>
+
+</mapper>
