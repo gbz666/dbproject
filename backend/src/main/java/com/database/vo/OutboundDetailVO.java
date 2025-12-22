@@ -8,6 +8,7 @@ import java.util.List;
 
 @Data
 public class OutboundDetailVO {
+    private Long id;
     private String salesOrderCode;      // 销售订单号
     private LocalDate orderDate;        // 订单日期
     private String customerName;        // 客户名称

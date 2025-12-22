@@ -1,14 +1,8 @@
 package com.database.service;
 
 import com.database.dto.SalesOrderDTO;
-import com.database.mapper.CustomersMapper;
-import com.database.mapper.ProductsMapper;
-import com.database.mapper.SalesOrderItemsMapper;
-import com.database.mapper.SalesOrdersMapper;
-import com.database.pojo.Customers;
-import com.database.pojo.Products;
-import com.database.pojo.SalesOrderItems;
-import com.database.pojo.SalesOrders;
+import com.database.mapper.*;
+import com.database.pojo.*;
 import com.database.vo.CustomerDetailVO;
 import com.database.vo.SalesOrderVO;
 import com.github.pagehelper.PageHelper;
@@ -20,8 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SalesOrderService {
@@ -30,23 +27,59 @@ public class SalesOrderService {
     private final SalesOrderItemsMapper itemsMapper;
     private final CustomersMapper customerMapper;
     private final ProductsMapper productMapper;
-
+    private final OutBoundOrdersService outboundOrdersService;
     @Autowired // 使用构造器注入
     public SalesOrderService(SalesOrdersMapper salesOrdersMapper,
                              SalesOrderItemsMapper itemsMapper,
                              CustomersMapper customerMapper,
-                             ProductsMapper productMapper) {
+                             ProductsMapper productMapper,
+                             OutBoundOrdersService outboundOrdersService
+       ) {
         this.salesOrdersMapper = salesOrdersMapper;
         this.itemsMapper = itemsMapper;
         this.customerMapper = customerMapper;
         this.productMapper = productMapper;
+        this.outboundOrdersService = outboundOrdersService;
+
     }
 
     // 1. 查询依然返回 VO
-    public PageInfo<SalesOrderVO> getSalesOrderByPage(int pageNum, int pageSize, String customerName, String customerCode, String productCode, String productName, String salesOrderCode) {
+    public PageInfo<SalesOrderVO> getSalesOrderByPage(
+            int pageNum,
+            int pageSize,
+            String customerName,
+            String customerCode,
+            String productCode,
+            String productName,
+            String salesOrderCode) {
+
+        // 1. 开启分页
         PageHelper.startPage(pageNum, pageSize);
-        List<SalesOrderVO> salesOrderList = salesOrdersMapper.selectSalesOrderByPage(customerName, customerCode, productCode, productName,salesOrderCode);
-        return new PageInfo<>(salesOrderList);
+
+        // 2. 传入所有参数进行主表查询（DISTINCT 保证了 ID 不重复，PageHelper 分页准确）
+        List<SalesOrderVO> baseOrders = salesOrdersMapper.selectSalesOrderBaseInfo(
+                customerName, customerCode, productCode, productName, salesOrderCode
+        );
+
+        if (baseOrders.isEmpty()) {
+            return new PageInfo<>(baseOrders);
+        }
+
+        // 3. 提取 ID 列表
+        List<Long> orderIds = baseOrders.stream().map(SalesOrderVO::getId).collect(Collectors.toList());
+
+        // 4. 获取这些订单的所有明细（不加过滤条件，因为订单既然被选中，就要展示其下所有产品）
+        List<SalesOrderVO.OrderItemDTO> allItems = salesOrdersMapper.selectItemsByOrderIds(orderIds);
+
+        // 5. 分组回填
+        Map<Long, List<SalesOrderVO.OrderItemDTO>> itemMap = allItems.stream()
+                .collect(Collectors.groupingBy(SalesOrderVO.OrderItemDTO::getOrderId));
+
+        baseOrders.forEach(vo -> vo.setItems(itemMap.getOrDefault(vo.getId(), new ArrayList<>())));
+
+        // 6. 包装 PageInfo
+        PageInfo<SalesOrderVO> result = new PageInfo<>(baseOrders);
+        return result;
     }
 
     // 2. 创建订单 (参数改为 DTO)
@@ -86,9 +119,9 @@ public class SalesOrderService {
 
         // 4) 插入主表，回填 ID
         salesOrdersMapper.insertSelective(order);
-
         // 5) 处理明细 (使用 DTO 里的 items)
         this.processItems(order.getId(), dto.getItems(),currentUserId);
+        outboundOrdersService.initializeEmptyOutbound(order.getId(), currentUserId);
     }
 
     // 3. 修改订单 (参数改为 DTO)
@@ -155,4 +188,5 @@ public class SalesOrderService {
 
         return "xs" + yearMonth + sequence;
     }
+
 }

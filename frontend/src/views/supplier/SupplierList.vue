@@ -2,7 +2,7 @@
   <div class="app-container" style="padding: 20px">
     <el-card shadow="never" style="margin-bottom: 20px">
       <el-form :inline="true" :model="store.searchFilters">
-        <el-form-item label="供应商编号">
+        <el-form-item label="keh编号">
           <el-input v-model="store.searchFilters.supplierCode" placeholder="请输入编号" clearable @clear="handleSearch" />
         </el-form-item>
         <el-form-item label="供应商名称">
@@ -87,6 +87,12 @@
         <el-form-item label="归属人">
           <el-input v-model="form.ownerName" placeholder="对应后端 Staff 姓名" />
         </el-form-item>
+                <el-form-item label="销售">
+          <el-input v-model="form.salesPersonName" placeholder="对应后端 Staff 姓名" />
+        </el-form-item>
+                <el-form-item label="跟单人">
+          <el-input v-model="form.followUpPersonName" placeholder="对应后端 Staff 姓名" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <div style="display: flex; justify-content: space-between">
@@ -126,9 +132,9 @@ const initialEmptyForm: SupplierRequest = {
   address: '',
   phone: '',
   email: '',
-  salesPersonName: '高', 
-  followUpPersonName: '高',
-  ownerName: '高'
+  salesPersonName: '高柏舟', 
+  followUpPersonName: '高柏舟',
+  ownerName: '高柏舟'
 };
 
 // 2. 初始化逻辑：优先加载草稿

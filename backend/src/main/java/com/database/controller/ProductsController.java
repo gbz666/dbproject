@@ -101,7 +101,8 @@ public class ProductsController {
             @RequestParam(defaultValue = "10") int pageSize, // 默认每页 10 条
             @RequestParam(required = false) String productName,
             @RequestParam(required = false) String categoryName,
-            @RequestParam(required = false) String productCode) {
+            @RequestParam(required = false) String productCode,
+            @RequestParam(required = false) String productType) {
 
         // 1. 调用 Service 分页查询
         PageInfo<ProductVO> pageInfo = productsService.getProductsByPage(
@@ -109,7 +110,8 @@ public class ProductsController {
                 pageSize,
                 productName,
                 categoryName,
-                productCode
+                productCode,
+                productType
         );
 
         // 2. 封装 Result (使用 success，code=200)

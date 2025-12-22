@@ -80,7 +80,7 @@ ALTER TABLE staffs
 
 CREATE TABLE customers (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '客户主键ID',
-    customer_code VARCHAR(50) UNIQUE NOT NULL COMMENT '客户业务编号(对外展示，不作为外键)',
+    customer_code VARCHAR(50) UNIQUE NULL COMMENT '客户业务编号(对外展示，不作为外键)',
     customer_name VARCHAR(200) NOT NULL COMMENT '客户名称',
     address VARCHAR(255) COMMENT '注册地址/地址',
     phone VARCHAR(50) COMMENT '客户电话/手机号',
@@ -116,7 +116,7 @@ CREATE TABLE customers (
 
 CREATE TABLE suppliers (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '供应商主键ID',
-    supplier_code VARCHAR(50) UNIQUE NOT NULL COMMENT '供应商业务编号(对外展示，不作为外键)',
+    supplier_code VARCHAR(50) UNIQUE NULL COMMENT '供应商业务编号(对外展示，不作为外键)',
     supplier_name VARCHAR(200) NOT NULL COMMENT '供应商名称',
     short_name VARCHAR(100) COMMENT '供应商简称',
     main_business TEXT COMMENT '主营业务描述',
@@ -196,7 +196,7 @@ CREATE TABLE product_categories (
 
 CREATE TABLE products (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '产品主键ID',
-    product_code VARCHAR(50) UNIQUE NOT NULL COMMENT '产品业务编号(对外展示，不参与FK)',
+    product_code VARCHAR(50) UNIQUE NULL COMMENT '产品业务编号(对外展示，不参与FK)',
     product_name VARCHAR(200) NOT NULL COMMENT '产品名称',
     category_id INT NULL COMMENT '所属分类ID(product_categories.id)',
     sku VARCHAR(100) COMMENT '库存单位/SKU',
@@ -281,7 +281,6 @@ CREATE TABLE sales_orders (
     order_status VARCHAR(50) DEFAULT 'draft' COMMENT '订单状态(建议使用字典表)',
     total_amount DECIMAL(18,2) DEFAULT 0.00 COMMENT '订单总金额(含税)',
     currency VARCHAR(10) DEFAULT 'CNY' COMMENT '币种',
-
     sales_person_id BIGINT NULL COMMENT '销售员(staffs.id)',
     follow_up_person_id BIGINT NULL COMMENT '跟进人(staffs.id)',
     owner_id BIGINT NULL COMMENT '订单归属人(staffs.id)',
@@ -316,6 +315,7 @@ CREATE TABLE sales_order_items (
     product_id BIGINT NOT NULL COMMENT '产品ID(products.id)',
     quantity DECIMAL(18,4) DEFAULT 0.0000 COMMENT '数量(含小数)',
     unit_price DECIMAL(18,2) DEFAULT 0.00 COMMENT '销售单价(含税/或按业务定义)',
+    cost_price DECIMAL(18,2) DEFAULT 0 COMMENT '当时的成本价',
     discount DECIMAL(18,2) DEFAULT 0.00 COMMENT '行折扣金额',
     tax_rate DECIMAL(5,4) DEFAULT 0.0000 COMMENT '税率(如 0.13 表示 13%)',
     line_total DECIMAL(18,2) GENERATED ALWAYS AS (quantity * unit_price - discount) VIRTUAL COMMENT '行合计(生成列，含税)',

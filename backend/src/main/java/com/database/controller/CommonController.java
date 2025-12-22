@@ -46,4 +46,13 @@ public class CommonController {
         PageInfo<BaseSelectVO> list = commonService.getSupplierPage(pageNum,pageSize,keyword);
         return ResponseEntity.ok(Result.success(list));
     }
+    @GetMapping("/search/productType")
+    public ResponseEntity<Result<PageInfo<BaseSelectVO>>> searchProductType(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam String keyword) {
+        PageInfo<BaseSelectVO> list = commonService.getProductType(pageNum,pageSize,keyword);
+        return ResponseEntity.ok(Result.success(list));
+    }
+
 }

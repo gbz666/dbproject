@@ -25,7 +25,13 @@ public class CustomerService {
     // 使用 final 关键字，确保依赖不可变
     private final CustomersMapper customersMapper;
     private final StaffsMapper staffsMapper;
-
+    @Transactional(rollbackFor = Exception.class)
+    public String generateNextCustomerCode() {
+        Integer maxNum = customersMapper.getMaxCustomerCodeNumber();
+        log.info("maxNum:{}", maxNum);
+        int nextNum = (maxNum == null) ? 1 : maxNum + 1;
+        return String.format("k%03d", nextNum);
+    }
     @Autowired
     public CustomerService(CustomersMapper customersMapper, StaffsMapper staffsMapper) {
         this.customersMapper = customersMapper;
@@ -85,24 +91,10 @@ public class CustomerService {
         newCustomer.setCreatedById(currentStaffId);
         newCustomer.setUpdatedById(currentStaffId);
         // is_deleted 默认 0 (未删除)
-
-        // --- 3. 第一次数据库操作：插入记录，MyBatis自动回填 ID ---
+        String t=generateNextCustomerCode();
+        newCustomer.setCustomerCode(t);
         customersMapper.insertCustomer(newCustomer);
 
-        // --- 4. 核心业务逻辑：生成业务编码 ---
-        Long newId = newCustomer.getId(); // 获取自动回填的 ID
-        if (newId == null) {
-            throw new BusinessException("系统错误：获取新客户的自增ID失败！", 500);
-        }
-
-        // 业务编码格式：K + ID
-        String newCustomerCode = "K" + newId;
-        newCustomer.setCustomerCode(newCustomerCode);
-
-        // --- 5. 第二次数据库操作：更新业务编码 ---
-        customersMapper.updateCustomerCode(newCustomer);
-
-        // 6. 返回包含 id 和 customerCode 的完整对象
         return newCustomer;
     }
 

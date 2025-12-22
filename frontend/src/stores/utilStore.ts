@@ -12,7 +12,15 @@ export const useUtilStore = defineStore('util', {
     // 产品相关状态
     productList: [] as BaseSelectVO[],
     productTotal: 0,
-    productLoading: false
+    productLoading: false,
+
+    productTypeList: [] as BaseSelectVO[],
+    productTypeTotal: 0,
+    productTypeLoading: false,
+
+    SupplierList: [] as BaseSelectVO[],
+    SupplierTotal: 0,
+    SupplierLoading: false,
   }),
   actions: {
     // 搜索客户
@@ -38,6 +46,28 @@ export const useUtilStore = defineStore('util', {
         this.productTotal = data.total;
       } finally {
         this.productLoading = false;
+      }
+    },
+    async searchProductTypesAction(query: string) {
+      // 注意：这里去掉了 if(!query) return，允许查询全部种类
+      this.productTypeLoading = true;
+      try {
+        const data = await utilService.getProductTypeOptions(query);
+        this.productTypeList = data.list;
+        this.productTypeTotal = data.total;
+      } finally {
+        this.productTypeLoading = false;
+      }
+    },
+    async searchSupplierAction(query: string) {
+      // 注意：这里去掉了 if(!query) return，允许查询全部种类
+      this.SupplierLoading = true;
+      try {
+        const data = await utilService.getSupplierOptions(query);
+        this.SupplierList = data.list;
+        this.SupplierTotal = data.total;
+      } finally {
+        this.SupplierLoading = false;
       }
     }
   }

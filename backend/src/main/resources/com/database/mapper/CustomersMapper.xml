@@ -108,16 +108,21 @@
                  LEFT JOIN staffs s5 ON c.updated_by_id = s5.id
         WHERE c.customer_code = #{customerCode} AND c.is_deleted = 0
     </select>
+    <select id="getMaxCustomerCodeNumber" resultType="java.lang.Integer">
+        SELECT MAX(CAST(SUBSTRING(customer_code, 2) AS UNSIGNED))
+        FROM customers
+        WHERE UPPER(customer_code) LIKE 'k%'
+    </select>
 
     <insert id="insertCustomer" useGeneratedKeys="true" keyProperty="id" parameterType="com.database.pojo.Customers">
         INSERT INTO customers (
-            customer_name, address, phone, email,
+            customer_name, address, phone, email,customer_code,
             sales_person_id, follow_up_person_id, owner_id,
             payment_terms_days, payment_terms_notes,
             created_by_id, updated_by_id, created_at, updated_at
         )
         VALUES (
-                   #{customerName}, #{address}, #{phone}, #{email},
+                   #{customerName}, #{address}, #{phone}, #{email},#{customerCode},
                    #{salesPersonId}, #{followUpPersonId}, #{ownerId},
                    #{paymentTermsDays}, #{paymentTermsNotes},
                    #{createdById}, #{updatedById}, NOW(), NOW()

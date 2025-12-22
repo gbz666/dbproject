@@ -32,4 +32,8 @@ public interface SalesOrdersMapper {
     SalesOrders selectByPrimaryKey(Long id);
 
     Long selectOrderIdByCode(String salesOrderCode);
+
+    List<SalesOrderVO.OrderItemDTO> selectItemsByOrderIds(List<Long> orderIds);
+
+    List<SalesOrderVO> selectSalesOrderBaseInfo(String customerName, String customerCode,String  productCode,String productName,String salesOrderCode);
 }

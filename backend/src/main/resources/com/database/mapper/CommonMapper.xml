@@ -47,5 +47,21 @@
         </if>
         ORDER BY supplier_name ASC
     </select>
+    <select id="selectProductType" resultType="com.database.vo.BaseSelectVO">
+        SELECT
+        CAST(id AS CHAR) AS code, -- 将 BIGINT/INT 转换为字符串
+        category_name AS name
+        FROM product_categories
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (
+            category_name LIKE CONCAT('%', #{keyword}, '%')
+            OR id LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY category_name ASC
+    </select>
+
+
 
 </mapper>

@@ -7,6 +7,7 @@ import com.database.pojo.OutboundOrderItems;
 import com.database.pojo.OutboundOrders;
 import com.database.vo.OutboundDetailVO;
 import com.database.vo.WarehouseStockVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -101,12 +103,30 @@ public class OutBoundOrdersService {
             for (WarehouseStockVO wh : itemDto.getWarehouseDetails()) {
                 // 2. 使用 itemMapper 插入明细表记录
                 // 注意：此时 orderId 是从主表 insertSelective 之后拿到的自增 ID
+                // 1. 获取原始字符串
+                String sns = itemDto.getSerialNumbers();
+                String jsonSns = null; // 默认为 null，对应数据库 NULL
+
+                if (sns != null && !sns.trim().isEmpty()) {
+                    // 2. 将逗号分隔的字符串转为 JSON 数组格式
+                    // 例如: "A,B" -> ["A","B"]
+                    String[] snArray = sns.split(",");
+                    // 使用 Jackson 序列化（推荐）
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        jsonSns = mapper.writeValueAsString(snArray);
+                    } catch (Exception e) {
+                        jsonSns = "[]"; // 出错则传空数组
+                    }
+                }
+
+// 3. 传入转换后的 jsonSns
                 itemMapper.insertItemDetail(
                         orderId,
                         productId,
                         wh.getWarehouseId(),
                         wh.getQuantity(),
-                        itemDto.getSerialNumbers(),
+                        jsonSns, // 这里传处理后的合法 JSON 串或 null
                         operatorId
                 );
 
@@ -150,5 +170,18 @@ public class OutBoundOrdersService {
 
         return new PageInfo<>(list);
     }
+    @Transactional(rollbackFor = Exception.class)
+    public void initializeEmptyOutbound(Long salesOrderId, Long operatorId) {
+        OutboundOrders outboundOrder = new OutboundOrders();
+        outboundOrder.setSalesOrderId(salesOrderId);
+        // 默认出库日期为当前日期或留空
+        outboundOrder.setOutboundDate(new Date());
+        outboundOrder.setRemark("销售订单自动生成，待执行出库");
+        outboundOrder.setCreatedById(operatorId);
+        outboundOrder.setUpdatedById(operatorId);
+        outboundOrder.setStatus("DRAFT"); // 初始状态为草稿
 
+        // 插入主表。此时不需要处理 Items 和 Inventory，因为出库数量为 0
+        outboundMapper.insertSelective(outboundOrder);
+    }
 }

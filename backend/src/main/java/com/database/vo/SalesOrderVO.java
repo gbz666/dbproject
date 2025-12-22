@@ -24,6 +24,7 @@ public class SalesOrderVO {
 
     @Data
     public static class OrderItemDTO {
+        private Long orderId;
         private String productCode;
         private String ProductName;
         private BigDecimal quantity;

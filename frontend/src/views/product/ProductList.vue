@@ -18,18 +18,31 @@
             @clear="handleSearch" 
           />
         </el-form-item>
-        <el-form-item label="分类名称">
-          <el-input 
+
+        <el-form-item label="产品分类">
+          <el-select 
             v-model="store.queryParams.categoryName" 
-            placeholder="请输入分类" 
+            placeholder="请选择分类" 
             clearable 
-            @clear="handleSearch" 
-          />
+            filterable
+            style="width: 200px"
+            @change="handleSearch"
+            @clear="handleSearch"
+          >
+            <el-option
+              v-for="item in utilStore.productTypeList"
+              :key="item.code"
+              :label="item.name"
+              :value="item.name" 
+            />
+          </el-select>
         </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
           <el-button @click="resetFilters">重置</el-button>
         </el-form-item>
+        
         <el-form-item style="float: right">
           <el-button type="success" @click="openDialog()">新增产品</el-button>
         </el-form-item>
@@ -93,7 +106,23 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="所属分类" prop="categoryName">
-              <el-input v-model="form.categoryName" placeholder="分类名称" />
+              <el-select
+                v-model="form.categoryName"
+                filterable
+                remote
+                reserve-keyword
+                placeholder="输入关键字搜索分类"
+                :remote-method="utilStore.searchProductTypesAction"
+                :loading="utilStore.productTypeLoading"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in utilStore.productTypeList"
+                  :key="item.code"
+                  :label="item.name"
+                  :value="item.name"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -152,20 +181,24 @@ import { ref, reactive, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useProductStore } from '@/stores/productStore';
+import { useUtilStore } from '@/stores/utilStore'; // 引入你的工具 Store
 import type { ProductRequest } from '@/types/dto';
 
+// 实例化 Store
 const store = useProductStore();
+const utilStore = useUtilStore();
+
 const formRef = ref<FormInstance>();
 const CURRENT_STAFF_ID = 1;
 const STORAGE_KEY = 'product_form_draft';
 
-// 状态
+// 状态控制
 const dialogVisible = ref(false);
 const isEdit = ref(false);
 const submitting = ref(false);
 const currentProductCode = ref(''); 
 
-// 1. 定义空的初始结构
+// 1. 初始化空表单结构
 const initialEmptyForm: ProductRequest = {
   id: null,
   productName: '',
@@ -178,7 +211,7 @@ const initialEmptyForm: ProductRequest = {
   listPrice: 0
 };
 
-// 2. 初始化逻辑：从本地恢复
+// 2. 从本地缓存恢复数据
 const getStoredForm = () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   return saved ? JSON.parse(saved) : { ...initialEmptyForm };
@@ -186,7 +219,7 @@ const getStoredForm = () => {
 
 const form = reactive<ProductRequest>(getStoredForm());
 
-// 3. 监听：自动保存草稿
+// 3. 侦听器：自动保存新增模式下的草稿
 watch(
   form,
   (newVal) => {
@@ -197,19 +230,28 @@ watch(
   { deep: true }
 );
 
+// 表单验证规则
 const formRules = reactive<FormRules>({
   productName: [{ required: true, message: '产品名称必填', trigger: 'blur' }],
-  categoryName: [{ required: true, message: '分类必填', trigger: 'blur' }],
+  categoryName: [{ required: true, message: '分类必填', trigger: 'change' }], // 注意：Select 触发通常是 change
   sku: [{ required: true, message: 'SKU必填', trigger: 'blur' }]
 });
 
-onMounted(() => store.loadPage());
+// 生命周期挂载
+onMounted(() => {
+  // 加载产品分页列表数据
+  store.loadPage();
+  // 初始加载分类下拉列表（传空字符串获取前15条）
+  utilStore.searchProductTypesAction(''); 
+});
 
+// 搜索处理
 const handleSearch = () => {
   store.queryParams.pageNum = 1;
   store.loadPage();
 };
 
+// 重置搜索条件
 const resetFilters = () => {
   store.queryParams.productCode = '';
   store.queryParams.productName = '';
@@ -217,21 +259,25 @@ const resetFilters = () => {
   handleSearch();
 };
 
+// 打开对话框逻辑
 const openDialog = (row?: any) => {
   isEdit.value = !!row;
   if (row) {
     currentProductCode.value = row.productCode;
-    // 编辑模式：直接加载行数据
+    // 编辑模式：回显行数据
     Object.keys(initialEmptyForm).forEach(key => {
       (form as any)[key] = row[key] ?? (initialEmptyForm as any)[key];
     });
   } else {
-    // 新增模式：不做 Object.assign 重置，保留草稿内容
+    // 新增模式：不重置 reactive，保留 watch 恢复的草稿
     currentProductCode.value = '';
+    // 确保弹窗打开时下拉列表有数据
+    utilStore.searchProductTypesAction('');
   }
   dialogVisible.value = true;
 };
 
+// 提交表单
 const submitForm = async () => {
   if (!formRef.value) return;
   await formRef.value.validate(async (valid) => {
@@ -240,9 +286,11 @@ const submitForm = async () => {
     submitting.value = true;
     try {
       if (isEdit.value) {
+        // 更新逻辑
         await store.updateProduct(currentProductCode.value, { ...form }, CURRENT_STAFF_ID);
         ElMessage.success('更新成功');
       } else {
+        // 新增逻辑
         await store.addProduct({ ...form }, CURRENT_STAFF_ID);
         ElMessage.success('新增成功');
         // 保存成功后清空草稿
@@ -266,12 +314,14 @@ const clearDraft = (needConfirm = true) => {
 
   if (needConfirm) {
     ElMessageBox.confirm('确定要清空已填写的产品信息吗？', '提示', { type: 'warning' })
-      .then(doClear);
+      .then(doClear)
+      .catch(() => {});
   } else {
     doClear();
   }
 };
 
+// 删除产品
 const handleDelete = async (code: string) => {
   try {
     await store.deleteItem(code);
@@ -281,3 +331,10 @@ const handleDelete = async (code: string) => {
   }
 };
 </script>
+
+<style scoped>
+.app-container {
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+</style>

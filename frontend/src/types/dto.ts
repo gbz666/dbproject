@@ -1,3 +1,5 @@
+import type { WarehouseStockVO } from "./vo";
+
 /** 对应后端 CustomerCreateRequest.java */
 export interface CustomerCreateRequest {
   customerName: string;
@@ -89,3 +91,33 @@ export interface SalesOrderItemDTO {
   unitPrice: number;
 }
 
+export interface OutboundItemDTO {
+  productCode: string;
+  warehouseDetails: WarehouseStockVO[]; // 对应后端引用的 WarehouseStockVO
+  serialNumbers?: string;
+  remark?: string;
+}
+
+/** 出库单创建/修改 DTO */
+export interface OutboundOrderDTO {
+  id?: number;
+  salesOrderCode: string;
+  outboundDate: string; // 后端 Date 类型，前端传 ISO 字符串或格式化日期
+  remark?: string;
+  items: OutboundItemDTO[];
+}
+
+export interface StockInItemDTO {
+  productCode: string;
+  serialNumbers: string;
+  remark?: string;
+  warehouseDetails: WarehouseStockVO[];
+}
+
+export interface StockInDTO {
+  id?: number;
+  purchaseOrderCode: string;
+  stockInDate: string | Date;
+  note?: string;
+  items: StockInItemDTO[];
+}

@@ -1,8 +1,10 @@
 package com.database.mapper;
 
 import com.database.pojo.Inventory;
+import com.database.vo.InventoryVO;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -27,4 +29,6 @@ public interface InventoryMapper {
     Long selectProductNum(Long id);
 
     void updateInventory(Long productId, Long warehouseId, BigDecimal quantity);
+
+    List<InventoryVO> selectInventoryDetails(String productCode,String productName);
 }

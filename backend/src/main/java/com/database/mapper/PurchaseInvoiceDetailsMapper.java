@@ -22,4 +22,5 @@ public interface PurchaseInvoiceDetailsMapper {
 
     int updateByPrimaryKey(PurchaseInvoiceDetails record);
 
+    void updateByInvoiceId(PurchaseInvoiceDetails detail);
 }

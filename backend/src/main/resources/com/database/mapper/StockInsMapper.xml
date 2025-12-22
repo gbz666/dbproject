@@ -65,7 +65,7 @@
         JOIN suppliers s ON po.supplier_id = s.id
         JOIN purchase_order_items poi ON po.id = poi.purchase_order_id
         JOIN products p ON poi.product_id = p.id
-        LEFT JOIN stock_ins si ON si.purchase_order_id = po.id AND si.is_deleted = 0
+        inner JOIN stock_ins si ON si.purchase_order_id = po.id AND si.is_deleted = 0
         LEFT JOIN stock_in_items sii ON si.id = sii.stock_in_id AND sii.product_id = p.id
         LEFT JOIN warehouses w ON sii.warehouse_id = w.id
         LEFT JOIN staffs st ON si.created_by_id = st.id
@@ -170,7 +170,7 @@
         UPDATE stock_ins
         SET is_deleted = 1,
             deleted_at = NOW(),
-            updated_by_id = #{updatedBy}
+            updated_by_id = #{operatorId}
         WHERE id = #{id}
     </update>
 </mapper>

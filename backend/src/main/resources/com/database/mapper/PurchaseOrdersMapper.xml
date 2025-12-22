@@ -157,62 +157,7 @@
     </update>
 
 
-    <resultMap id="PurchaseOrderVOResultMap" type="com.database.vo.PurchaseOrderVO">
-        <id property="id" column="id" />
-        <result property="purchaseCode" column="purchase_code" />
-        <result property="orderDate" column="order_date" />
-        <result property="note" column="note" />
 
-        <result property="supplierCode" column="supplier_code" />
-        <result property="supplierName" column="supplier_name" />
-        <result property="totalAmount" column="total_amount"/>
-        <collection property="items" ofType="com.database.vo.PurchaseOrderVO$OrderItemDTO">
-            <result property="productCode" column="product_code" />
-            <result property="productName" column="product_name" />
-            <result property="quantity" column="quantity" />
-            <result property="unitPrice" column="unit_price" />
-            <result property="lineTotal" column="line_total" />
-        </collection>
-    </resultMap>
-
-    <select id="selectPurchaseOrderVOByPage" resultMap="PurchaseOrderVOResultMap">
-        SELECT
-            po.id,
-            po.purchase_code,
-            po.order_date,
-            po.note,
-            po.total_amount,
-            s.supplier_code,
-            s.supplier_name,
-            p.product_code,
-            p.product_name,
-            poi.quantity,
-            poi.unit_price,
-            poi.line_total
-# - 这里对应 VO 中的 totalAmount (Long/BigDecimal 需注意类型匹配)
-        FROM purchase_orders po
-                 LEFT JOIN suppliers s ON po.supplier_id = s.id
-                 LEFT JOIN purchase_order_items poi ON po.id = poi.purchase_order_id
-                 LEFT JOIN products p ON poi.product_id = p.id
-        <where>
-            po.is_deleted = 0
-            <if test="supplierName != null and supplierName != ''">
-                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
-            </if>
-            <if test="supplierCode != null and supplierCode != ''">
-                AND s.supplier_code LIKE CONCAT('%', #{supplierCode}, '%')
-            </if>
-            <if test="productCode != null and productCode != ''">
-                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
-            </if>
-            <if test="productName != null and productName != ''">
-                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
-            </if>
-            <if test="purchaseOrderCode != null and purchaseOrderCode != ''">
-                AND po.purchase_code LIKE CONCAT('%', #{purchaseOrderCode}, '%')
-            </if>
-        </where>
-    </select>
     <select id="countOrdersByMonth" resultType="java.lang.Integer">
         SELECT COUNT(*)
         FROM purchase_orders
@@ -220,5 +165,83 @@
     </select>
     <select id="selectOrderIdByCode" resultType="java.lang.Long">
         select id from purchase_orders where purchase_code=#{purchaseOrderCode}
+    </select>
+
+
+
+    <resultMap id="OrderItemVOResultMap" type="com.database.vo.PurchaseOrderVO$OrderItemDTO">
+        <result property="productCode" column="product_code" />
+        <result property="productName" column="product_name" />
+        <result property="quantity" column="quantity" />
+        <result property="unitPrice" column="unit_price" />
+        <result property="lineTotal" column="line_total" />
+    </resultMap>
+
+    <resultMap id="PurchaseOrderVOResultMap" type="com.database.vo.PurchaseOrderVO">
+        <id property="id" column="id" />
+        <result property="purchaseCode" column="purchase_code" />
+        <result property="orderDate" column="order_date" />
+        <result property="note" column="note" />
+        <result property="supplierCode" column="supplier_code" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="totalAmount" column="total_amount"/>
+
+        <collection property="items"
+                    ofType="com.database.vo.PurchaseOrderVO$OrderItemDTO"
+                    select="selectItemsByOrderId"
+                    column="id" />
+    </resultMap>
+
+    <select id="selectMainOrderPage" resultType="com.database.vo.PurchaseOrderVO">
+        SELECT
+        po.id,
+        po.purchase_code AS purchaseCode,
+        po.order_date AS orderDate,
+        po.total_amount AS totalAmount,
+        po.note,
+        s.supplier_code AS supplierCode,
+        s.supplier_name AS supplierName
+        FROM purchase_orders po
+        inner JOIN suppliers s ON po.supplier_id = s.id
+        <where>
+            po.is_deleted = 0
+            <if test="purchaseOrderCode != null and purchaseOrderCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{purchaseOrderCode}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+            <if test="(productCode != null and productCode != '') or (productName != null and productName != '')">
+                AND EXISTS (
+                SELECT 1 FROM purchase_order_items poi
+                JOIN products p ON poi.product_id = p.id
+                WHERE poi.purchase_order_id = po.id
+                <if test="productCode != null and productCode != ''">
+                    AND p.product_code = #{productCode}
+                </if>
+                <if test="productName != null and productName != ''">
+                    AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+                </if>
+                )
+            </if>
+
+        </where>
+        ORDER BY po.id DESC
+    </select>
+
+    <select id="selectItemsByOrderIds" resultType="com.database.vo.PurchaseOrderVO$OrderItemDTO">
+        SELECT
+        poi.purchase_order_id AS orderId,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        poi.quantity,
+        poi.unit_price AS unitPrice,
+        poi.line_total AS lineTotal
+        FROM purchase_order_items poi
+        JOIN products p ON poi.product_id = p.id
+        WHERE poi.purchase_order_id IN
+        <foreach collection="orderIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 </mapper>

@@ -1,6 +1,7 @@
 package com.database.dto;
 
 import com.database.vo.WarehouseStockVO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.util.List;
 public class OutboundOrderDTO {
     private Long id;
     private String salesOrderCode;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date outboundDate;
     private String remark;
 

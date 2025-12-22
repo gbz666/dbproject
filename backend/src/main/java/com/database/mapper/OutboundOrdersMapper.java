@@ -5,6 +5,7 @@ import com.database.vo.OutboundDetailVO;
 import com.database.vo.WarehouseStockVO;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,4 +32,6 @@ public interface OutboundOrdersMapper {
     void softDeleteOrder(Long id, Long operatorId);
 
     List<OutboundDetailVO> selectOutboundDetails(String salesOrderCode, String customerName, String productName, String serialNumber);
+
+
 }

@@ -33,6 +33,46 @@
         from purchase_invoices
         where  id = #{id} 
     </select>
+    <select id="selectInvoicesPage" resultType="com.database.vo.PurchaseInvoiceVO">
+        SELECT
+        pi.id, pi.invoice_no, pi.invoice_date, po.purchase_code, po.order_date,
+        s.supplier_name, pid.item_name, pid.specification, pid.unit, pid.quantity,
+        pid.unit_price, pid.amount_exclusive_tax, pid.tax_rate, pid.tax_amount,
+        pid.amount_inclusive_tax, po.note as order_note,
+        -- 核心统计字段
+        (SELECT MAX(invoice_date) FROM purchase_invoices WHERE supplier_id = s.id) as lastInvoiceDate,
+        (SELECT SUM(amount) FROM purchase_invoices WHERE supplier_id = s.id) as totalInvoicedAmount,
+        (SELECT COUNT(*) FROM purchase_invoices WHERE supplier_id = s.id) as invoiceCount,
+        (po.total_amount - (SELECT IFNULL(SUM(amount), 0) FROM purchase_invoices WHERE supplier_id = s.id)) as pendingInvoiceAmount,
+        DATEDIFF(pi.invoice_date, po.order_date) as avgInvoiceDays
+        FROM purchase_invoices pi
+        INNER JOIN purchase_invoice_details pid ON pi.id = pid.invoice_id
+        LEFT JOIN suppliers s ON pi.supplier_id = s.id
+        LEFT JOIN stock_ins si ON pi.related_stock_in_id = si.id
+        LEFT JOIN purchase_orders po ON si.purchase_order_id = po.id
+        <where>
+            pi.is_deleted = 0
+            <if test="query.supplierName != null and query.supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{query.supplierName}, '%')
+            </if>
+            <if test="query.purchaseCode != null and query.purchaseCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{query.purchaseCode}, '%')
+            </if>
+            <if test="query.productModel != null and query.productModel != ''">
+                AND pid.specification LIKE CONCAT('%', #{query.productModel}, '%')
+            </if>
+        </where>
+        ORDER BY pi.invoice_date DESC
+    </select>
+    <select id="selectVOById" resultType="com.database.vo.PurchaseInvoiceVO">
+        SELECT pi.*, pid.*, po.purchase_code, po.order_date, s.supplier_name
+        FROM purchase_invoices pi
+                 JOIN purchase_invoice_details pid ON pi.id = pid.invoice_id
+                 LEFT JOIN suppliers s ON pi.supplier_id = s.id
+                 LEFT JOIN stock_ins si ON pi.related_stock_in_id = si.id
+                 LEFT JOIN purchase_orders po ON si.purchase_order_id = po.id
+        WHERE pi.id = #{id}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from purchase_invoices
@@ -144,5 +184,8 @@
             is_deleted =  #{isDeleted},
             deleted_at =  #{deletedAt}
         where   id = #{id} 
+    </update>
+    <update id="softDelete">
+        update purchase_invoices set is_deleted=1,deleted_at=NOW() where id=#{id}
     </update>
 </mapper>

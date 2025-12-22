@@ -3,10 +3,7 @@ package com.database.service;
 import com.database.dto.PurchaseOrderDto;
 import com.database.exception.BusinessException;
 import com.database.mapper.*;
-import com.database.pojo.Products;
-import com.database.pojo.PurchaseOrderItems;
-import com.database.pojo.PurchaseOrders;
-import com.database.pojo.Suppliers;
+import com.database.pojo.*;
 import com.database.vo.PurchaseOrderVO;
 import com.database.vo.SalesOrderVO;
 import com.github.pagehelper.PageHelper;
@@ -19,8 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,22 +30,56 @@ public class PurchaseOrderService {
     private PurchaseOrderItemsMapper purchaseOrderItemsMapper;
     private ProductsMapper productsMapper;
     private InventoryMapper inventoryMapper;
+    private StockInsMapper stockInsMapper;
     @Autowired
     public PurchaseOrderService(PurchaseOrdersMapper purchaseOrdersMapper,
                                 SuppliersMapper suppliersMapper,
                                 PurchaseOrderItemsMapper purchaseOrderItemsMapper,
                                 ProductsMapper productsMapper,
-                                InventoryMapper inventoryMapper) {
+                                InventoryMapper inventoryMapper,
+                                StockInsMapper stockInsMapper) {
         this.purchaseOrdersMapper = purchaseOrdersMapper;
         this.suppliersMapper = suppliersMapper;
         this.purchaseOrderItemsMapper = purchaseOrderItemsMapper;
         this.productsMapper = productsMapper;
         this.inventoryMapper = inventoryMapper;
+        this.stockInsMapper = stockInsMapper;
     }
     @Transactional(rollbackFor = Exception.class)
-    public PageInfo<PurchaseOrderVO> getPurchaseOrderByPage(int pageNum, int pageSize, String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode) {
+    public PageInfo<PurchaseOrderVO> getPurchaseOrderByPage(
+            int pageNum, int pageSize, String supplierCode, String supplierName,
+            String productCode, String productName, String purchaseOrderCode) {
+
+        // 1. 启动分页 (只对下面的第一条 SQL 有效)
         PageHelper.startPage(pageNum, pageSize);
-        List<PurchaseOrderVO> orderVOList=purchaseOrdersMapper.selectPurchaseOrderVOByPage(supplierCode,supplierName,productCode,productName,purchaseOrderCode);
+
+        // 2. 查主表：此时 orderVOList 的长度等于 pageSize，且没有重复记录
+        List<PurchaseOrderVO> orderVOList = purchaseOrdersMapper.selectMainOrderPage(
+                supplierCode, supplierName, productCode, productName, purchaseOrderCode
+        );
+
+        if (orderVOList == null || orderVOList.isEmpty()) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+
+        // 3. 收集当前页所有订单 ID
+        List<Long> orderIds = orderVOList.stream()
+                .map(PurchaseOrderVO::getId)
+                .collect(Collectors.toList());
+
+        // 4. 查明细：一次性查出当前页所有订单的全部商品
+        List<PurchaseOrderVO.OrderItemDTO> allItems = purchaseOrdersMapper.selectItemsByOrderIds(orderIds);
+
+        // 5. 分组：将明细按订单 ID 分组存储在 Map 里
+        Map<Long, List<PurchaseOrderVO.OrderItemDTO>> itemMap = allItems.stream()
+                .collect(Collectors.groupingBy(PurchaseOrderVO.OrderItemDTO::getOrderId));
+
+        // 6. 回填：遍历主表列表，把对应的明细塞进去
+        orderVOList.forEach(order -> {
+            order.setItems(itemMap.getOrDefault(order.getId(), new ArrayList<>()));
+        });
+
+        // 7. 封装返回（PageHelper 会保留正确的 TotalCount）
         return new PageInfo<>(orderVOList);
     }
     /**
@@ -86,6 +120,21 @@ public class PurchaseOrderService {
 
         // 5) 处理明细
         this.processPurchaseItems(order.getId(), dto.getItems(), currentUserId);
+        createAutoStockIn( order, currentUserId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void  createAutoStockIn(PurchaseOrders order, Long currentUserId) {
+        // 1) 校验供应商并生成单号 (略)
+
+        StockIns stockIn = new StockIns();
+        stockIn.setPurchaseOrderId(order.getId());
+        stockIn.setStockInCode("IN-" + order.getPurchaseCode()); // 业务关联
+        stockIn.setStockInDate(null); // 此时还没入库，日期可为空或设为预定日期
+        stockIn.setCreatedById(currentUserId);
+        stockInsMapper.insertSelective(stockIn);
+
+        // 注意：这里不需要插入 stock_in_items，也不需要更新 inventory！
     }
 
     /**
@@ -121,7 +170,7 @@ public class PurchaseOrderService {
      * 处理采购明细
      */
     @Transactional(rollbackFor = Exception.class)
-    private void processPurchaseItems(Long orderId, List<PurchaseOrderDto.ItemDTO> items, Long currentUserId) {
+    public void processPurchaseItems(Long orderId, List<PurchaseOrderDto.ItemDTO> items, Long currentUserId) {
         if (items == null || items.isEmpty())
             return;
 

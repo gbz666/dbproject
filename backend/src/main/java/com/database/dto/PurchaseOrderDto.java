@@ -1,5 +1,6 @@
 package com.database.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.util.List;
 @Data
 public class PurchaseOrderDto {
     private Long id; // 修改时使用
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date orderDate;
     private String supplierCode;
     private String note;

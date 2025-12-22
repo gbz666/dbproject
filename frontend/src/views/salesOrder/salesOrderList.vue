@@ -10,7 +10,7 @@
           <el-input v-model="salesStore.queryParams.customerCode" placeholder="编号" style="width: 90px; margin-left: 5px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="salesStore.fetchPageAction">查询</el-button>
+          <el-button type="primary" @click="salesStore.fetchPageAction()">查询</el-button>
           <el-button @click="handleResetQuery">重置</el-button>
         </el-form-item>
         <el-form-item style="float: right">
@@ -29,7 +29,7 @@
               <el-table-column prop="productName" label="产品名称" min-width="150" />
               <el-table-column prop="quantity" label="数量" width="100" />
               <el-table-column prop="unitPrice" label="成交单价" width="100">
-                <template #default="s">¥{{ s.row.unitPrice }}</template>
+                <template #default="s">¥{{ s.row.unitPrice?.toFixed(2) }}</template>
               </el-table-column>
               <el-table-column label="单项小计" width="120">
                 <template #default="s">
@@ -42,10 +42,12 @@
       </el-table-column>
 
       <el-table-column prop="orderCode" label="订单号" width="130" align="center" fixed />
-      <el-table-column prop="orderDate" label="订单日期" width="120" sortable />
+      <el-table-column prop="orderDate" label="订单日期" width="120" sortable>
+        <template #default="{ row }">{{ row.orderDate?.substring(0, 10) }}</template>
+      </el-table-column>
       <el-table-column prop="customerCode" label="客户编号" width="100" />
       <el-table-column prop="customerName" label="客户全称" min-width="180" show-overflow-tooltip />
-      
+      <el-table-column prop="note" label="备注" min-width="180" show-overflow-tooltip />
       <el-table-column label="操作" width="140" fixed="right" align="center">
         <template #default="{ row }">
           <el-button link type="primary" @click="handleOpenDialog(row)">编辑</el-button>
@@ -68,7 +70,12 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '修改销售订单' : '新增销售订单'" width="950px" destroy-on-close>
+    <el-dialog 
+      v-model="dialogVisible" 
+      :title="isEdit ? '修改销售订单' : '新增销售订单'" 
+      width="950px" 
+      destroy-on-close
+    >
       <el-form :model="form" ref="formRef" :rules="formRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -103,17 +110,14 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.note" type="textarea" :rows="2" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        
+        <el-form-item label="备注">
+          <el-input v-model="form.note" type="textarea" :rows="2" />
+        </el-form-item>
 
         <el-table :data="form.items" border size="small" style="margin-top: 10px">
           <el-table-column label="选择产品" min-width="250">
-            <template #default="{ row }">
+            <template #default="{ row}">
               <el-select
                 v-model="row.productCode"
                 filterable
@@ -134,10 +138,14 @@
             </template>
           </el-table-column>
           <el-table-column label="数量" width="160">
-            <template #default="{ row }"><el-input-number v-model="row.quantity" :min="0.0001" :precision="4" /></template>
+            <template #default="{ row }">
+              <el-input-number v-model="row.quantity" :min="0.0001" :precision="4" controls-position="right" style="width: 100%"/>
+            </template>
           </el-table-column>
           <el-table-column label="成交单价" width="160">
-            <template #default="{ row }"><el-input-number v-model="row.unitPrice" :precision="2" :min="0" /></template>
+            <template #default="{ row }">
+              <el-input-number v-model="row.unitPrice" :precision="2" :min="0" controls-position="right" style="width: 100%"/>
+            </template>
           </el-table-column>
           <el-table-column label="操作" width="60" align="center">
             <template #default="{ $index }">
@@ -145,7 +153,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-button type="dashed" style="width: 100%; margin-top: 10px" @click="addItemRow">+ 添加产品明细</el-button>
+        <el-button type="info" dashed style="width: 100%; margin-top: 10px" @click="addItemRow">+ 添加产品明细</el-button>
       </el-form>
 
       <template #footer>
@@ -164,13 +172,13 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue';
 import { useSalesStore } from '@/stores/salesOrderStore';
-import { useUtilStore } from '@/stores/utilStore'; // 引入工具 store
+import { useUtilStore } from '@/stores/utilStore';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import type { SalesOrderDTO } from '@/types/dto';
+import type { SalesOrderVO } from '@/types/vo';
 
-// Store 初始化
 const salesStore = useSalesStore();
 const utilStore = useUtilStore();
 
@@ -183,44 +191,38 @@ const submitLoading = ref(false);
 const formRef = ref<FormInstance>();
 const editId = ref<number>();
 
-// 1. 远程搜索逻辑
 const remoteSearchCustomer = (query: string) => {
-  if (query) {
-    utilStore.searchCustomersAction(query);
-  }
+  if (query) utilStore.searchCustomersAction(query);
 };
 
 const remoteSearchProduct = (query: string) => {
-  if (query) {
-    utilStore.searchProductsAction(query);
-  }
+  if (query) utilStore.searchProductsAction(query);
 };
 
-// 2. 日期与表单基础
-const getTodayDate = (): string => new Date().toISOString().split('T')[0];
+const getTodayDate = (): string => new Date().toISOString().split('T')[0] as any;
 
 const createEmptyForm = (): SalesOrderDTO => ({
   customerCode: '',
   orderDate: getTodayDate(),
   note: '',
-  items: []
+  items: [{ productCode: '', quantity: 1, unitPrice: 0 }]
 });
 
-const getInitialData = (): SalesOrderDTO => {
+const form = reactive<SalesOrderDTO>(createEmptyForm());
+
+// 恢复草稿逻辑封装
+const loadDraft = () => {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved && !isEdit.value) {
+  if (saved) {
     try {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      Object.assign(form, parsed);
     } catch (e) {
       console.error("解析草稿失败", e);
     }
   }
-  return { ...createEmptyForm(), items: [{ productCode: '', quantity: 1, unitPrice: 0 }] };
 };
 
-const form = reactive<SalesOrderDTO>(getInitialData());
-
-// 3. 草稿观察者
 watch(form, (v) => { 
   if (!isEdit.value && dialogVisible.value) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
@@ -232,24 +234,25 @@ const formRules = reactive<FormRules>({
   orderDate: [{ required: true, message: '请选择订单日期', trigger: 'change' }]
 });
 
-// 4. 操作函数
 const handleOpenDialog = (row?: any) => {
-  isEdit.value = !!row;
-  if (row) {
+  // 核心防御：判断 row 是否为有效的业务数据对象（包含 id），防止鼠标事件误入
+  const isValidRow = row && typeof row === 'object' && 'id' in row;
+  isEdit.value = isValidRow;
+
+  if (isValidRow) {
     editId.value = row.id;
-    // 编辑模式回填，同时手动触发一次搜索以显示名称
     form.customerCode = row.customerCode;
     utilStore.searchCustomersAction(row.customerCode); 
-    
     form.orderDate = row.orderDate?.substring(0, 10) || getTodayDate();
     form.note = row.note || '';
     form.items = row.items?.map((i: any) => {
-      utilStore.searchProductsAction(i.productCode); // 预加载产品信息显示
+      utilStore.searchProductsAction(i.productCode);
       return { productCode: i.productCode, quantity: i.quantity, unitPrice: i.unitPrice };
     }) || [];
   } else {
     editId.value = undefined;
-    Object.assign(form, getInitialData());
+    Object.assign(form, createEmptyForm());
+    loadDraft(); // 新增模式尝试加载草稿
   }
   dialogVisible.value = true;
 };
@@ -262,17 +265,15 @@ const handleSave = async () => {
       ElMessage.warning('明细中存在未选择产品的行');
       return;
     }
-
     submitLoading.value = true;
     const dto = { ...form, id: editId.value };
     await salesStore.submitOrderAction(dto, CURRENT_STAFF_ID);
-    
     ElMessage.success(isEdit.value ? '修改成功' : '创建成功');
     if (!isEdit.value) localStorage.removeItem(STORAGE_KEY);
     dialogVisible.value = false;
     salesStore.fetchPageAction();
   } catch (error) {
-    console.error('提交失败:', error);
+    console.error('验证未通过或提交失败');
   } finally {
     submitLoading.value = false;
   }
@@ -282,8 +283,7 @@ const handleClearDraft = () => {
   ElMessageBox.confirm('确定清空草稿吗？', '提示', { type: 'warning' }).then(() => {
     localStorage.removeItem(STORAGE_KEY);
     Object.assign(form, createEmptyForm());
-    form.items = [{ productCode: '', quantity: 1, unitPrice: 0 }];
-  });
+  }).catch(() => {});
 };
 
 const handleResetQuery = () => {
@@ -292,17 +292,17 @@ const handleResetQuery = () => {
 };
 
 const addItemRow = () => form.items.push({ productCode: '', quantity: 1, unitPrice: 0 });
-const removeItemRow = (i: number) => form.items.splice(i, 1);
-const handleConfirmDelete = (row: any) => salesStore.deleteOrderAction(row.id).then(() => {
-  ElMessage.success('已删除');
-  salesStore.fetchPageAction();
-});
+const removeItemRow = (i: number) => {
+  if (form.items.length > 1) form.items.splice(i, 1);
+  else ElMessage.info('至少需要保留一行明细');
+};
+
+const handleConfirmDelete = (row: any) => {
+  salesStore.deleteOrderAction(row.id).then(() => {
+    ElMessage.success('已删除');
+    salesStore.fetchPageAction();
+  });
+};
 
 onMounted(() => salesStore.fetchPageAction());
 </script>
-
-<style scoped>
-.app-container :deep(.el-table__expanded-cell) {
-  background-color: #fafafa;
-}
-</style>

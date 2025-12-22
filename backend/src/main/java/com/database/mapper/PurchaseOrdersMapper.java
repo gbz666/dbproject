@@ -24,14 +24,17 @@ public interface PurchaseOrdersMapper {
     int updateByPrimaryKeySelective(PurchaseOrders record);
 
     int updateByPrimaryKey(PurchaseOrders record);
-
-
-
-    List<PurchaseOrderVO> selectPurchaseOrderVOByPage(String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode);
-
+    
     void updateToDeleteByPrimaryKey(Long id,Long currentUserId);
 
     int countOrdersByMonth(String yearMonth);
 
     Long selectOrderIdByCode(String purchaseOrderCode);
+
+
+
+
+    List<PurchaseOrderVO> selectMainOrderPage(String supplierCode, String supplierName, String productCode, String productName, String purchaseOrderCode);
+
+    List<PurchaseOrderVO.OrderItemDTO> selectItemsByOrderIds(List<Long> orderIds);
 }

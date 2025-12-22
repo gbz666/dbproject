@@ -16,3 +16,15 @@ export const getProductPageApi = (pageNum: number, pageSize: number, keyword?: s
     params: { pageNum, pageSize, keyword }
   });
 };
+export const getProductTypeOptionsApi = (pageNum: number, pageSize: number, keyword?: string) => {
+  return httpClient<PageInfo<BaseSelectVO>>('/api/util/search/productType', {
+    method: "GET",
+    params: { pageNum, pageSize, keyword }
+  });
+};
+export const getSupplierOptionsApi = (pageNum: number, pageSize: number, keyword?: string) => {
+  return httpClient<PageInfo<BaseSelectVO>>('/api/util/search/supplier', {
+    method: "GET",
+    params: { pageNum, pageSize, keyword }
+  });
+};

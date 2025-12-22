@@ -107,3 +107,54 @@ export interface BaseSelectVO{
   code:string,
   name:string
 }
+
+export interface WarehouseStockVO {
+  warehouseId: number;
+  warehouseName?: string;
+  quantity: number;
+}
+
+export interface OutboundDetailVO {
+  salesOrderCode: string;
+  orderDate: string;
+  customerName: string;
+  productCode: string;
+  orderQuantity: number;
+  orderRemark: string;
+  firstOutboundDate: string;
+  warehouseDetails: WarehouseStockVO[]; // 仓库出货数量列表
+  subTotal: number;
+  pendingQuantity: number;
+  serialNumbers: string;
+}
+
+export interface StockInVO {
+  id: number;
+  stockInCode: string;
+  purchaseOrderCode: string;
+  supplierName: string;
+  orderDate: string; // 后端 Date 传到前端通常为 ISO 字符串
+  productCode: string;
+  productName: string;
+  purchaseQuantity: number;
+  subTotal: number;
+  pendingQuantity: number;
+  note: string;
+  creatorName: string;
+  warehouseDetails: WarehouseStockVO[];
+}
+
+// @/types/vo.ts
+export interface InventoryVO {
+  productId: number;
+  productCode: string;
+  productName: string;
+  specification: string;
+  unit: string;
+  costPrice: number;
+  // 平铺各仓库库存
+  shInventory: number; // 上海
+  tjInventory: number; // 天津
+  szInventory: number; // 深圳
+  totalInventory: number;
+}

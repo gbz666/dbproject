@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
 import type { PurchaseOrderVO } from "@/types/vo";
 import { purchaseOrderService } from "@/services/purchaseOrderService";
+import type { PurchaseOrderDto } from "@/types/dto";
 
 export const usePurchaseStore = defineStore("purchaseOrder", () => {
   const orderList = ref<PurchaseOrderVO[]>([]);
@@ -31,7 +32,7 @@ export const usePurchaseStore = defineStore("purchaseOrder", () => {
     }
   };
 
-  const submitOrderAction = async (dto: any, userId: number) => {
+  const submitOrderAction = async (dto: PurchaseOrderDto, userId: number) => {
     const success = await purchaseOrderService.saveOrder(dto, userId);
     if (success) {
       await fetchPageAction();

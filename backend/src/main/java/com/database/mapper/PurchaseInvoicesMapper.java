@@ -1,6 +1,11 @@
 package com.database.mapper;
 
+import com.database.dto.PurchaseInvoiceQuery;
 import com.database.pojo.PurchaseInvoices;
+import com.database.vo.PurchaseInvoiceVO;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -22,4 +27,11 @@ public interface PurchaseInvoicesMapper {
 
     int updateByPrimaryKey(PurchaseInvoices record);
 
+    // 复杂的 VO 关联查询，包含所有统计字段
+    List<PurchaseInvoiceVO> selectInvoicesPage(@Param("query") PurchaseInvoiceQuery query);
+
+
+    PurchaseInvoiceVO selectVOById(Long id);
+
+    void softDelete(Long id);
 }

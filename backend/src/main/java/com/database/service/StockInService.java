@@ -69,7 +69,7 @@ public class StockInService {
         restoreOldInventory(dto.getId());
 
         // 2. 删除旧明细记录
-        stockInItemMapper.deleteByPrimaryKey(dto.getId());
+        stockInItemMapper.deleteByStockInId(dto.getId());
 
         // 3. 更新主表
         StockIns stockIn = new StockIns();

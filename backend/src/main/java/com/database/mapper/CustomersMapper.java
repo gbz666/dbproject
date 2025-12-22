@@ -57,4 +57,5 @@ public interface CustomersMapper {
      * 根据客户业务编码查询客户详情 DTO，关联员工姓名
      */
     CustomerDetailVO selectCustomerDtoByCustomerCode(String customerCode);
+    Integer getMaxCustomerCodeNumber();
 }

@@ -13,4 +13,6 @@ public interface CommonMapper {
     List<BaseSelectVO> selectProductOptions(@Param("keyword") String keyword);
 
     List<BaseSelectVO> selectSupplierOptions(@Param("keyword") String keyword);
+
+    List<BaseSelectVO> selectProductType(String keyword);
 }

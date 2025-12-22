@@ -20,6 +20,7 @@ public class PurchaseOrderVO {
     private BigDecimal totalAmount;
     @Data
     public static class OrderItemDTO {
+        private Long orderId;
         private String productCode;
         private String productName;
         private BigDecimal quantity;

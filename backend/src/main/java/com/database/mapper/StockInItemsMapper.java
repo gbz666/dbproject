@@ -28,4 +28,6 @@ public interface StockInItemsMapper {
     void insertItemDetail(Long stockInId, Long productId, Long warehouseId, BigDecimal quantity, String serialNumbers, Long creatorId);
 
     List<StockInItems> selectByStockInId(Long stockInId);
+
+    void deleteByStockInId(Long id);
 }

@@ -79,8 +79,24 @@
       <el-form :model="form" ref="formRef" :rules="formRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="供应商编号" prop="supplierCode">
-              <el-input v-model="form.supplierCode" placeholder="供应商编号" />
+            <el-form-item label="供应商" prop="supplierCode">
+              <el-select
+                v-model="form.supplierCode"
+                filterable
+                remote
+                reserve-keyword
+                placeholder="输入供应商名称搜索"
+                :remote-method="utilStore.searchSupplierAction"
+                :loading="utilStore.SupplierLoading"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in utilStore.SupplierList"
+                  :key="item.code"
+                  :label="item.name"
+                  :value="item.code"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -95,8 +111,26 @@
 
         <el-divider>产品明细</el-divider>
         <el-table :data="form.items" border size="small">
-          <el-table-column label="产品编号" width="220">
-            <template #default="{ row }"><el-input v-model="row.productCode" /></template>
+          <el-table-column label="产品" width="300">
+            <template #default="{ row }">
+              <el-select
+                v-model="row.productCode"
+                filterable
+                remote
+                reserve-keyword
+                placeholder="输入产品名称搜索"
+                :remote-method="utilStore.searchProductsAction"
+                :loading="utilStore.productLoading"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in utilStore.productList"
+                  :key="item.code"
+                  :label="`${item.name} (${item.code})`"
+                  :value="item.code"
+                />
+              </el-select>
+            </template>
           </el-table-column>
           <el-table-column label="数量" width="160">
             <template #default="{ row }"><el-input-number v-model="row.quantity" :min="1" /></template>
@@ -110,7 +144,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-button type="dashed" style="width: 100%; margin-top: 10px" @click="addItemRow">+ 添加产品</el-button>
+        <el-button class="btn-dashed" style="width: 100%; margin-top: 10px" @click="addItemRow">+ 添加产品</el-button>
       </el-form>
       <template #footer>
         <div style="display: flex; justify-content: space-between">
@@ -128,6 +162,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue';
 import { usePurchaseStore } from '@/stores/purchaseOrderStore';
+import { useUtilStore } from '@/stores/utilStore';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
@@ -135,15 +170,15 @@ import type { PurchaseOrderDto } from '@/types/dto';
 import type { PurchaseOrderVO } from '@/types/vo';
 
 const purchaseStore = usePurchaseStore();
+const utilStore = useUtilStore();
 const CURRENT_USER_ID = 2;
-const STORAGE_KEY = 'purchase_order_draft'; // 缓存键名
+const STORAGE_KEY = 'purchase_order_draft'; 
 
 const dialogVisible = ref(false);
 const isEdit = ref(false);
 const submitLoading = ref(false);
 const formRef = ref<FormInstance>();
 
-// 1. 纯净的初始空结构
 const getEmptyForm = (): PurchaseOrderDto => ({
   supplierCode: '',
   orderDate: new Date().toISOString().split('T')[0] as string,
@@ -151,7 +186,6 @@ const getEmptyForm = (): PurchaseOrderDto => ({
   items: []
 });
 
-// 2. 初始化逻辑：尝试从本地存储读取
 const initFormWithStorage = (): PurchaseOrderDto => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -164,10 +198,8 @@ const initFormWithStorage = (): PurchaseOrderDto => {
   return getEmptyForm();
 };
 
-// 使用 reactive 定义表单，初始值包含缓存
 const form = reactive<PurchaseOrderDto>(initFormWithStorage());
 
-// 3. 实时监听：自动保存到缓存（仅在新增模式下）
 watch(
   form,
   (newVal) => {
@@ -179,7 +211,7 @@ watch(
 );
 
 const formRules = reactive<FormRules>({
-  supplierCode: [{ required: true, message: '必填', trigger: 'blur' }],
+  supplierCode: [{ required: true, message: '请选择供应商', trigger: 'change' }],
   orderDate: [{ required: true, message: '必填', trigger: 'change' }]
 });
 
@@ -195,7 +227,6 @@ const handleResetQuery = () => {
 const handleOpenDialog = (row?: PurchaseOrderVO) => {
   isEdit.value = !!row;
   if (row) {
-    // 编辑模式：手动填充
     form.id = row.id;
     form.supplierCode = row.supplierCode ?? '';
     form.orderDate = row.orderDate ?? '';
@@ -206,7 +237,6 @@ const handleOpenDialog = (row?: PurchaseOrderVO) => {
       unitPrice: i.unitPrice
     })) : [];
   } else {
-    // 新增模式：加载最新草稿（或空表单）
     const draft = initFormWithStorage();
     Object.assign(form, draft);
     if (form.items.length === 0) addItemRow();
@@ -214,7 +244,6 @@ const handleOpenDialog = (row?: PurchaseOrderVO) => {
   dialogVisible.value = true;
 };
 
-// 清空草稿方法
 const handleClearDraft = () => {
   ElMessageBox.confirm('确定要清空已填写的草稿内容吗？', '提示', { type: 'warning' })
     .then(() => {
@@ -236,7 +265,6 @@ const handleSave = async () => {
     try {
       const success = await purchaseStore.submitOrderAction(form, CURRENT_USER_ID);
       if (success) {
-        // 保存成功后清除草稿
         localStorage.removeItem(STORAGE_KEY);
         dialogVisible.value = false;
       }
@@ -252,3 +280,18 @@ const handleConfirmDelete = (row: PurchaseOrderVO) => {
 
 onMounted(() => purchaseStore.fetchPageAction());
 </script>
+
+<style scoped>
+/* 修复 dashed 按钮报错问题并模拟虚线样式 */
+.btn-dashed {
+  border-style: dashed !important;
+  border-color: var(--el-border-color);
+  color: var(--el-text-color-regular);
+  background-color: transparent;
+}
+.btn-dashed:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
+}
+</style>

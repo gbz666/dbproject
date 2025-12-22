@@ -37,6 +37,9 @@
         delete from stock_in_items
         where  id = #{id} 
     </delete>
+    <delete id="deleteByStockInId">
+        DELETE FROM stock_in_items WHERE stock_in_id = #{stockInId}
+    </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.StockInItems" useGeneratedKeys="true">
         insert into stock_in_items
         ( id,stock_in_id,product_id,warehouse_id,quantity,serial_numbers,

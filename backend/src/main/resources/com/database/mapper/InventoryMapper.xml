@@ -37,6 +37,33 @@
         WHERE product_id = #{productId}
           AND is_deleted = 0
     </select>
+    <select id="selectInventoryDetails" resultType="com.database.vo.InventoryVO">
+        SELECT
+        p.id AS productId,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        p.specification,
+        p.unit,
+        p.cost_price AS costPrice,
+        SUM(CASE WHEN w.warehouse_name LIKE '%上海%' THEN i.quantity ELSE 0 END) AS shInventory,
+        SUM(CASE WHEN w.warehouse_name LIKE '%天津%' THEN i.quantity ELSE 0 END) AS tjInventory,
+        SUM(CASE WHEN w.warehouse_name LIKE '%深圳%' THEN i.quantity ELSE 0 END) AS szInventory,
+        SUM(i.quantity) AS totalInventory
+        FROM products p
+        LEFT JOIN inventory i ON p.id = i.product_id AND i.is_deleted = 0
+        LEFT JOIN warehouses w ON i.warehouse_id = w.id AND w.is_deleted = 0
+        <where>
+            p.is_deleted = 0
+            <if test="productCode != null and productCode != ''">
+                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+        </where>
+        GROUP BY p.id
+        ORDER BY p.id ASC
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from inventory

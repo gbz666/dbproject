@@ -23,7 +23,14 @@ public class ProductsService{
 
     @Autowired
     private ProductCategoriesMapper productCategoriesMapper;
+    public String generateNextProductCode() {
+        Integer maxNum = productsMapper.getMaxProductCodeNumber();
+        int nextNum = (maxNum == null) ? 1 : maxNum + 1;
 
+        // 格式化为 P + 4位数字，例如 P0001
+        // %04d 表示如果不足4位则前面补0
+        return String.format("P%04d", nextNum);
+    }
     // ... convertRequestToProducts 方法（用于 DTO -> POJO，逻辑不变）
     private Products convertRequestToProducts(ProductRequest request) {
         // ... 实现 details here (确保 categoryName -> categoryId 逻辑)
@@ -46,7 +53,7 @@ public class ProductsService{
         Products product = convertRequestToProducts(request);
 
         // 【重要】生成业务编码
-        product.setProductCode("P" + UUID.randomUUID().toString().substring(0, 7).toUpperCase());
+        product.setProductCode(generateNextProductCode());
 
         // 审计字段设置
         product.setCreatedById(currentStaffId);
@@ -117,14 +124,16 @@ public class ProductsService{
             int pageSize,
             String productName,
             String categoryName,
-            String productCode) {
+            String productCode,
+            String productType
+            ) {
 
         // 1. 启动 PageHelper 分页功能
         // 仅对紧随其后的第一次查询生效
         PageHelper.startPage(pageNum, pageSize);
 
         // 2. 调用 Mapper 的查询方法（SQL 不变，PageHelper 会自动添加 LIMIT/OFFSET）
-        List<ProductVO> productList = productsMapper.selectVOList(productName, categoryName,productCode);
+        List<ProductVO> productList = productsMapper.selectVOList(productName, categoryName,productCode,productType);
 
         // 3. 将 List 封装为 PageInfo 返回
         return new PageInfo<>(productList);

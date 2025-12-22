@@ -37,7 +37,7 @@
         from sales_orders
         where  id = #{id} 
     </select>
-    <resultMap id="SalesOrderVOResultMap" type="com.database.vo.SalesOrderVO">
+    <resultMap id="BaseOrderVOResultMap" type="com.database.vo.SalesOrderVO">
         <id property="id" column="orderId" />
         <result property="orderCode" column="orderCode" />
         <result property="orderDate" column="orderDate" />
@@ -47,36 +47,26 @@
         <result property="followUpPersonName" column="followUpPersonName" />
         <result property="ownerName" column="ownerName" />
         <result property="note" column="note" />
-
-        <collection property="items" ofType="com.database.vo.SalesOrderVO$OrderItemDTO">
-            <result property="productCode" column="productCode" />
-            <result property="productName" column="productName" />
-            <result property="quantity" column="quantity" />
-            <result property="unitPrice" column="unitPrice" />
-            <result property="salesCount" column="salesCount" />
-        </collection>
     </resultMap>
 
-    <select id="selectSalesOrderByPage" resultMap="SalesOrderVOResultMap">
-        SELECT
-        so.id AS orderId,  -- 必须查出ID，否则MyBatis无法分组
+    <select id="selectSalesOrderBaseInfo" resultMap="BaseOrderVOResultMap">
+        SELECT DISTINCT
+        so.id AS orderId,
         so.order_code AS orderCode,
         so.order_date AS orderDate,
         c.customer_code AS customerCode,
         c.customer_name AS customerName,
-        p.product_code AS productCode,
-        p.product_name AS productName,
-        soi.quantity AS quantity,
-        soi.unit_price AS unitPrice,
-        (soi.quantity * soi.unit_price) AS salesCount,
         s1.staff_name AS salesPersonName,
         s2.staff_name AS followUpPersonName,
         s3.staff_name AS ownerName,
         so.note AS note
         FROM sales_orders so
-        INNER JOIN sales_order_items soi ON so.id = soi.sales_order_id
         INNER JOIN customers c ON so.customer_id = c.id
-        INNER JOIN products p ON soi.product_id = p.id
+        -- 仅当需要按产品过滤时，才执行 EXISTS 联表过滤，避免 DISTINCT 压力过大
+        <if test="(productCode != null and productCode != '') or (productName != null and productName != '')">
+            INNER JOIN sales_order_items soi_filter ON so.id = soi_filter.sales_order_id
+            INNER JOIN products p_filter ON soi_filter.product_id = p_filter.id
+        </if>
         LEFT JOIN staffs s1 ON so.sales_person_id = s1.id
         LEFT JOIN staffs s2 ON so.follow_up_person_id = s2.id
         LEFT JOIN staffs s3 ON so.owner_id = s3.id
@@ -85,11 +75,39 @@
             <if test="customerName != null and customerName != ''">
                 AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
             </if>
+            <if test="customerCode != null and customerCode != ''">
+                AND c.customer_code LIKE CONCAT('%', #{customerCode}, '%')
+            </if>
             <if test="salesOrderCode != null and salesOrderCode != ''">
                 AND so.order_code LIKE CONCAT('%', #{salesOrderCode}, '%')
             </if>
+            <if test="productCode != null and productCode != ''">
+                AND p_filter.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p_filter.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
         </where>
+        ORDER BY so.id DESC
     </select>
+
+    <select id="selectItemsByOrderIds" resultType="com.database.vo.SalesOrderVO$OrderItemDTO">
+        SELECT
+        soi.sales_order_id AS orderId,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        soi.quantity AS quantity,
+        soi.unit_price AS unitPrice,
+        (soi.quantity * soi.unit_price) AS salesCount
+        FROM sales_order_items soi
+        INNER JOIN products p ON soi.product_id = p.id
+        WHERE soi.sales_order_id IN
+        <foreach collection="orderIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+
     <select id="countOrdersByMonth" resultType="int">
         SELECT COUNT(*)
         FROM sales_orders

@@ -25,16 +25,12 @@ public interface ProductsMapper {
 
     int updateByPrimaryKeySelective(Products record);
 
-    int updateByPrimaryKey(Products record);
-
-
-    List<Products> selectProductsList(@Param("productName") String productName, @Param("categoryId") Integer categoryId);
-
-
+    Integer getMaxProductCodeNumber();
     List<ProductVO> selectVOList(
             @Param("productName") String productName,
             @Param("categoryName") String categoryName,
-            @Param("productCode" ) String productCode
+            @Param("productCode" ) String productCode,
+            @Param("productType")String productType
     );
     /**
      * 【扩展】逻辑删除产品 (更新 is_deleted=1 和 deleted_at)

@@ -42,8 +42,26 @@
               </el-icon>
               采购订单
             </el-menu-item>
+            <el-menu-item index="/basic/outBound">
+              <el-icon>
+                <Goods />
+              </el-icon>
+              出库管理
+            </el-menu-item>
+            <el-menu-item index="/basic/stockIn">
+              <el-icon>
+                <Goods />
+              </el-icon>
+              入库管理
+            </el-menu-item>
+            <el-menu-item index="/basic/inventory">
+              <el-icon>
+                <Goods />
+              </el-icon>
+              库存展示
+            </el-menu-item>
           </el-sub-menu>
-
+<!-- 
           <el-sub-menu index="2">
             <template #title>
               <el-icon>
@@ -51,7 +69,7 @@
               </el-icon>
               <span>销售管理 (待开发)</span>
             </template>
-          </el-sub-menu>
+          </el-sub-menu> -->
 
         </el-menu>
       </el-aside>

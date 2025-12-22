@@ -144,6 +144,7 @@
 
     <resultMap id="OutboundDetailMap" type="com.database.vo.OutboundDetailVO">
         <result column="order_code" property="salesOrderCode"/>
+        <result column="id" property="id"/>
         <result column="order_date" property="orderDate"/>
         <result column="customer_name" property="customerName"/>
         <result column="product_code" property="productCode"/>
@@ -160,6 +161,7 @@
 
     <select id="selectOutboundDetails" resultMap="OutboundDetailMap">
         SELECT
+        oo.id ,
         so.order_code,
         so.order_date,
         c.customer_name,
@@ -178,9 +180,9 @@
         JOIN sales_order_items soi ON so.id = soi.sales_order_id
         JOIN products p ON soi.product_id = p.id
         -- 使用 LEFT JOIN 确保即便没有出库记录也能查到订单，若只需查已出库的改为 INNER JOIN
-        LEFT JOIN outbound_orders oo ON oo.sales_order_id = so.id AND oo.is_deleted = 0
-        LEFT JOIN outbound_order_items ooi ON oo.id = ooi.outbound_order_id AND ooi.product_id = p.id
-        LEFT JOIN warehouses w ON ooi.warehouse_id = w.id
+        inner JOIN outbound_orders oo ON oo.sales_order_id = so.id AND oo.is_deleted = 0
+        left JOIN outbound_order_items ooi ON oo.id = ooi.outbound_order_id AND ooi.product_id = p.id
+        left JOIN warehouses w ON ooi.warehouse_id = w.id
         <where>
             AND so.is_deleted = 0
             <if test="salesOrderCode != null and salesOrderCode != ''">
