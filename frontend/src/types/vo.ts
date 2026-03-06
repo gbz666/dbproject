@@ -59,6 +59,7 @@ export interface PurchaseOrderVO {
   orderDate: string;
   supplierCode: string;
   supplierName: string;
+  supplierId: number;
   note: string;
   totalAmount: number;
   items: PurchaseOrderItemVO[];
@@ -91,6 +92,7 @@ export interface OrderItemVO {
   productName: string; // 注意：对应后端 VO 中的 ProductName (驼峰可能需注意一致性)
   quantity: number;
   unitPrice: number;
+  costPrice:number;
   salesCount: number;
   salesTotalCount: number;
 }
@@ -157,4 +159,76 @@ export interface InventoryVO {
   tjInventory: number; // 天津
   szInventory: number; // 深圳
   totalInventory: number;
+}
+
+/** 进项发票明细行（列表/编辑用），对应后端 PurchaseInvoiceDetails */
+export interface PurchaseInvoiceDetailVO {
+  id?: number;
+  invoiceId?: number;
+  itemName: string;
+  specification: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  amountExclusiveTax: number;
+  taxRate: number;
+  taxAmount: number;
+  amountInclusiveTax: number;
+  remark?: string;
+}
+
+/** 进项发票 VO，对应后端 PurchaseInvoiceVO；列表为发票全貌（总金额、明细数），按 id 查询带 details */
+export interface PurchaseInvoiceVO {
+  id: number;
+  purchaseCode: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  supplierId?: number;
+  supplierName: string;
+  orderDate?: string;
+  orderNote?: string;
+  remark?: string;
+  /** 列表展示：发票含税总金额、明细行数 */
+  totalAmount?: number;
+  detailCount?: number;
+  /** 按 id 查询时由服务端填充首行明细，列表不展示 */
+  itemName?: string;
+  specification?: string;
+  unit?: string;
+  quantity?: number;
+  unitPrice?: number;
+  amountExclusiveTax?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  amountInclusiveTax?: number;
+  lastInvoiceDate?: string;
+  avgInvoiceDays?: number;
+  totalInvoicedAmount?: number;
+  invoiceCount?: number;
+  pendingInvoiceAmount?: number;
+  /** 按 id 查询时的完整明细列表 */
+  details?: PurchaseInvoiceDetailVO[];
+}
+
+/** 销项发票 VO，对应后端 SalesInvoiceVO */
+export interface SalesInvoiceVO {
+  id: number;
+  // 来自 DTO 的字段
+  salesOrderCode: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  companyName: string;
+  itemName: string;
+  specification: string;
+  unit: string;
+  quantity: number;
+  unitPriceInclusiveTax: number;
+  amountInclusiveTax: number;
+  amountExclusiveTax: number;
+  taxAmount: number;
+  remark?: string;
+
+  // 统计字段
+  avgInvoiceDays?: number;        // 平均开票时间
+  pendingInvoiceAmount?: number;  // 未开金额
 }

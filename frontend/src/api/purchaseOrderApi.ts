@@ -19,29 +19,29 @@ export const purchaseOrderApi = {
     });
   },
 
-  /** 新增采购订单 */
-  create(dto: PurchaseOrderDto, currentUserId: number) {
+  /** 新增采购订单（后端参数名：currentStaffId） */
+  create(dto: PurchaseOrderDto, currentStaffId: number) {
     return httpClient<string>("/api/purchaseOrder", {
       method: "POST",
       body: dto,
-      params: { currentUserId },
+      params: { currentStaffId },
     });
   },
 
-  /** 更新采购订单 */
-  update(id: number, dto: PurchaseOrderDto, currentUserId: number) {
+  /** 更新采购订单（后端参数名：currentStaffId） */
+  update(id: number, dto: PurchaseOrderDto, currentStaffId: number) {
     return httpClient<string>(`/api/purchaseOrder/${id}`, {
       method: "PUT",
       body: dto,
-      params: { currentUserId },
+      params: { currentStaffId },
     });
   },
 
-  /** 删除采购订单 */
-  remove(id: number, currentUserId: number) {
+  /** 删除采购订单（后端参数名：currentStaffId） */
+  remove(id: number, currentStaffId: number) {
     return httpClient<string>(`/api/purchaseOrder/${id}`, {
       method: "DELETE",
-      params: { currentUserId },
+      params: { currentStaffId },
     });
   },
 };

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.PurchaseOrderItemsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.PurchaseOrderItems">
+            <id property="id" column="id" />
+            <result property="purchaseOrderId" column="purchase_order_id" />
+            <result property="productId" column="product_id" />
+            <result property="quantity" column="quantity" />
+            <result property="unitPrice" column="unit_price" />
+            <result property="lineTotal" column="line_total" />
+            <result property="remark" column="remark" />
+            <result property="createdAt" column="created_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="updatedById" column="updated_by_id" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,purchase_order_id,product_id,quantity,unit_price,line_total,
+        remark,created_at,created_by_id,updated_at,updated_by_id
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from purchase_order_items
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from purchase_order_items
+        where  id = #{id} 
+    </delete>
+    <delete id="deleteByPurchaseOrderId">
+        delete from purchase_order_items  as poi where poi.purchase_order_id=#{id}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PurchaseOrderItems" useGeneratedKeys="true">
+        insert into purchase_order_items
+        ( id,purchase_order_id,product_id,quantity,unit_price,line_total,
+        remark,created_at,created_by_id,updated_at,updated_by_id)
+        values (#{id},#{purchaseOrderId},#{productId},#{quantity},#{unitPrice},#{lineTotal},
+        #{remark},#{createdAt},#{createdById},#{updatedAt},#{updatedById})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PurchaseOrderItems" useGeneratedKeys="true">
+        insert into purchase_order_items
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="purchaseOrderId != null">purchase_order_id,</if>
+                <if test="productId != null">product_id,</if>
+                <if test="quantity != null">quantity,</if>
+                <if test="unitPrice != null">unit_price,</if>
+                <if test="lineTotal != null">line_total,</if>
+                <if test="remark != null">remark,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="purchaseOrderId != null">#{purchaseOrderId},</if>
+                <if test="productId != null">#{productId},</if>
+                <if test="quantity != null">#{quantity},</if>
+                <if test="unitPrice != null">#{unitPrice},</if>
+                <if test="lineTotal != null">#{lineTotal},</if>
+                <if test="remark != null">#{remark},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.PurchaseOrderItems">
+        update purchase_order_items
+        <set>
+                <if test="purchaseOrderId != null">
+                    purchase_order_id = #{purchaseOrderId},
+                </if>
+                <if test="productId != null">
+                    product_id = #{productId},
+                </if>
+                <if test="quantity != null">
+                    quantity = #{quantity},
+                </if>
+                <if test="unitPrice != null">
+                    unit_price = #{unitPrice},
+                </if>
+                <if test="lineTotal != null">
+                    line_total = #{lineTotal},
+                </if>
+                <if test="remark != null">
+                    remark = #{remark},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.PurchaseOrderItems">
+        update purchase_order_items
+        set 
+            purchase_order_id =  #{purchaseOrderId},
+            product_id =  #{productId},
+            quantity =  #{quantity},
+            unit_price =  #{unitPrice},
+            line_total =  #{lineTotal},
+            remark =  #{remark},
+            created_at =  #{createdAt},
+            created_by_id =  #{createdById},
+            updated_at =  #{updatedAt},
+            updated_by_id =  #{updatedById}
+        where   id = #{id} 
+    </update>
+</mapper>

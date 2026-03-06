@@ -15,11 +15,6 @@ public class ProductCategories {
     private Integer id;
 
     /**
-     * 分类编码(展示用)
-     */
-    private String categoryCode;
-
-    /**
      * 分类名称
      */
     private String categoryName;
@@ -52,7 +47,6 @@ public class ProductCategories {
         }
         ProductCategories other = (ProductCategories) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getCategoryCode() == null ? other.getCategoryCode() == null : this.getCategoryCode().equals(other.getCategoryCode()))
             && (this.getCategoryName() == null ? other.getCategoryName() == null : this.getCategoryName().equals(other.getCategoryName()))
             && (this.getDescription() == null ? other.getDescription() == null : this.getDescription().equals(other.getDescription()))
             && (this.getCreatedAt() == null ? other.getCreatedAt() == null : this.getCreatedAt().equals(other.getCreatedAt()))
@@ -64,7 +58,6 @@ public class ProductCategories {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result + ((getCategoryCode() == null) ? 0 : getCategoryCode().hashCode());
         result = prime * result + ((getCategoryName() == null) ? 0 : getCategoryName().hashCode());
         result = prime * result + ((getDescription() == null) ? 0 : getDescription().hashCode());
         result = prime * result + ((getCreatedAt() == null) ? 0 : getCreatedAt().hashCode());
@@ -79,7 +72,6 @@ public class ProductCategories {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", id=").append(id);
-        sb.append(", categoryCode=").append(categoryCode);
         sb.append(", categoryName=").append(categoryName);
         sb.append(", description=").append(description);
         sb.append(", createdAt=").append(createdAt);

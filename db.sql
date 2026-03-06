@@ -506,7 +506,8 @@ CREATE TABLE sales_invoices (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '销项发票主键ID',
     invoice_no VARCHAR(80) UNIQUE NOT NULL COMMENT '发票号/发票编码(唯一)',
     customer_id BIGINT NOT NULL COMMENT '开票客户ID(customers.id)',
-    related_outbound_id BIGINT NULL COMMENT '关联出库单ID(outbound_orders.id)',
+    sales_order_id BIGINT NULL COMMENT '关联销售订单ID(sales_orders.id)，发票直接关联销售订单',
+    related_outbound_id BIGINT NULL COMMENT '关联出库单ID(outbound_orders.id)，可选，用于记录出库信息',
     amount DECIMAL(18,2) DEFAULT 0.00 COMMENT '发票金额(含税)',
     invoice_date DATE COMMENT '开票日期',
     status VARCHAR(50) DEFAULT 'unsettled' COMMENT '发票状态(unsettled/settled)',
@@ -521,6 +522,8 @@ CREATE TABLE sales_invoices (
 
     CONSTRAINT fk_sales_invoices_customer FOREIGN KEY (customer_id)
         REFERENCES customers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_sales_invoices_sales_order FOREIGN KEY (sales_order_id)
+        REFERENCES sales_orders(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_sales_invoices_outbound FOREIGN KEY (related_outbound_id)
         REFERENCES outbound_orders(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_sales_invoices_created_by FOREIGN KEY (created_by_id)
@@ -536,11 +539,11 @@ CREATE TABLE sales_invoice_details (
     specification VARCHAR(255) COMMENT '规格型号',
     unit VARCHAR(50) DEFAULT '个' COMMENT '计量单位',
     quantity DECIMAL(18,4) DEFAULT 0.0000 COMMENT '数量',
-    unit_price DECIMAL(18,2) DEFAULT 0.00 COMMENT '单价',
-    amount_exclusive_tax DECIMAL(18,2) DEFAULT 0.00 COMMENT '不含税金额',
-    tax_rate DECIMAL(5,4) DEFAULT 0.0000 COMMENT '税率',
-    tax_amount DECIMAL(18,2) DEFAULT 0.00 COMMENT '税额',
-    amount_inclusive_tax DECIMAL(18,2) DEFAULT 0.00 COMMENT '含税金额',
+    unit_price DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '单价(支持最多 8 位小数)',
+    amount_exclusive_tax DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '不含税金额',
+    tax_rate DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '税率',
+    tax_amount DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '税额',
+    amount_inclusive_tax DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '含税金额',
     remark VARCHAR(255) COMMENT '备注',
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -562,8 +565,9 @@ CREATE TABLE purchase_invoices (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '进项发票主键ID',
     invoice_no VARCHAR(80) UNIQUE NOT NULL COMMENT '发票号/发票编码(唯一)',
     supplier_id BIGINT NOT NULL COMMENT '供应商ID(suppliers.id)',
-    related_stock_in_id BIGINT NULL COMMENT '关联入库单ID(stock_ins.id)',
-    amount DECIMAL(18,2) DEFAULT 0.00 COMMENT '发票金额(含税)',
+    purchase_order_id BIGINT NULL COMMENT '关联采购订单ID(purchase_orders.id)，发票直接关联采购订单',
+    related_stock_in_id BIGINT NULL COMMENT '关联入库单ID(stock_ins.id)，可选，用于记录入库信息',
+    amount DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '发票金额(含税，支持最多 8 位小数)',
     invoice_date DATE COMMENT '开票日期',
     status VARCHAR(50) DEFAULT 'unsettled' COMMENT '发票状态(unsettled/settled)',
     remark VARCHAR(255) COMMENT '备注',
@@ -577,6 +581,8 @@ CREATE TABLE purchase_invoices (
 
     CONSTRAINT fk_purchase_invoices_supplier FOREIGN KEY (supplier_id)
         REFERENCES suppliers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_purchase_invoices_purchase_order FOREIGN KEY (purchase_order_id)
+        REFERENCES purchase_orders(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_purchase_invoices_stockin FOREIGN KEY (related_stock_in_id)
         REFERENCES stock_ins(id) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_purchase_invoices_created_by FOREIGN KEY (created_by_id)
@@ -592,11 +598,11 @@ CREATE TABLE purchase_invoice_details (
     specification VARCHAR(255) COMMENT '规格',
     unit VARCHAR(50) COMMENT '计量单位',
     quantity DECIMAL(18,4) DEFAULT 0.0000 COMMENT '数量',
-    unit_price DECIMAL(18,2) DEFAULT 0.00 COMMENT '单价',
-    amount_exclusive_tax DECIMAL(18,2) DEFAULT 0.00 COMMENT '不含税金额',
-    tax_rate DECIMAL(5,4) DEFAULT 0.0000 COMMENT '税率',
-    tax_amount DECIMAL(18,2) DEFAULT 0.00 COMMENT '税额',
-    amount_inclusive_tax DECIMAL(18,2) DEFAULT 0.00 COMMENT '含税金额',
+    unit_price DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '单价(支持最多 8 位小数)',
+    amount_exclusive_tax DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '不含税金额',
+    tax_rate DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '税率',
+    tax_amount DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '税额',
+    amount_inclusive_tax DECIMAL(18,8) DEFAULT 0.00000000 COMMENT '含税金额',
     remark VARCHAR(255) COMMENT '备注',
 
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

@@ -159,4 +159,22 @@
             updated_by_id =  #{updatedById}
         where   id = #{id} 
     </update>
+    <!-- 根据 invoice_id 批量更新对应的明细（当前场景为一票一明细） -->
+    <update id="updateByInvoiceId">
+        UPDATE sales_invoice_details
+        <set>
+            <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="specification != null">specification = #{specification},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="amountExclusiveTax != null">amount_exclusive_tax = #{amountExclusiveTax},</if>
+            <if test="taxAmount != null">tax_amount = #{taxAmount},</if>
+            <if test="amountInclusiveTax != null">amount_inclusive_tax = #{amountInclusiveTax},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updatedById != null">updated_by_id = #{updatedById},</if>
+            updated_at = NOW()
+        </set>
+        WHERE invoice_id = #{invoiceId}
+    </update>
 </mapper>

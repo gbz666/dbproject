@@ -200,7 +200,8 @@
         po.total_amount AS totalAmount,
         po.note,
         s.supplier_code AS supplierCode,
-        s.supplier_name AS supplierName
+        s.supplier_name AS supplierName,
+        s.id AS supplierId
         FROM purchase_orders po
         inner JOIN suppliers s ON po.supplier_id = s.id
         <where>

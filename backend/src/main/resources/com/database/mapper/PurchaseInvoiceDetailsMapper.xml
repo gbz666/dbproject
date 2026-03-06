@@ -33,8 +33,20 @@
         select
         <include refid="Base_Column_List" />
         from purchase_invoice_details
-        where  id = #{id} 
+        where  id = #{id}
     </select>
+
+    <select id="selectByInvoiceId" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from purchase_invoice_details
+        where invoice_id = #{invoiceId}
+        order by id
+    </select>
+
+    <delete id="deleteByInvoiceId" parameterType="java.lang.Long">
+        delete from purchase_invoice_details where invoice_id = #{invoiceId}
+    </delete>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from purchase_invoice_details

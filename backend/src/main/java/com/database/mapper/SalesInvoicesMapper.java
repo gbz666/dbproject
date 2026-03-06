@@ -1,12 +1,14 @@
 package com.database.mapper;
 
+import com.database.dto.SalesInvoiceQuery;
 import com.database.pojo.SalesInvoices;
+import com.database.vo.SalesInvoiceVO;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
-* @author 高柏舟
-* @description 针对表【sales_invoices(销项发票表)】的数据库操作Mapper
-* @createDate 2025-12-10 19:58:56
-* @Entity com.database.pojo.SalesInvoices
+* 销项发票表 Mapper
 */
 public interface SalesInvoicesMapper {
 
@@ -22,4 +24,20 @@ public interface SalesInvoicesMapper {
 
     int updateByPrimaryKey(SalesInvoices record);
 
+    /**
+     * 分页查询销项发票 VO 列表（含统计字段）
+     */
+    List<SalesInvoiceVO> selectInvoicesPage(@Param("query") SalesInvoiceQuery query);
+
+    /**
+     * 根据主键查询完整 VO
+     */
+    SalesInvoiceVO selectVOById(Long id);
+
+    /**
+     * 软删除
+     */
+    void softDelete(Long id);
+
 }
+

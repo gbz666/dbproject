@@ -83,7 +83,7 @@
         </div>
         
         <div class="header-right">
-          <span class="user-info">欢迎，{{ authStore.user?.username }}</span>
+          <span class="user-info">欢迎，{{ authStore.user?.staffName }}</span>
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               <el-icon><User /></el-icon>

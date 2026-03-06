@@ -45,6 +45,22 @@ public class Result<T> {
     }
 
     /**
+     * 成功，带自定义消息，无返回数据
+     */
+    public static Result<Void> success(String message) {
+        return new Result<>(200, message, null);
+    }
+
+    /**
+     * 成功，带自定义消息，无返回数据（明确返回 Void 类型）
+     * 用于避免与 success(T data) 方法重载时的类型推断问题
+     */
+    @SuppressWarnings("unused")
+    public static Result<Void> successMessage(String message) {
+        return new Result<>(200, message, null);
+    }
+
+    /**
      * 成功，带返回数据
      */
     public static <T> Result<T> success(T data) {
@@ -66,9 +82,16 @@ public class Result<T> {
     /**
      * 业务失败，带默认消息
      */
-    public static Result<Void> fail(int code,String message) {
+    public static Result<Void> fail(int code, String message) {
         // 通常使用 400 或业务自定义状态码
-        return new Result<>(400, message, null);
+        return new Result<>(code, message, null);
+    }
+
+    /**
+     * 业务失败，带自定义状态码和消息，支持泛型
+     */
+    public static <T> Result<T> fail(int code, String message, T data) {
+        return new Result<>(code, message, data);
     }
 
     /**

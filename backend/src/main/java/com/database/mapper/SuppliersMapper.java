@@ -13,6 +13,11 @@ public interface SuppliersMapper {
 
     // ----------------- Select -----------------
     /**
+     * 根据主键 ID 查询供应商（仅返回未删除的记录）
+     */
+    Suppliers selectByPrimaryKey(@Param("id") Long id);
+
+    /**
      * 分页查询供应商详情列表 (包含关联员工姓名)
      */
     List<SupplierDetailVO> selectSupplierDetailsByPage(@RequestParam("supplierCode")String supplierCode,@RequestParam("supplierName") String supplierName);

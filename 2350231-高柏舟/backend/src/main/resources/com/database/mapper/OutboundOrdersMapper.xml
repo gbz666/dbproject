@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.OutboundOrdersMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.OutboundOrders">
+            <id property="id" column="id" />
+            <result property="outboundCode" column="outbound_code" />
+            <result property="salesOrderId" column="sales_order_id" />
+            <result property="outboundDate" column="outbound_date" />
+            <result property="status" column="status" />
+            <result property="remark" column="remark" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,outbound_code,sales_order_id,outbound_date,status,remark,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from outbound_orders
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from outbound_orders
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.OutboundOrders" useGeneratedKeys="true">
+        insert into outbound_orders
+        ( id,outbound_code,sales_order_id,outbound_date,status,remark,
+        created_at,updated_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at)
+        values (#{id},#{outboundCode},#{salesOrderId},#{outboundDate},#{status},#{remark},
+        #{createdAt},#{updatedAt},#{createdById},#{updatedById},#{isDeleted},
+        #{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.OutboundOrders" useGeneratedKeys="true">
+        insert into outbound_orders
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="outboundCode != null">outbound_code,</if>
+                <if test="salesOrderId != null">sales_order_id,</if>
+                <if test="outboundDate != null">outbound_date,</if>
+                <if test="status != null">status,</if>
+                <if test="remark != null">remark,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="outboundCode != null">#{outboundCode},</if>
+                <if test="salesOrderId != null">#{salesOrderId},</if>
+                <if test="outboundDate != null">#{outboundDate},</if>
+                <if test="status != null">#{status},</if>
+                <if test="remark != null">#{remark},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.OutboundOrders">
+        update outbound_orders
+        <set>
+                <if test="outboundCode != null">
+                    outbound_code = #{outboundCode},
+                </if>
+                <if test="salesOrderId != null">
+                    sales_order_id = #{salesOrderId},
+                </if>
+                <if test="outboundDate != null">
+                    outbound_date = #{outboundDate},
+                </if>
+                <if test="status != null">
+                    status = #{status},
+                </if>
+                <if test="remark != null">
+                    remark = #{remark},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+                updated_at = NOW()
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.OutboundOrders">
+        update outbound_orders
+        set 
+            outbound_code =  #{outboundCode},
+            sales_order_id =  #{salesOrderId},
+            outbound_date =  #{outboundDate},
+            status =  #{status},
+            remark =  #{remark},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+
+
+
+
+    <update id="softDeleteOrder">
+        UPDATE outbound_orders
+        SET is_deleted = 1,
+            deleted_at = NOW(),
+            updated_by_id = #{operatorId}
+        WHERE id = #{id}
+    </update>
+
+    <resultMap id="OutboundDetailMap" type="com.database.vo.OutboundDetailVO">
+        <result column="order_code" property="salesOrderCode"/>
+        <result column="id" property="id"/>
+        <result column="order_date" property="orderDate"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="product_code" property="productCode"/>
+        <result column="order_qty" property="orderQuantity"/>
+        <result column="order_remark" property="orderRemark"/>
+        <result column="first_out_date" property="firstOutboundDate"/>
+        <result column="serial_numbers" property="serialNumbers"/>
+        <collection property="warehouseDetails" ofType="com.database.vo.WarehouseStockVO">
+            <result column="warehouse_id" property="warehouseId"/>
+            <result column="warehouse_name" property="warehouseName"/>
+            <result column="item_qty" property="quantity"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectOutboundDetails" resultMap="OutboundDetailMap">
+        SELECT
+        oo.id ,
+        so.order_code,
+        so.order_date,
+        c.customer_name,
+        p.product_code,
+        soi.quantity AS order_qty,
+        so.note AS order_remark,
+        (SELECT MIN(oo_sub.outbound_date)
+        FROM outbound_orders oo_sub
+        WHERE oo_sub.sales_order_id = so.id AND oo_sub.is_deleted = 0) AS first_out_date,
+        w.id AS warehouse_id,
+        w.warehouse_name,
+        ooi.quantity AS item_qty,
+        ooi.serial_numbers
+        FROM sales_orders so
+        JOIN customers c ON so.customer_id = c.id
+        JOIN sales_order_items soi ON so.id = soi.sales_order_id
+        JOIN products p ON soi.product_id = p.id
+        -- 使用 LEFT JOIN 确保即便没有出库记录也能查到订单，若只需查已出库的改为 INNER JOIN
+        inner JOIN outbound_orders oo ON oo.sales_order_id = so.id AND oo.is_deleted = 0
+        left JOIN outbound_order_items ooi ON oo.id = ooi.outbound_order_id AND ooi.product_id = p.id
+        left JOIN warehouses w ON ooi.warehouse_id = w.id
+        <where>
+            AND so.is_deleted = 0
+            <if test="salesOrderCode != null and salesOrderCode != ''">
+                AND so.order_code LIKE CONCAT('%', #{salesOrderCode}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+            <if test="serialNumber != null and serialNumber != ''">
+                AND ooi.serial_numbers LIKE CONCAT('%', #{serialNumber}, '%')
+            </if>
+
+        </where>
+        ORDER BY so.order_date DESC, so.order_code DESC
+    </select>
+</mapper>

@@ -39,6 +39,21 @@ public class Staffs {
     private String title;
 
     /**
+     * 登录密码（BCrypt加密）
+     */
+    private String password;
+
+    /**
+     * 账户状态：0=禁用，1=启用
+     */
+    private Integer status;
+
+    /**
+     * 最后登录时间
+     */
+    private java.util.Date lastLoginAt;
+
+    /**
      * 创建人ID，指向 staffs.id
      */
     private Long createdById;

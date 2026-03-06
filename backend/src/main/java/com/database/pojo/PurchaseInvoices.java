@@ -26,7 +26,12 @@ public class PurchaseInvoices {
     private Long supplierId;
 
     /**
-     * 关联入库单ID(stock_ins.id)
+     * 关联采购订单ID(purchase_orders.id)，发票直接关联采购订单
+     */
+    private Long purchaseOrderId;
+
+    /**
+     * 关联入库单ID(stock_ins.id)，可选，用于记录入库信息
      */
     private Long relatedStockInId;
 
@@ -95,6 +100,7 @@ public class PurchaseInvoices {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getInvoiceNo() == null ? other.getInvoiceNo() == null : this.getInvoiceNo().equals(other.getInvoiceNo()))
             && (this.getSupplierId() == null ? other.getSupplierId() == null : this.getSupplierId().equals(other.getSupplierId()))
+            && (this.getPurchaseOrderId() == null ? other.getPurchaseOrderId() == null : this.getPurchaseOrderId().equals(other.getPurchaseOrderId()))
             && (this.getRelatedStockInId() == null ? other.getRelatedStockInId() == null : this.getRelatedStockInId().equals(other.getRelatedStockInId()))
             && (this.getAmount() == null ? other.getAmount() == null : this.getAmount().equals(other.getAmount()))
             && (this.getInvoiceDate() == null ? other.getInvoiceDate() == null : this.getInvoiceDate().equals(other.getInvoiceDate()))
@@ -115,6 +121,7 @@ public class PurchaseInvoices {
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getInvoiceNo() == null) ? 0 : getInvoiceNo().hashCode());
         result = prime * result + ((getSupplierId() == null) ? 0 : getSupplierId().hashCode());
+        result = prime * result + ((getPurchaseOrderId() == null) ? 0 : getPurchaseOrderId().hashCode());
         result = prime * result + ((getRelatedStockInId() == null) ? 0 : getRelatedStockInId().hashCode());
         result = prime * result + ((getAmount() == null) ? 0 : getAmount().hashCode());
         result = prime * result + ((getInvoiceDate() == null) ? 0 : getInvoiceDate().hashCode());
@@ -138,6 +145,7 @@ public class PurchaseInvoices {
         sb.append(", id=").append(id);
         sb.append(", invoiceNo=").append(invoiceNo);
         sb.append(", supplierId=").append(supplierId);
+        sb.append(", purchaseOrderId=").append(purchaseOrderId);
         sb.append(", relatedStockInId=").append(relatedStockInId);
         sb.append(", amount=").append(amount);
         sb.append(", invoiceDate=").append(invoiceDate);

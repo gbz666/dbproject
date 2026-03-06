@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.InventoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.Inventory">
+            <id property="productId" column="product_id" />
+            <id property="warehouseId" column="warehouse_id" />
+            <result property="quantity" column="quantity" />
+            <result property="reservedQuantity" column="reserved_quantity" />
+            <result property="lastStockInAt" column="last_stock_in_at" />
+            <result property="lastStockOutAt" column="last_stock_out_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdAt" column="created_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        product_id,warehouse_id,quantity,reserved_quantity,last_stock_in_at,last_stock_out_at,
+        updated_at,created_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from inventory
+        where  product_id = #{productId} AND warehouse_id = #{warehouseId} 
+    </select>
+    <select id="selectProductNum" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(quantity), 0)
+        FROM inventory
+        WHERE product_id = #{productId}
+          AND is_deleted = 0
+    </select>
+    <select id="selectInventoryDetails" resultType="com.database.vo.InventoryVO">
+        SELECT
+        p.id AS productId,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        p.specification,
+        p.unit,
+        p.cost_price AS costPrice,
+        SUM(CASE WHEN w.warehouse_name LIKE '%上海%' THEN i.quantity ELSE 0 END) AS shInventory,
+        SUM(CASE WHEN w.warehouse_name LIKE '%天津%' THEN i.quantity ELSE 0 END) AS tjInventory,
+        SUM(CASE WHEN w.warehouse_name LIKE '%深圳%' THEN i.quantity ELSE 0 END) AS szInventory,
+        SUM(i.quantity) AS totalInventory
+        FROM products p
+        LEFT JOIN inventory i ON p.id = i.product_id AND i.is_deleted = 0
+        LEFT JOIN warehouses w ON i.warehouse_id = w.id AND w.is_deleted = 0
+        <where>
+            p.is_deleted = 0
+            <if test="productCode != null and productCode != ''">
+                AND p.product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+        </where>
+        GROUP BY p.id
+        ORDER BY p.id ASC
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from inventory
+        where  product_id = #{productId} AND warehouse_id = #{warehouseId} 
+    </delete>
+    <insert id="insert">
+        insert into inventory
+        ( product_id,warehouse_id,quantity,reserved_quantity,last_stock_in_at,last_stock_out_at,
+        updated_at,created_at,created_by_id,updated_by_id,is_deleted,
+        deleted_at)
+        values (#{productId},#{warehouseId},#{quantity},#{reservedQuantity},#{lastStockInAt},#{lastStockOutAt},
+        #{updatedAt},#{createdAt},#{createdById},#{updatedById},#{isDeleted},
+        #{deletedAt})
+    </insert>
+    <insert id="insertSelective">
+        insert into inventory
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="productId != null">product_id,</if>
+                <if test="warehouseId != null">warehouse_id,</if>
+                <if test="quantity != null">quantity,</if>
+                <if test="reservedQuantity != null">reserved_quantity,</if>
+                <if test="lastStockInAt != null">last_stock_in_at,</if>
+                <if test="lastStockOutAt != null">last_stock_out_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="productId != null">#{productId},</if>
+                <if test="warehouseId != null">#{warehouseId},</if>
+                <if test="quantity != null">#{quantity},</if>
+                <if test="reservedQuantity != null">#{reservedQuantity},</if>
+                <if test="lastStockInAt != null">#{lastStockInAt},</if>
+                <if test="lastStockOutAt != null">#{lastStockOutAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Inventory">
+        update inventory
+        <set>
+                <if test="quantity != null">
+                    quantity = #{quantity},
+                </if>
+                <if test="reservedQuantity != null">
+                    reserved_quantity = #{reservedQuantity},
+                </if>
+                <if test="lastStockInAt != null">
+                    last_stock_in_at = #{lastStockInAt},
+                </if>
+                <if test="lastStockOutAt != null">
+                    last_stock_out_at = #{lastStockOutAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   product_id = #{productId} AND warehouse_id = #{warehouseId} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Inventory">
+        update inventory
+        set 
+            quantity =  #{quantity},
+            reserved_quantity =  #{reservedQuantity},
+            last_stock_in_at =  #{lastStockInAt},
+            last_stock_out_at =  #{lastStockOutAt},
+            updated_at =  #{updatedAt},
+            created_at =  #{createdAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   product_id = #{productId} AND warehouse_id = #{warehouseId} 
+    </update>
+    <update id="updateInventory">
+        INSERT INTO inventory (product_id, warehouse_id, quantity, updated_at)
+        VALUES (#{productId}, #{warehouseId}, #{quantity}, NOW())
+        ON DUPLICATE KEY UPDATE
+                             quantity = quantity + VALUES(quantity),
+                             updated_at = NOW()
+    </update>
+</mapper>

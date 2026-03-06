@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.PurchaseOrdersMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.PurchaseOrders">
+            <id property="id" column="id" />
+            <result property="purchaseCode" column="purchase_code" />
+            <result property="orderDate" column="order_date" />
+            <result property="supplierId" column="supplier_id" />
+            <result property="orderStatus" column="order_status" />
+            <result property="totalAmount" column="total_amount" />
+            <result property="note" column="note" />
+            <result property="followUpPersonId" column="follow_up_person_id" />
+            <result property="ownerId" column="owner_id" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+            <result property="isDeleted" column="is_deleted" />
+            <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,purchase_code,order_date,supplier_id,order_status,total_amount,
+        note,follow_up_person_id,owner_id,created_at,updated_at,
+        created_by_id,updated_by_id,is_deleted,deleted_at
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from purchase_orders
+        where  id = #{id} 
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from purchase_orders
+        where  id = #{id} 
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PurchaseOrders" useGeneratedKeys="true">
+        insert into purchase_orders
+        ( id,purchase_code,order_date,supplier_id,order_status,total_amount,
+        note,follow_up_person_id,owner_id,created_at,updated_at,
+        created_by_id,updated_by_id,is_deleted,deleted_at)
+        values (#{id},#{purchaseCode},#{orderDate},#{supplierId},#{orderStatus},#{totalAmount},
+        #{note},#{followUpPersonId},#{ownerId},#{createdAt},#{updatedAt},
+        #{createdById},#{updatedById},#{isDeleted},#{deletedAt})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.PurchaseOrders" useGeneratedKeys="true">
+        insert into purchase_orders
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="purchaseCode != null">purchase_code,</if>
+                <if test="orderDate != null">order_date,</if>
+                <if test="supplierId != null">supplier_id,</if>
+                <if test="orderStatus != null">order_status,</if>
+                <if test="totalAmount != null">total_amount,</if>
+                <if test="note != null">note,</if>
+                <if test="followUpPersonId != null">follow_up_person_id,</if>
+                <if test="ownerId != null">owner_id,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+                <if test="isDeleted != null">is_deleted,</if>
+                <if test="deletedAt != null">deleted_at,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="purchaseCode != null">#{purchaseCode},</if>
+                <if test="orderDate != null">#{orderDate},</if>
+                <if test="supplierId != null">#{supplierId},</if>
+                <if test="orderStatus != null">#{orderStatus},</if>
+                <if test="totalAmount != null">#{totalAmount},</if>
+                <if test="note != null">#{note},</if>
+                <if test="followUpPersonId != null">#{followUpPersonId},</if>
+                <if test="ownerId != null">#{ownerId},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+                <if test="isDeleted != null">#{isDeleted},</if>
+                <if test="deletedAt != null">#{deletedAt},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.PurchaseOrders">
+        update purchase_orders
+        <set>
+                <if test="purchaseCode != null">
+                    purchase_code = #{purchaseCode},
+                </if>
+                <if test="orderDate != null">
+                    order_date = #{orderDate},
+                </if>
+                <if test="supplierId != null">
+                    supplier_id = #{supplierId},
+                </if>
+                <if test="orderStatus != null">
+                    order_status = #{orderStatus},
+                </if>
+                <if test="totalAmount != null">
+                    total_amount = #{totalAmount},
+                </if>
+                <if test="note != null">
+                    note = #{note},
+                </if>
+                <if test="followUpPersonId != null">
+                    follow_up_person_id = #{followUpPersonId},
+                </if>
+                <if test="ownerId != null">
+                    owner_id = #{ownerId},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+                <if test="isDeleted != null">
+                    is_deleted = #{isDeleted},
+                </if>
+                <if test="deletedAt != null">
+                    deleted_at = #{deletedAt},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.PurchaseOrders">
+        update purchase_orders
+        set 
+            purchase_code =  #{purchaseCode},
+            order_date =  #{orderDate},
+            supplier_id =  #{supplierId},
+            order_status =  #{orderStatus},
+            total_amount =  #{totalAmount},
+            note =  #{note},
+            follow_up_person_id =  #{followUpPersonId},
+            owner_id =  #{ownerId},
+            created_at =  #{createdAt},
+            updated_at =  #{updatedAt},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById},
+            is_deleted =  #{isDeleted},
+            deleted_at =  #{deletedAt}
+        where   id = #{id} 
+    </update>
+    <update id="updateToDeleteByPrimaryKey">
+        update purchase_orders as po set po.is_deleted=1,deleted_at=NOW() where po.id=#{id}
+    </update>
+
+
+
+    <select id="countOrdersByMonth" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM purchase_orders
+        WHERE purchase_code LIKE CONCAT('cg', #{monthStr}, '%')
+    </select>
+    <select id="selectOrderIdByCode" resultType="java.lang.Long">
+        select id from purchase_orders where purchase_code=#{purchaseOrderCode}
+    </select>
+
+
+
+    <resultMap id="OrderItemVOResultMap" type="com.database.vo.PurchaseOrderVO$OrderItemDTO">
+        <result property="productCode" column="product_code" />
+        <result property="productName" column="product_name" />
+        <result property="quantity" column="quantity" />
+        <result property="unitPrice" column="unit_price" />
+        <result property="lineTotal" column="line_total" />
+    </resultMap>
+
+    <resultMap id="PurchaseOrderVOResultMap" type="com.database.vo.PurchaseOrderVO">
+        <id property="id" column="id" />
+        <result property="purchaseCode" column="purchase_code" />
+        <result property="orderDate" column="order_date" />
+        <result property="note" column="note" />
+        <result property="supplierCode" column="supplier_code" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="totalAmount" column="total_amount"/>
+
+        <collection property="items"
+                    ofType="com.database.vo.PurchaseOrderVO$OrderItemDTO"
+                    select="selectItemsByOrderId"
+                    column="id" />
+    </resultMap>
+
+    <select id="selectMainOrderPage" resultType="com.database.vo.PurchaseOrderVO">
+        SELECT
+        po.id,
+        po.purchase_code AS purchaseCode,
+        po.order_date AS orderDate,
+        po.total_amount AS totalAmount,
+        po.note,
+        s.supplier_code AS supplierCode,
+        s.supplier_name AS supplierName
+        FROM purchase_orders po
+        inner JOIN suppliers s ON po.supplier_id = s.id
+        <where>
+            po.is_deleted = 0
+            <if test="purchaseOrderCode != null and purchaseOrderCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{purchaseOrderCode}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+            <if test="(productCode != null and productCode != '') or (productName != null and productName != '')">
+                AND EXISTS (
+                SELECT 1 FROM purchase_order_items poi
+                JOIN products p ON poi.product_id = p.id
+                WHERE poi.purchase_order_id = po.id
+                <if test="productCode != null and productCode != ''">
+                    AND p.product_code = #{productCode}
+                </if>
+                <if test="productName != null and productName != ''">
+                    AND p.product_name LIKE CONCAT('%', #{productName}, '%')
+                </if>
+                )
+            </if>
+
+        </where>
+        ORDER BY po.id DESC
+    </select>
+
+    <select id="selectItemsByOrderIds" resultType="com.database.vo.PurchaseOrderVO$OrderItemDTO">
+        SELECT
+        poi.purchase_order_id AS orderId,
+        p.product_code AS productCode,
+        p.product_name AS productName,
+        poi.quantity,
+        poi.unit_price AS unitPrice,
+        poi.line_total AS lineTotal
+        FROM purchase_order_items poi
+        JOIN products p ON poi.product_id = p.id
+        WHERE poi.purchase_order_id IN
+        <foreach collection="orderIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

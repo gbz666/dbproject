@@ -28,4 +28,6 @@ public interface StockInsMapper {
     void softDeleteStockIn(Long id, Long operatorId);
 
     List<StockInVO> selectStockInDetails(String purchaseOrderCode, String supplierName, String productName,String serialNumber);
+
+    StockIns selectByPurchaseOrderId(Long purchaseOrderId);
 }

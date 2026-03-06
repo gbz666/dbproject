@@ -1,6 +1,8 @@
 package com.database.service;
 
 import com.database.mapper.CommonMapper;
+import com.database.mapper.WarehousesMapper;
+import com.database.pojo.Warehouses;
 import com.database.vo.BaseSelectVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommonService {
     @Autowired
     private CommonMapper commonMapper;
+    @Autowired
+    private WarehousesMapper warehousesMapper;
 
     public PageInfo<BaseSelectVO> getCustomerPage(int pageNum, int pageSize, String keyword) {
         PageHelper.startPage(pageNum, pageSize);
@@ -39,4 +43,9 @@ public class CommonService {
         return new PageInfo<>(list);
     }
 
+    /** 查询未删除的仓库列表（出库/入库下拉用） */
+    public List<Warehouses> getWarehouseList() {
+        List<Warehouses> list = warehousesMapper.selectListNotDeleted();
+        return list != null ? list : Collections.emptyList();
+    }
 }

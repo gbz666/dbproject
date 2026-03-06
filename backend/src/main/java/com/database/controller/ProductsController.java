@@ -9,115 +9,94 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductsController {
 
+    private final ProductsService productsService;
+
     @Autowired
-    private ProductsService productsService;
+    public ProductsController(ProductsService productsService) {
+        this.productsService = productsService;
+    }
 
+    /**
+     * GET /api/products: 分页查询产品列表
+     * @param pageNum 页码
+     * @param pageSize 每页条数
+     * @param productName 产品名称（可选）
+     * @param categoryName 分类名称（可选）
+     * @param productCode 产品编码（可选）
+     * @param productType 产品类型（可选）
+     * @return 200 OK
+     */
+    @GetMapping
+    public ResponseEntity<Result<PageInfo<ProductVO>>> getProductsByPage(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String productCode,
+            @RequestParam(required = false) String productType) {
+        PageInfo<ProductVO> pageInfo = productsService.getProductsByPage(
+                pageNum, pageSize, productName, categoryName, productCode, productType);
+        return ResponseEntity.ok(Result.success(pageInfo));
+    }
 
-    /** * [C] 创建产品
-     * POST /api/products
-     * 成功返回: 201 Created
-     * 【注意】创建时产品编码在 Service 层生成。
+    /**
+     * GET /api/products/{productCode}: 根据业务编码获取产品详情
+     * @param productCode 产品业务编码
+     * @return 200 OK
+     */
+    @GetMapping("/{productCode}")
+    public ResponseEntity<Result<ProductVO>> getProduct(@PathVariable String productCode) {
+        ProductVO product = productsService.getProductDetail(productCode);
+        return ResponseEntity.ok(Result.success(product));
+    }
+
+    /**
+     * POST /api/products: 创建产品（产品编码在 Service 层生成）
+     * @param request 产品请求数据
+     * @param currentStaffId 当前操作员ID
+     * @return 201 Created
      */
     @PostMapping
     public ResponseEntity<Result<ProductVO>> createProduct(
             @RequestBody ProductRequest request,
             @RequestParam Long currentStaffId) {
-
-        // 1. 调用 Service
         ProductVO newProduct = productsService.createProduct(request, currentStaffId);
-
-        // 2. 封装 Result (使用 createsuccess，code=201)
         Result<ProductVO> result = Result.createsuccess(newProduct);
-
-        // 3. 返回 ResponseEntity，状态码设置为 201 CREATED
+        result.setMessage("产品创建成功");
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    /** * [U] 修改产品 (使用业务编码进行定位)
-     * PUT /api/products/{productCode}
-     * 成功返回: 200 OK
+    /**
+     * PUT /api/products/{productCode}: 根据业务编码修改产品
+     * @param productCode 产品业务编码
+     * @param request 产品请求数据
+     * @param currentStaffId 当前操作员ID
+     * @return 200 OK
      */
     @PutMapping("/{productCode}")
     public ResponseEntity<Result<ProductVO>> updateProduct(
-            @PathVariable String productCode, // 接收业务编码
+            @PathVariable String productCode,
             @RequestBody ProductRequest request,
             @RequestParam Long currentStaffId) {
-
-        // 1. 调用 Service，传递 productCode
         ProductVO updatedProduct = productsService.updateProduct(productCode, request, currentStaffId);
-
-        // 2. 封装 Result (使用 success，code=200)
         Result<ProductVO> result = Result.success(updatedProduct);
-
-        // 3. 返回 ResponseEntity，状态码设置为 200 OK
+        result.setMessage("产品更新成功");
         return ResponseEntity.ok(result);
     }
 
-    /** * [R] 获取产品详情 (使用业务编码)
-     * GET /api/products/{productCode}
-     * 成功返回: 200 OK
-     */
-    @GetMapping("/{productCode}")
-    public ResponseEntity<Result<ProductVO>> getProduct(@PathVariable String productCode) {
-
-        // 1. 调用 Service，传递 productCode
-        ProductVO product = productsService.getProductDetail(productCode);
-
-        // 2. 封装 Result (使用 success，code=200)
-        Result<ProductVO> result = Result.success(product);
-
-        // 3. 返回 ResponseEntity，状态码设置为 200 OK
-        return ResponseEntity.ok(result);
-    }
-
-
-
-    /** * [D] 逻辑删除产品 (使用业务编码)
-     * DELETE /api/products/{productCode}
-     * 成功返回: 204 No Content
+    /**
+     * DELETE /api/products/{productCode}: 逻辑删除产品
+     * @param productCode 产品业务编码
+     * @return 204 No Content
      */
     @DeleteMapping("/{productCode}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable String productCode) {
-
-        // 1. 调用 Service，传递 productCode
+    public ResponseEntity<Result<Void>> deleteProduct(@PathVariable String productCode) {
         productsService.deleteProduct(productCode);
-
-        // 2. 删除成功，返回 204 No Content，不含响应体
-        return ResponseEntity.noContent().build();
-    }
-    /** * [R] 获取产品列表
-     * GET /api/products?productName=xxx&categoryName=yyy
-     * 成功返回: 200 OK
-     */
-    @GetMapping
-    public ResponseEntity<Result<PageInfo<ProductVO>>> getProductsByPage(
-            @RequestParam(defaultValue = "1") int pageNum, // 默认页码 1
-            @RequestParam(defaultValue = "10") int pageSize, // 默认每页 10 条
-            @RequestParam(required = false) String productName,
-            @RequestParam(required = false) String categoryName,
-            @RequestParam(required = false) String productCode,
-            @RequestParam(required = false) String productType) {
-
-        // 1. 调用 Service 分页查询
-        PageInfo<ProductVO> pageInfo = productsService.getProductsByPage(
-                pageNum,
-                pageSize,
-                productName,
-                categoryName,
-                productCode,
-                productType
-        );
-
-        // 2. 封装 Result (使用 success，code=200)
-        Result<PageInfo<ProductVO>> result = Result.success(pageInfo);
-
-        // 3. 返回 ResponseEntity，状态码设置为 200 OK
-        return ResponseEntity.ok(result);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 }

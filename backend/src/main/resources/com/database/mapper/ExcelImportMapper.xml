@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.ExcelImportMapper">
+
+    <insert id="upsertProduct">
+        INSERT INTO products (product_code, product_name, category_id, unit, description, cost_price, created_by_id, updated_by_id)
+        VALUES (#{productCode}, #{productName}, #{categoryId}, #{unit}, #{description}, #{costPrice}, #{createdById}, #{updatedById})
+        ON DUPLICATE KEY UPDATE
+            product_name = VALUES(product_name),
+            category_id = VALUES(category_id),
+            description = VALUES(description),
+            cost_price = COALESCE(VALUES(cost_price), cost_price),
+            updated_at = NOW(),
+            updated_by_id = VALUES(updated_by_id)
+    </insert>
+
+    <select id="selectCategoryIdByName" resultType="java.lang.Integer">
+        SELECT id FROM product_categories WHERE category_name = #{categoryName} AND (is_deleted = 0 OR is_deleted IS NULL) LIMIT 1
+    </select>
+
+    <select id="selectCustomerIdByName" resultType="java.lang.Long">
+        SELECT id FROM customers WHERE customer_name = #{customerName} AND (is_deleted = 0 OR is_deleted IS NULL) LIMIT 1
+    </select>
+
+    <select id="selectProductIdByName" resultType="java.lang.Long">
+        SELECT id FROM products WHERE product_name = #{productName} AND (is_deleted = 0 OR is_deleted IS NULL) LIMIT 1
+    </select>
+
+    <select id="selectWarehouseIdByName" resultType="java.lang.Long">
+        SELECT id FROM warehouses
+        WHERE (is_deleted = 0 OR is_deleted IS NULL)
+          AND (warehouse_name = #{name} OR warehouse_name LIKE CONCAT('%', #{name}, '%'))
+        LIMIT 1
+    </select>
+</mapper>

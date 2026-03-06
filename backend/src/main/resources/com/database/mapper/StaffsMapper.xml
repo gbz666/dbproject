@@ -11,12 +11,15 @@
             <result property="email" column="email" />
             <result property="phone" column="phone" />
             <result property="title" column="title" />
+            <result property="password" column="password" />
+            <result property="status" column="status" />
+            <result property="lastLoginAt" column="last_login_at" />
             <result property="createdById" column="created_by_id" />
             <result property="updatedById" column="updated_by_id" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,staff_code,staff_name,email,phone,title,
+        id,staff_code,staff_name,email,phone,title,password,status,last_login_at,
         created_by_id,updated_by_id
     </sql>
 
@@ -31,6 +34,12 @@
     <select id="selectByStaffName" resultType="java.lang.Long">
         select id from staffs where staff_name=#{staffName}
     </select>
+
+    <update id="updateLastLoginTime" parameterType="java.lang.Long">
+        update staffs
+        set last_login_at = NOW()
+        where id = #{id}
+    </update>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from staffs
@@ -87,6 +96,9 @@
                 </if>
                 <if test="title != null">
                     title = #{title},
+                </if>
+                <if test="password != null">
+                    password = #{password},
                 </if>
                 <if test="createdById != null">
                     created_by_id = #{createdById},

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.StaffsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.Staffs">
+            <id property="id" column="id" />
+            <result property="staffCode" column="staff_code" />
+            <result property="staffName" column="staff_name" />
+            <result property="email" column="email" />
+            <result property="phone" column="phone" />
+            <result property="title" column="title" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedById" column="updated_by_id" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,staff_code,staff_name,email,phone,title,
+        created_by_id,updated_by_id
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from staffs
+        where  id = #{id} 
+    </select>
+
+
+    <select id="selectByStaffName" resultType="java.lang.Long">
+        select id from staffs where staff_name=#{staffName}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from staffs
+        where  id = #{id} 
+    </delete>
+
+
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Staffs" useGeneratedKeys="true">
+        insert into staffs
+        ( id,staff_code,staff_name,email,phone,title,
+        created_by_id,updated_by_id)
+        values (#{id},#{staffCode},#{staffName},#{email},#{phone},#{title},
+        #{createdById},#{updatedById})
+    </insert>
+
+
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.Staffs" useGeneratedKeys="true">
+        insert into staffs
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="staffCode != null">staff_code,</if>
+                <if test="staffName != null">staff_name,</if>
+                <if test="email != null">email,</if>
+                <if test="phone != null">phone,</if>
+                <if test="title != null">title,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="staffCode != null">#{staffCode},</if>
+                <if test="staffName != null">#{staffName},</if>
+                <if test="email != null">#{email},</if>
+                <if test="phone != null">#{phone},</if>
+                <if test="title != null">#{title},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.Staffs">
+        update staffs
+        <set>
+                <if test="staffCode != null">
+                    staff_code = #{staffCode},
+                </if>
+                <if test="staffName != null">
+                    staff_name = #{staffName},
+                </if>
+                <if test="email != null">
+                    email = #{email},
+                </if>
+                <if test="phone != null">
+                    phone = #{phone},
+                </if>
+                <if test="title != null">
+                    title = #{title},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.Staffs">
+        update staffs
+        set 
+            staff_code =  #{staffCode},
+            staff_name =  #{staffName},
+            email =  #{email},
+            phone =  #{phone},
+            title =  #{title},
+            created_by_id =  #{createdById},
+            updated_by_id =  #{updatedById}
+        where   id = #{id} 
+    </update>
+</mapper>

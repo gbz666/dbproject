@@ -24,6 +24,9 @@ public interface OutboundOrdersMapper {
 
     OutboundOrders selectByPrimaryKey(Long id);
 
+    /** 按出库单号查询（导入时判断是否已存在，避免重复插入） */
+    OutboundOrders selectByOutboundCode(String outboundCode);
+
     int updateByPrimaryKeySelective(OutboundOrders record);
 
     int updateByPrimaryKey(OutboundOrders record);

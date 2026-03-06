@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.PaymentReconciliationMapper">
+
+    <resultMap id="PaymentReconciliationResultMap" type="com.database.vo.PaymentReconciliationVO">
+        <result property="purchaseCode" column="purchase_code" />
+        <result property="orderDate" column="order_date" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="specification" column="specification" />
+        <result property="quantity" column="quantity" />
+        <result property="unitPrice" column="unit_price" />
+        <result property="lineTotal" column="line_total" />
+        <result property="orderNote" column="order_note" />
+        <result property="lastPaymentDate" column="last_payment_date" />
+        <result property="avgPaymentDays" column="avg_payment_days" />
+        <result property="totalPaidAmount" column="total_paid_amount" />
+        <result property="paymentCount" column="payment_count" />
+        <result property="unpaidAmount" column="unpaid_amount" />
+    </resultMap>
+
+    <select id="selectPurchaseReconciliation" resultMap="PaymentReconciliationResultMap">
+        SELECT
+            po.purchase_code                    AS purchase_code,
+            po.order_date                       AS order_date,
+            s.supplier_name                     AS supplier_name,
+            p.specification                     AS specification,
+            SUM(poi.quantity)                   AS quantity,
+            AVG(poi.unit_price)                 AS unit_price,
+            SUM(poi.line_total)                 AS line_total,
+            po.note                             AS order_note,
+
+            -- 付款统计：最后一次付款日期
+            MAX(pe.payment_date)                               AS last_payment_date,
+            -- 平均付款时间：付款日期与发票日期的平均天数差
+            AVG(CASE WHEN pe.payment_date IS NOT NULL AND pi.invoice_date IS NOT NULL
+                     THEN DATEDIFF(pe.payment_date, pi.invoice_date)
+                     ELSE NULL END)                            AS avg_payment_days,
+            -- 累计付款金额
+            COALESCE(SUM(pe.amount), 0)                        AS total_paid_amount,
+            -- 累计付款次数
+            COUNT(DISTINCT pe.id)                              AS payment_count,
+            -- 未付款金额 = 进项发票总额 - 累计付款金额
+            (COALESCE(SUM(pi.amount), 0) - COALESCE(SUM(pe.amount), 0)) AS unpaid_amount
+
+        FROM purchase_orders po
+        JOIN suppliers s ON po.supplier_id = s.id
+        JOIN purchase_order_items poi ON poi.purchase_order_id = po.id
+        JOIN products p ON poi.product_id = p.id
+        -- 进项发票：直接关联采购订单（不再通过入库单）
+        LEFT JOIN purchase_invoices pi ON pi.purchase_order_id = po.id AND pi.is_deleted = 0
+        -- 付款记录：通过进项发票关联
+        LEFT JOIN payment_expenses pe ON pe.purchase_invoice_id = pi.id
+
+        WHERE po.is_deleted = 0
+        <if test="supplierId != null">
+            AND po.supplier_id = #{supplierId}
+        </if>
+        <if test="purchaseCode != null and purchaseCode != ''">
+            AND po.purchase_code LIKE CONCAT('%', #{purchaseCode}, '%')
+        </if>
+        <if test="startDate != null">
+            AND po.order_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND po.order_date &lt;= #{endDate}
+        </if>
+
+        GROUP BY po.id, p.id, po.purchase_code, po.order_date, s.supplier_name, p.specification, po.note
+        ORDER BY po.order_date DESC, po.purchase_code
+    </select>
+
+</mapper>

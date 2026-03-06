@@ -1,5 +1,9 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
-import type { ApiResult } from "@/types/api"; 
+import type { ApiResult } from "@/types/api";
+import { getCookie, removeCookie } from "@/utils/cookie";
+
+const TOKEN_KEY = "access_token";
+const USER_KEY = "user_info"; 
 
 // --- 错误类型定义 ---
 export interface ApiError {
@@ -17,7 +21,7 @@ export const axiosInstance = axios.create({
 // --- 请求拦截器 ---
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = getCookie(TOKEN_KEY) ?? localStorage.getItem(TOKEN_KEY);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,13 +31,20 @@ axiosInstance.interceptors.request.use(
 );
 
 // --- 响应拦截器 ---
+function isLoginRequest(config: AxiosRequestConfig | undefined): boolean {
+  if (!config?.url) return false;
+  const url = typeof config.url === "string" ? config.url : config.url.toString();
+  return url.includes("/auth/login");
+}
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      if (status === 401) {
-        localStorage.removeItem("access_token");
+      if (status === 401 && !isLoginRequest(error.config)) {
+        removeCookie(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
         window.location.href = "/auth/login";
       }
       return Promise.reject<ApiError>({
@@ -83,7 +94,7 @@ export const httpClient = async <TData>(
     data: body,
     headers: {
       ...headers,
-      ...(method !== "GET" && { "Content-Type": "application/json" }),
+      ...(method !== "GET" && !(body instanceof FormData) && { "Content-Type": "application/json" }),
     },
   };
 

@@ -40,9 +40,9 @@
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.SalesOrderItems" useGeneratedKeys="true">
         insert into sales_order_items
-        ( sales_order_id,product_id,quantity,unit_price,discount,
+        ( sales_order_id,product_id,quantity,unit_price,discount,cost_price,
         tax_rate,remark,created_at,created_by_id)
-        values (#{salesOrderId},#{productId},#{quantity},#{unitPrice},#{discount},
+        values (#{salesOrderId},#{productId},#{quantity},#{unitPrice},#{discount},#{costPrice},
         #{taxRate},#{remark},NOW(),#{createdById})
     </insert>
 <!--,line_total    ,#{lineTotal}-->
@@ -56,7 +56,6 @@
                 <if test="unitPrice != null">unit_price,</if>
                 <if test="discount != null">discount,</if>
                 <if test="taxRate != null">tax_rate,</if>
-                <if test="lineTotal != null">line_total,</if>
                 <if test="remark != null">remark,</if>
                 <if test="createdAt != null">created_at,</if>
                 <if test="createdById != null">created_by_id,</if>
@@ -69,7 +68,6 @@
                 <if test="unitPrice != null">#{unitPrice},</if>
                 <if test="discount != null">#{discount},</if>
                 <if test="taxRate != null">#{taxRate},</if>
-                <if test="lineTotal != null">#{lineTotal},</if>
                 <if test="remark != null">#{remark},</if>
                 <if test="createdAt != null">#{createdAt},</if>
                 <if test="createdById != null">#{createdById},</if>
@@ -96,9 +94,6 @@
                 <if test="taxRate != null">
                     tax_rate = #{taxRate},
                 </if>
-                <if test="lineTotal != null">
-                    line_total = #{lineTotal},
-                </if>
                 <if test="remark != null">
                     remark = #{remark},
                 </if>
@@ -120,7 +115,6 @@
             unit_price =  #{unitPrice},
             discount =  #{discount},
             tax_rate =  #{taxRate},
-            line_total =  #{lineTotal},
             remark =  #{remark},
             created_at =  #{createdAt},
             created_by_id =  #{createdById}

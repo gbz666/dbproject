@@ -167,4 +167,15 @@
                              quantity = quantity + VALUES(quantity),
                              updated_at = NOW()
     </update>
+
+    <!-- 原子扣减：仅当 quantity >= 扣减量时更新，防止高并发超卖 -->
+    <update id="deductInventoryIfSufficient">
+        UPDATE inventory
+        SET quantity = quantity - #{quantity},
+            updated_at = NOW()
+        WHERE product_id = #{productId}
+          AND warehouse_id = #{warehouseId}
+          AND quantity >= #{quantity}
+          AND (is_deleted = 0 OR is_deleted IS NULL)
+    </update>
 </mapper>

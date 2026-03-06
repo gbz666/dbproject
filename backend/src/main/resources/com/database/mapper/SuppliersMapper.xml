@@ -6,6 +6,12 @@
         <id column="id" property="id"/>
         <result column="supplier_code" property="supplierCode"/>
         <result column="supplier_name" property="supplierName"/>
+        <result column="short_name" property="shortName"/>
+        <result column="main_business" property="mainBusiness"/>
+        <result column="tax_no" property="taxNo"/>
+        <result column="address" property="address"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="created_by_id" property="createdById"/>
@@ -44,6 +50,13 @@
         t_created.staff_name AS created_by_staff_name,
         t_updated.staff_name AS updated_by_staff_name
     </sql>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        SELECT *
+        FROM suppliers
+        WHERE id = #{id}
+          AND is_deleted = 0
+    </select>
 
     <select id="selectSupplierDetailsByPage" resultMap="SupplierDetailDTOMap">
         SELECT

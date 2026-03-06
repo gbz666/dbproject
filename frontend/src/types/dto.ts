@@ -121,3 +121,69 @@ export interface StockInDTO {
   note?: string;
   items: StockInItemDTO[];
 }
+
+/** 进项发票查询条件，对应后端 PurchaseInvoiceQuery */
+export interface PurchaseInvoiceQuery {
+  pageNum: number;
+  pageSize: number;
+  companyName?: string;   // 公司名称
+  supplierName?: string;   // 供应商名称
+  productModel?: string;   // 产品型号（规格）
+  purchaseCode?: string;   // 采购订单号
+  itemName?: string;       // 货物/服务名称
+}
+
+/** 进项发票单行明细 DTO，对应后端 PurchaseInvoiceDetailItemDTO */
+export interface PurchaseInvoiceDetailItemDTO {
+  itemName: string;
+  specification: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  amountExclusiveTax: number;
+  taxRate: number;
+  taxAmount: number;
+  amountInclusiveTax: number;
+  remark?: string;
+}
+
+/** 进项发票创建/更新 DTO，一张发票可多行明细，对应后端 PurchaseInvoiceDTO */
+export interface PurchaseInvoiceDTO {
+  id?: number;                 // 更新时使用
+  purchaseCode: string;        // 采购订单号
+  supplierName?: string;
+  supplierId?: number;
+  invoiceNo: string;           // 发票号
+  invoiceDate: string;         // 发票日期 YYYY-MM-DD
+  remark?: string;             // 发票备注
+  items: PurchaseInvoiceDetailItemDTO[];  // 至少一行
+}
+
+/** 销项发票查询条件，对应后端 SalesInvoiceQuery */
+export interface SalesInvoiceQuery {
+  pageNum: number;
+  pageSize: number;
+  companyName?: string;       // 公司名称 / 客户名称
+  productModel?: string;      // 产品型号（规格）
+  salesOrderCode?: string;    // 销售订单号
+  itemName?: string;          // 货物/服务名称
+  invoiceNo?: string;         // 发票编码
+}
+
+/** 销项发票创建/更新 DTO，对应后端 SalesInvoiceDTO */
+export interface SalesInvoiceDTO {
+  id?: number;                    // 更新时使用
+  salesOrderCode: string;         // 销售订单号
+  invoiceNo: string;              // 发票编码
+  invoiceDate: string;            // 开票日期 YYYY-MM-DD
+  companyName?: string;           // 公司名称（前端展示，可选）
+  itemName: string;               // 货物或应税劳务、服务名称
+  specification: string;          // 规格型号
+  unit: string;                   // 单位
+  quantity: number;               // 数量
+  unitPriceInclusiveTax: number;  // 含税单价
+  amountInclusiveTax: number;     // 含税总金额
+  amountExclusiveTax: number;     // 未税销售金额
+  taxAmount: number;              // 税额
+  remark?: string;                // 备注
+}

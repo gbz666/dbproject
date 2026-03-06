@@ -22,4 +22,9 @@ public interface SalesInvoiceDetailsMapper {
 
     int updateByPrimaryKey(SalesInvoiceDetails record);
 
+    /**
+     * 根据发票ID更新对应明细
+     */
+    void updateByInvoiceId(SalesInvoiceDetails detail);
+
 }

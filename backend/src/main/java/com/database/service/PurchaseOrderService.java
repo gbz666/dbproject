@@ -189,7 +189,7 @@ public class PurchaseOrderService {
             Long productNum = inventoryMapper.selectProductNum(product.getId());
             BigDecimal currentQty = (productNum == null) ? BigDecimal.ZERO : new BigDecimal(productNum);
             BigDecimal inboundQty = itemDto.getQuantity();
-            BigDecimal currentCost = product.getCostPrice();
+            BigDecimal currentCost = (product.getCostPrice() != null) ? product.getCostPrice() : BigDecimal.ZERO;
             BigDecimal inboundPrice = itemDto.getUnitPrice();
             // 2. 计算分母：总数量
             BigDecimal totalQty = currentQty.add(inboundQty);
@@ -206,10 +206,7 @@ public class PurchaseOrderService {
                 newCostPrice = totalValue.divide(totalQty, 4, RoundingMode.HALF_UP);
 
             }
-            log.info(newCostPrice.toString());
             productsMapper.updateProductCostPrice(product.getId(),newCostPrice);
-
-//            detail.setLineTotal(itemDto.getUnitPrice().multiply(itemDto.getQuantity()));
             purchaseOrderItemsMapper.insertSelective(detail);
         }
     }

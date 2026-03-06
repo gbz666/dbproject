@@ -24,4 +24,9 @@ public interface StaffsMapper {
     int updateByPrimaryKey(Staffs record);
 
     Long selectByStaffName(@Param("staffName") String staffName);
+
+    /**
+     * 更新最后登录时间
+     */
+    int updateLastLoginTime(@Param("id") Long id);
 }

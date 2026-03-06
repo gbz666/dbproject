@@ -7,10 +7,10 @@
       </template>
       
       <el-form :model="loginForm" :rules="rules" ref="loginFormRef">
-        <el-form-item prop="username">
+        <el-form-item prop="staffName">
           <el-input
-            v-model="loginForm.username"
-            placeholder="用户名"
+            v-model="loginForm.staffName"
+            placeholder="员工姓名"
             prefix-icon="User"
             size="large"
           />
@@ -56,12 +56,12 @@ const loginFormRef = ref();
 const loading = ref(false);
 
 const loginForm = reactive({
-  username: '',
+  staffName: '',
   password: '',
 });
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  staffName: [{ required: true, message: '请输入员工姓名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 };
 
@@ -72,12 +72,12 @@ const handleLogin = async () => {
     const valid = await loginFormRef.value.validate();
     if (valid) {
       loading.value = true;
-      await authStore.login(loginForm.username, loginForm.password);
+      await authStore.login(loginForm.staffName, loginForm.password);
       ElMessage.success('登录成功');
-      router.push('/dashboard');
+      router.push('/');
     }
   } catch (error) {
-    ElMessage.error('登录失败，请检查用户名和密码');
+    ElMessage.error('登录失败，请检查员工姓名和密码');
   } finally {
     loading.value = false;
   }

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.StockInItemsMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.StockInItems">
+            <id property="id" column="id" />
+            <result property="stockInId" column="stock_in_id" />
+            <result property="productId" column="product_id" />
+            <result property="warehouseId" column="warehouse_id" />
+            <result property="quantity" column="quantity" />
+            <result property="serialNumbers" column="serial_numbers" />
+            <result property="remark" column="remark" />
+            <result property="createdAt" column="created_at" />
+            <result property="createdById" column="created_by_id" />
+            <result property="updatedAt" column="updated_at" />
+            <result property="updatedById" column="updated_by_id" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,stock_in_id,product_id,warehouse_id,quantity,serial_numbers,
+        remark,created_at,created_by_id,updated_at,updated_by_id
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_in_items
+        where  id = #{id} 
+    </select>
+    <select id="selectByStockInId" resultType="com.database.pojo.StockInItems">
+        select * from stock_in_items where stock_in_id=#{id}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from stock_in_items
+        where  id = #{id} 
+    </delete>
+    <delete id="deleteByStockInId">
+        DELETE FROM stock_in_items WHERE stock_in_id = #{stockInId}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.StockInItems" useGeneratedKeys="true">
+        insert into stock_in_items
+        ( id,stock_in_id,product_id,warehouse_id,quantity,serial_numbers,
+        remark,created_at,created_by_id,updated_at,updated_by_id)
+        values (#{id},#{stockInId},#{productId},#{warehouseId},#{quantity},#{serialNumbers},
+        #{remark},#{createdAt},#{createdById},#{updatedAt},#{updatedById})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.StockInItems" useGeneratedKeys="true">
+        insert into stock_in_items
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="stockInId != null">stock_in_id,</if>
+                <if test="productId != null">product_id,</if>
+                <if test="warehouseId != null">warehouse_id,</if>
+                <if test="quantity != null">quantity,</if>
+                <if test="serialNumbers != null">serial_numbers,</if>
+                <if test="remark != null">remark,</if>
+                <if test="createdAt != null">created_at,</if>
+                <if test="createdById != null">created_by_id,</if>
+                <if test="updatedAt != null">updated_at,</if>
+                <if test="updatedById != null">updated_by_id,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="stockInId != null">#{stockInId},</if>
+                <if test="productId != null">#{productId},</if>
+                <if test="warehouseId != null">#{warehouseId},</if>
+                <if test="quantity != null">#{quantity},</if>
+                <if test="serialNumbers != null">#{serialNumbers},</if>
+                <if test="remark != null">#{remark},</if>
+                <if test="createdAt != null">#{createdAt},</if>
+                <if test="createdById != null">#{createdById},</if>
+                <if test="updatedAt != null">#{updatedAt},</if>
+                <if test="updatedById != null">#{updatedById},</if>
+        </trim>
+    </insert>
+    <insert id="insertItemDetail">
+        INSERT INTO stock_in_items (
+            stock_in_id, product_id, warehouse_id, quantity,
+            serial_numbers, created_by_id, created_at
+        ) VALUES (
+                     #{stockInId}, #{productId}, #{warehouseId}, #{quantity},
+                     #{serialNumbers}, #{creatorId}, NOW()
+                 )
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.StockInItems">
+        update stock_in_items
+        <set>
+                <if test="stockInId != null">
+                    stock_in_id = #{stockInId},
+                </if>
+                <if test="productId != null">
+                    product_id = #{productId},
+                </if>
+                <if test="warehouseId != null">
+                    warehouse_id = #{warehouseId},
+                </if>
+                <if test="quantity != null">
+                    quantity = #{quantity},
+                </if>
+                <if test="serialNumbers != null">
+                    serial_numbers = #{serialNumbers},
+                </if>
+                <if test="remark != null">
+                    remark = #{remark},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="createdById != null">
+                    created_by_id = #{createdById},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+                <if test="updatedById != null">
+                    updated_by_id = #{updatedById},
+                </if>
+        </set>
+        where   id = #{id} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.database.pojo.StockInItems">
+        update stock_in_items
+        set 
+            stock_in_id =  #{stockInId},
+            product_id =  #{productId},
+            warehouse_id =  #{warehouseId},
+            quantity =  #{quantity},
+            serial_numbers =  #{serialNumbers},
+            remark =  #{remark},
+            created_at =  #{createdAt},
+            created_by_id =  #{createdById},
+            updated_at =  #{updatedAt},
+            updated_by_id =  #{updatedById}
+        where   id = #{id} 
+    </update>
+</mapper>

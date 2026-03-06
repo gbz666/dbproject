@@ -130,9 +130,11 @@ public class OutBoundOrdersService {
                         operatorId
                 );
 
-                // 3. 使用 outboundMapper (或专门的库存Mapper) 更新库存
-                // 出库是减少库存，所以传入负数
-                inventoryMapper.updateInventory(productId, wh.getWarehouseId(), wh.getQuantity().negate());
+                // 3. 原子扣减库存（高并发防超卖：仅当库存足够时扣减，否则抛异常回滚）
+                int updated = inventoryMapper.deductInventoryIfSufficient(productId, wh.getWarehouseId(), wh.getQuantity());
+                if (updated == 0) {
+                    throw new BusinessException("库存不足，无法出库。产品ID=" + productId + ", 仓库ID=" + wh.getWarehouseId() + ", 需要数量=" + wh.getQuantity());
+                }
             }
         }
     }

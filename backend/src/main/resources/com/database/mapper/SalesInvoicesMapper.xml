@@ -8,6 +8,7 @@
             <id property="id" column="id" />
             <result property="invoiceNo" column="invoice_no" />
             <result property="customerId" column="customer_id" />
+            <result property="salesOrderId" column="sales_order_id" />
             <result property="relatedOutboundId" column="related_outbound_id" />
             <result property="amount" column="amount" />
             <result property="invoiceDate" column="invoice_date" />
@@ -22,7 +23,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,invoice_no,customer_id,related_outbound_id,amount,invoice_date,
+        id,invoice_no,customer_id,sales_order_id,related_outbound_id,amount,invoice_date,
         status,remark,created_at,updated_at,created_by_id,
         updated_by_id,is_deleted,deleted_at
     </sql>
@@ -33,6 +34,80 @@
         from sales_invoices
         where  id = #{id} 
     </select>
+    <!-- 销项发票分页查询，返回 SalesInvoiceVO -->
+    <select id="selectInvoicesPage" resultType="com.database.vo.SalesInvoiceVO">
+        SELECT
+            pi.id,
+            pi.invoice_no       AS invoiceNo,
+            pi.invoice_date     AS invoiceDate,
+            so.order_code       AS salesOrderCode,
+            c.customer_name     AS companyName,
+            sid.item_name       AS itemName,
+            sid.specification   AS specification,
+            sid.unit            AS unit,
+            sid.quantity        AS quantity,
+            sid.unit_price      AS unitPriceInclusiveTax,
+            sid.amount_inclusive_tax AS amountInclusiveTax,
+            sid.amount_exclusive_tax AS amountExclusiveTax,
+            sid.tax_amount      AS taxAmount,
+            -- 统计字段
+            DATEDIFF(pi.invoice_date, so.order_date) AS avgInvoiceDays,
+            (so.total_amount - IFNULL((
+                SELECT SUM(amount) FROM sales_invoices si2
+                WHERE si2.sales_order_id = so.id AND si2.is_deleted = 0
+            ), 0)) AS pendingInvoiceAmount
+        FROM sales_invoices pi
+            INNER JOIN sales_invoice_details sid ON pi.id = sid.invoice_id
+            LEFT JOIN sales_orders so ON pi.sales_order_id = so.id
+            LEFT JOIN customers c ON pi.customer_id = c.id
+        <where>
+            pi.is_deleted = 0
+            <if test="query.companyName != null and query.companyName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{query.companyName}, '%')
+            </if>
+            <if test="query.salesOrderCode != null and query.salesOrderCode != ''">
+                AND so.order_code LIKE CONCAT('%', #{query.salesOrderCode}, '%')
+            </if>
+            <if test="query.productModel != null and query.productModel != ''">
+                AND sid.specification LIKE CONCAT('%', #{query.productModel}, '%')
+            </if>
+            <if test="query.itemName != null and query.itemName != ''">
+                AND sid.item_name LIKE CONCAT('%', #{query.itemName}, '%')
+            </if>
+            <if test="query.invoiceNo != null and query.invoiceNo != ''">
+                AND pi.invoice_no LIKE CONCAT('%', #{query.invoiceNo}, '%')
+            </if>
+        </where>
+        ORDER BY pi.invoice_date DESC
+    </select>
+
+    <!-- 根据 ID 查询单条 VO -->
+    <select id="selectVOById" resultType="com.database.vo.SalesInvoiceVO">
+        SELECT
+            pi.id,
+            pi.invoice_no       AS invoiceNo,
+            pi.invoice_date     AS invoiceDate,
+            so.order_code       AS salesOrderCode,
+            c.customer_name     AS companyName,
+            sid.item_name       AS itemName,
+            sid.specification   AS specification,
+            sid.unit            AS unit,
+            sid.quantity        AS quantity,
+            sid.unit_price      AS unitPriceInclusiveTax,
+            sid.amount_inclusive_tax AS amountInclusiveTax,
+            sid.amount_exclusive_tax AS amountExclusiveTax,
+            sid.tax_amount      AS taxAmount,
+            DATEDIFF(pi.invoice_date, so.order_date) AS avgInvoiceDays,
+            (so.total_amount - IFNULL((
+                SELECT SUM(amount) FROM sales_invoices si2
+                WHERE si2.sales_order_id = so.id AND si2.is_deleted = 0
+            ), 0)) AS pendingInvoiceAmount
+        FROM sales_invoices pi
+            INNER JOIN sales_invoice_details sid ON pi.id = sid.invoice_id
+            LEFT JOIN sales_orders so ON pi.sales_order_id = so.id
+            LEFT JOIN customers c ON pi.customer_id = c.id
+        WHERE pi.id = #{id}
+    </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from sales_invoices
@@ -40,10 +115,10 @@
     </delete>
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.SalesInvoices" useGeneratedKeys="true">
         insert into sales_invoices
-        ( id,invoice_no,customer_id,related_outbound_id,amount,invoice_date,
+        ( id,invoice_no,customer_id,sales_order_id,related_outbound_id,amount,invoice_date,
         status,remark,created_at,updated_at,created_by_id,
         updated_by_id,is_deleted,deleted_at)
-        values (#{id},#{invoiceNo},#{customerId},#{relatedOutboundId},#{amount},#{invoiceDate},
+        values (#{id},#{invoiceNo},#{customerId},#{salesOrderId},#{relatedOutboundId},#{amount},#{invoiceDate},
         #{status},#{remark},#{createdAt},#{updatedAt},#{createdById},
         #{updatedById},#{isDeleted},#{deletedAt})
     </insert>
@@ -53,6 +128,7 @@
                 <if test="id != null">id,</if>
                 <if test="invoiceNo != null">invoice_no,</if>
                 <if test="customerId != null">customer_id,</if>
+                <if test="salesOrderId != null">sales_order_id,</if>
                 <if test="relatedOutboundId != null">related_outbound_id,</if>
                 <if test="amount != null">amount,</if>
                 <if test="invoiceDate != null">invoice_date,</if>
@@ -69,6 +145,7 @@
                 <if test="id != null">#{id},</if>
                 <if test="invoiceNo != null">#{invoiceNo},</if>
                 <if test="customerId != null">#{customerId},</if>
+                <if test="salesOrderId != null">#{salesOrderId},</if>
                 <if test="relatedOutboundId != null">#{relatedOutboundId},</if>
                 <if test="amount != null">#{amount},</if>
                 <if test="invoiceDate != null">#{invoiceDate},</if>
@@ -90,6 +167,9 @@
                 </if>
                 <if test="customerId != null">
                     customer_id = #{customerId},
+                </if>
+                <if test="salesOrderId != null">
+                    sales_order_id = #{salesOrderId},
                 </if>
                 <if test="relatedOutboundId != null">
                     related_outbound_id = #{relatedOutboundId},
@@ -132,6 +212,7 @@
         set 
             invoice_no =  #{invoiceNo},
             customer_id =  #{customerId},
+            sales_order_id =  #{salesOrderId},
             related_outbound_id =  #{relatedOutboundId},
             amount =  #{amount},
             invoice_date =  #{invoiceDate},
@@ -144,5 +225,8 @@
             is_deleted =  #{isDeleted},
             deleted_at =  #{deletedAt}
         where   id = #{id} 
+    </update>
+    <update id="softDelete">
+        update sales_invoices set is_deleted=1,deleted_at=NOW() where id=#{id}
     </update>
 </mapper>

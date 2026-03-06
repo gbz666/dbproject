@@ -42,6 +42,18 @@
               </el-icon>
               采购订单
             </el-menu-item>
+            <el-menu-item index="/basic/purchaseInvoice">
+              <el-icon>
+                <Goods />
+              </el-icon>
+              进项发票
+            </el-menu-item>
+            <el-menu-item index="/basic/salesInvoice">
+              <el-icon>
+                <Goods />
+              </el-icon>
+              销项发票
+            </el-menu-item>
             <el-menu-item index="/basic/outBound">
               <el-icon>
                 <Goods />
@@ -82,16 +94,27 @@
             </el-icon>
           </div>
           <div class="header-right">
-            <el-dropdown>
+            <el-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              accept=".xlsx,.xls"
+              @change="handleExcelImport"
+            >
+              <el-button type="primary" :loading="importLoading">
+                <el-icon><Upload /></el-icon>
+                导入 Excel
+              </el-button>
+            </el-upload>
+            <el-dropdown @command="handleUserCommand">
               <span class="el-dropdown-link">
-                欢迎，管理员 <el-icon class="el-icon--right">
+                欢迎，{{ authStore.user?.staffName ?? '管理员' }} <el-icon class="el-icon--right">
                   <ArrowDown />
                 </el-icon>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item>个人中心</el-dropdown-item>
-                  <el-dropdown-item divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -108,16 +131,46 @@
 
 <script setup lang="ts">
   import { ref, computed } from 'vue';
-  import { useRoute } from 'vue-router'; // 1. 导入 useRoute
-  // 组合式 API 中不需要在这里 import 图标，因为已经在 main.ts 中全局注册
-  const isCollapse = ref(false);
-  const route = useRoute(); // 2. 初始化路由实例
+  import { useRoute, useRouter } from 'vue-router';
+  import { ElMessage } from 'element-plus';
+  import { importExcelApi } from '@/api/utilApi';
+  import { useAuthStore } from '@/stores/authStore';
 
-  // 3. 使用计算属性获取当前路径，作为菜单的激活项
-  const activeMenu = computed(() => {
-    const { path } = route;
-    return path;
-  });
+  const isCollapse = ref(false);
+  const route = useRoute();
+  const router = useRouter();
+  const importLoading = ref(false);
+  const authStore = useAuthStore();
+
+  const activeMenu = computed(() => route.path);
+
+  const handleUserCommand = (command: string) => {
+    if (command === 'profile') {
+      router.push('/profile');
+    } else if (command === 'logout') {
+      authStore.logout();
+      router.push('/auth/login');
+    }
+  };
+
+  const handleExcelImport = async (e: { raw?: File }) => {
+    const file = e?.raw;
+    if (!file) return;
+    importLoading.value = true;
+    try {
+      const result = await importExcelApi(file);
+      const msg = `导入完成：产品 ${result.products}、供应商 ${result.suppliers}、客户 ${result.customers}、采购 ${result.purchases}、销售 ${result.sales}、入库 ${result.stockIns}、出库 ${result.outbounds}`;
+      if (result.errors?.length) {
+        ElMessage.warning(`${msg}，${result.errors.length} 条行有误`);
+      } else {
+        ElMessage.success(msg);
+      }
+    } catch (err: any) {
+      ElMessage.error(err?.message || '导入失败');
+    } finally {
+      importLoading.value = false;
+    }
+  };
 </script>
 
 <style scoped>
@@ -181,6 +234,12 @@
   .main-content {
     background-color: #f0f2f5;
     padding: 10px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
 
   .el-dropdown-link {

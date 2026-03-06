@@ -12,7 +12,7 @@ public class PurchaseOrderVO {
     private Date orderDate;
     private String supplierCode;
     private String supplierName;
-
+    private int supplierId;
     private String note;
 
     // 接收前端传来的货物列表

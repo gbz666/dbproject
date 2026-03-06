@@ -30,5 +30,11 @@ public interface InventoryMapper {
 
     void updateInventory(Long productId, Long warehouseId, BigDecimal quantity);
 
+    /**
+     * 原子扣减库存：仅当当前库存 >= 扣减数量时更新，防止超卖。
+     * @return 影响行数，1 表示扣减成功，0 表示库存不足
+     */
+    int deductInventoryIfSufficient(Long productId, Long warehouseId, BigDecimal quantity);
+
     List<InventoryVO> selectInventoryDetails(String productCode,String productName);
 }

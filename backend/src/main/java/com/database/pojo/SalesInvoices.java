@@ -26,7 +26,12 @@ public class SalesInvoices {
     private Long customerId;
 
     /**
-     * 关联出库单ID(outbound_orders.id)
+     * 关联销售订单ID(sales_orders.id)，发票直接关联销售订单
+     */
+    private Long salesOrderId;
+
+    /**
+     * 关联出库单ID(outbound_orders.id)，可选，用于记录出库信息
      */
     private Long relatedOutboundId;
 
@@ -95,6 +100,7 @@ public class SalesInvoices {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getInvoiceNo() == null ? other.getInvoiceNo() == null : this.getInvoiceNo().equals(other.getInvoiceNo()))
             && (this.getCustomerId() == null ? other.getCustomerId() == null : this.getCustomerId().equals(other.getCustomerId()))
+            && (this.getSalesOrderId() == null ? other.getSalesOrderId() == null : this.getSalesOrderId().equals(other.getSalesOrderId()))
             && (this.getRelatedOutboundId() == null ? other.getRelatedOutboundId() == null : this.getRelatedOutboundId().equals(other.getRelatedOutboundId()))
             && (this.getAmount() == null ? other.getAmount() == null : this.getAmount().equals(other.getAmount()))
             && (this.getInvoiceDate() == null ? other.getInvoiceDate() == null : this.getInvoiceDate().equals(other.getInvoiceDate()))
@@ -115,6 +121,7 @@ public class SalesInvoices {
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getInvoiceNo() == null) ? 0 : getInvoiceNo().hashCode());
         result = prime * result + ((getCustomerId() == null) ? 0 : getCustomerId().hashCode());
+        result = prime * result + ((getSalesOrderId() == null) ? 0 : getSalesOrderId().hashCode());
         result = prime * result + ((getRelatedOutboundId() == null) ? 0 : getRelatedOutboundId().hashCode());
         result = prime * result + ((getAmount() == null) ? 0 : getAmount().hashCode());
         result = prime * result + ((getInvoiceDate() == null) ? 0 : getInvoiceDate().hashCode());
@@ -138,6 +145,7 @@ public class SalesInvoices {
         sb.append(", id=").append(id);
         sb.append(", invoiceNo=").append(invoiceNo);
         sb.append(", customerId=").append(customerId);
+        sb.append(", salesOrderId=").append(salesOrderId);
         sb.append(", relatedOutboundId=").append(relatedOutboundId);
         sb.append(", amount=").append(amount);
         sb.append(", invoiceDate=").append(invoiceDate);

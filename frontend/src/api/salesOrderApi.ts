@@ -9,20 +9,20 @@ export const salesOrderApi = {
   fetchPage: (params: any) => 
     httpClient<PageInfo<SalesOrderVO>>(BASE_URL, { method: "GET", params }),
 
-  // 创建订单
-  create: (data: SalesOrderDTO, currentUserId: number) =>
+  // 创建订单（后端参数名：currentStaffId）
+  create: (data: SalesOrderDTO, currentStaffId: number) =>
     httpClient<string>(BASE_URL, { 
       method: "POST", 
       body: data, 
-      params: { currentUserId } 
+      params: { currentStaffId } 
     }),
 
-  // 修改订单
-  update: (id: number, data: SalesOrderDTO, currentUserId: number) =>
+  // 修改订单（后端参数名：currentStaffId）
+  update: (id: number, data: SalesOrderDTO, currentStaffId: number) =>
     httpClient<string>(`${BASE_URL}/${id}`, { 
       method: "PUT", 
       body: data, 
-      params: { currentUserId } 
+      params: { currentStaffId } 
     }),
 
   // 删除订单

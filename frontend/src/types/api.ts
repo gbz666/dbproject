@@ -5,6 +5,14 @@ export interface AuthTokens {
   expiredAt: string
 }
 
+/** 登录接口返回的数据，对应后端 LoginResponse（仅使用 staffName，无 username） */
+export interface LoginResponse {
+  token: string
+  userId: number | null
+  staffName: string
+  expiration: number | null
+}
+
 export interface SearchFilters {
   keyword?: string
   tags?: string[]

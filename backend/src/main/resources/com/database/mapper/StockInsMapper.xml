@@ -166,6 +166,10 @@
             updated_by_id =  #{updatedById}
         where   id = #{id} 
     </update>
+    <select id="selectByPurchaseOrderId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" /> FROM stock_ins WHERE purchase_order_id = #{purchaseOrderId} AND (is_deleted = 0 OR is_deleted IS NULL) LIMIT 1
+    </select>
+
     <update id="softDeleteStockIn">
         UPDATE stock_ins
         SET is_deleted = 1,

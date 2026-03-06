@@ -1,48 +1,190 @@
-@startuml Staff_Roles_Classic_ERD
-' 设置图表和样式
-hide circle
+@startuml
 skinparam linetype ortho
-
-' ===================================
-' 定义实体 (Entity)
-' ===================================
-
-entity Staffs {
-  id : BIGINT
-  --
-  staff_code : VARCHAR(50)
-  staff_name : VARCHAR(100)
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    ArrowColor #666666
+    BorderColor #333333
 }
 
-entity Roles {
-  id : INT
-  --
-  role_name : VARCHAR(50)
-  description : VARCHAR(255)
+package "组织架构与权限 (Staffs & Roles)" {
+    class staffs << (T,#FFAAAA) >> {
+        + id: BIGINT [PK]
+        --
+        staff_code: VARCHAR
+        staff_name: VARCHAR
+        email: VARCHAR
+        phone: VARCHAR
+        title: VARCHAR
+        created_by_id: BIGINT [FK]
+        updated_by_id: BIGINT [FK]
+    }
+
+    class roles << (T,#FFAAAA) >> {
+        + id: INT [PK]
+        --
+        role_name: VARCHAR
+        description: VARCHAR
+    }
+
+    class staff_roles << (T,#FFAAAA) >> {
+        + id: BIGINT [PK]
+        --
+        staff_id: BIGINT [FK]
+        role_id: INT [FK]
+    }
 }
 
-' ===================================
-' 定义联系集 (Relationship) - 强制菱形
-' ===================================
+package "基础主数据 (Master Data)" {
+    class product_categories << (T,#FFFFAA) >> {
+        + id: INT [PK]
+        --
+        category_name: VARCHAR
+    }
 
-' 使用 class 关键字和 <<R>> 构造型来强制渲染为菱形
-class ASSIGNMENT <<R>> {
-  ' 这里可以放置联系集自身的属性，对应 staff_roles 的非 FK 字段
-  assigned_at : DATETIME
+    class products << (T,#FFFFAA) >> {
+        + id: BIGINT [PK]
+        --
+        product_code: VARCHAR
+        product_name: VARCHAR
+        category_id: INT [FK]
+        sku: VARCHAR
+        cost_price: DECIMAL
+        list_price: DECIMAL
+    }
+
+    class customers << (T,#AAFFAA) >> {
+        + id: BIGINT [PK]
+        --
+        customer_name: VARCHAR
+        sales_person_id: BIGINT [FK]
+        owner_id: BIGINT [FK]
+    }
+
+    class suppliers << (T,#AAFFAA) >> {
+        + id: BIGINT [PK]
+        --
+        supplier_name: VARCHAR
+        owner_id: BIGINT [FK]
+    }
+
+    class contacts << (T,#AAFFAA) >> {
+        + id: BIGINT [PK]
+        --
+        contact_name: VARCHAR
+        customer_id: BIGINT [FK]
+        supplier_id: BIGINT [FK]
+    }
 }
 
-' ===================================
-' 定义关系：多对多
-' ===================================
-' 使用 plantuml 的关联符号连接实体和菱形
+package "库存与物流 (Inventory & Warehouse)" {
+    class warehouses << (T,#AAD6FF) >> {
+        + id: BIGINT [PK]
+        --
+        warehouse_code: VARCHAR
+        warehouse_name: VARCHAR
+    }
 
-' Staffs (1) 拥有 (N) ASSIGNMENT
-Staffs "1" -- "N" ASSIGNMENT : has_assignment
+    class inventory << (T,#AAD6FF) >> {
+        + product_id: BIGINT [PK, FK]
+        + warehouse_id: BIGINT [PK, FK]
+        --
+        quantity: DECIMAL
+        reserved_quantity: DECIMAL
+    }
+}
 
-' Roles (1) 被分配给 (N) ASSIGNMENT
-Roles "1" -- "N" ASSIGNMENT : is_assigned_to
+package "销售模块 (Sales)" {
+    class sales_orders << (T,#FFCC99) >> {
+        + id: BIGINT [PK]
+        --
+        order_code: VARCHAR
+        customer_id: BIGINT [FK]
+        total_amount: DECIMAL
+    }
+
+    class sales_order_items << (T,#FFCC99) >> {
+        + id: BIGINT [PK]
+        --
+        sales_order_id: BIGINT [FK]
+        product_id: BIGINT [FK]
+        quantity: DECIMAL
+    }
+
+    class outbound_orders << (T,#FFCC99) >> {
+        + id: BIGINT [PK]
+        --
+        outbound_code: VARCHAR
+        sales_order_id: BIGINT [FK]
+    }
+
+    class outbound_order_items << (T,#FFCC99) >> {
+        + id: BIGINT [PK]
+        --
+        outbound_order_id: BIGINT [FK]
+        product_id: BIGINT [FK]
+        warehouse_id: BIGINT [FK]
+    }
+}
+
+package "采购模块 (Purchase)" {
+    class purchase_orders << (T,#CC99FF) >> {
+        + id: BIGINT [PK]
+        --
+        purchase_code: VARCHAR
+        supplier_id: BIGINT [FK]
+    }
+
+    class purchase_order_items << (T,#CC99FF) >> {
+        + id: BIGINT [PK]
+        --
+        purchase_order_id: BIGINT [FK]
+        product_id: BIGINT [FK]
+    }
+
+    class stock_ins << (T,#CC99FF) >> {
+        + id: BIGINT [PK]
+        --
+        stock_in_code: VARCHAR
+        purchase_order_id: BIGINT [FK]
+    }
+
+    class stock_in_items << (T,#CC99FF) >> {
+        + id: BIGINT [PK]
+        --
+        stock_in_id: BIGINT [FK]
+        product_id: BIGINT [FK]
+        warehouse_id: BIGINT [FK]
+    }
+}
+
+' 关系连接
+staffs "1" -- "0..*" staffs : "created/updated_by"
+staff_roles "*" -- "1" staffs
+staff_roles "*" -- "1" roles
+
+products "0..*" -- "1" product_categories
+inventory "0..*" -- "1" products
+inventory "0..*" -- "1" warehouses
+
+customers "0..*" -- "1" staffs : "sales/owner"
+suppliers "0..*" -- "1" staffs : "owner"
+contacts "0..*" -- "1" customers
+contacts "0..*" -- "1" suppliers
+
+sales_orders "0..*" -- "1" customers
+sales_order_items "*" -- "1" sales_orders
+sales_order_items "*" -- "1" products
+outbound_orders "0..*" -- "1" sales_orders
+outbound_order_items "*" -- "1" outbound_orders
+outbound_order_items "*" -- "1" warehouses
+
+purchase_orders "0..*" -- "1" suppliers
+purchase_order_items "*" -- "1" purchase_orders
+purchase_order_items "*" -- "1" products
+stock_ins "0..*" -- "1" purchase_orders
+stock_in_items "*" -- "1" stock_ins
+stock_in_items "*" -- "1" warehouses
 
 @enduml
-
-
-mysql -u root -p dbproject --default-character-set=utf8mb4 < db.sql

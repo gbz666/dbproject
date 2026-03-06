@@ -6,7 +6,6 @@
 
     <resultMap id="BaseResultMap" type="com.database.pojo.ProductCategories">
             <id property="id" column="id" />
-            <result property="categoryCode" column="category_code" />
             <result property="categoryName" column="category_name" />
             <result property="description" column="description" />
             <result property="createdAt" column="created_at" />
@@ -14,7 +13,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,category_code,category_name,description,created_at,is_deleted
+        id,category_name,description,created_at,is_deleted
     </sql>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -34,13 +33,12 @@
     <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.ProductCategories" useGeneratedKeys="true">
         insert into product_categories
         ( id,category_name,description,created_at,is_deleted)
-        values (#{id},#{categoryCode},#{categoryName},#{description},#{createdAt},#{isDeleted})
+        values (#{id},#{categoryName},#{description},#{createdAt},#{isDeleted})
     </insert>
     <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.database.pojo.ProductCategories" useGeneratedKeys="true">
         insert into product_categories
         <trim prefix="(" suffix=")" suffixOverrides=",">
                 <if test="id != null">id,</if>
-                <if test="categoryCode != null">category_code,</if>
                 <if test="categoryName != null">category_name,</if>
                 <if test="description != null">description,</if>
                 <if test="createdAt != null">created_at,</if>
@@ -48,7 +46,6 @@
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
                 <if test="id != null">#{id},</if>
-                <if test="categoryCode != null">#{categoryCode},</if>
                 <if test="categoryName != null">#{categoryName},</if>
                 <if test="description != null">#{description},</if>
                 <if test="createdAt != null">#{createdAt},</if>
@@ -58,9 +55,6 @@
     <update id="updateByPrimaryKeySelective" parameterType="com.database.pojo.ProductCategories">
         update product_categories
         <set>
-                <if test="categoryCode != null">
-                    category_code = #{categoryCode},
-                </if>
                 <if test="categoryName != null">
                     category_name = #{categoryName},
                 </if>

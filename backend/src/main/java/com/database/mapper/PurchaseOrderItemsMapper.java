@@ -23,4 +23,6 @@ public interface PurchaseOrderItemsMapper {
     int updateByPrimaryKey(PurchaseOrderItems record);
 
     void deleteByPurchaseOrderId(Long id);
+
+    java.util.List<PurchaseOrderItems> selectByOrderId(Long purchaseOrderId);
 }

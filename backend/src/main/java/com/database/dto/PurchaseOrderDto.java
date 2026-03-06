@@ -13,6 +13,7 @@ public class PurchaseOrderDto {
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date orderDate;
     private String supplierCode;
+    private int supplierId;
     private String note;
 
     // 货物明细列表
