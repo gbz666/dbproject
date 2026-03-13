@@ -26,6 +26,21 @@ public class SalesInvoiceController {
     }
 
     /**
+     * GET /api/sales-invoices/{id}: 查询单个销项发票详情（含一票多明细）
+     * @param id 发票主键ID
+     * @return 200 OK 或 404 Not Found
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Result<SalesInvoiceVO>> getById(@PathVariable Long id) {
+        SalesInvoiceVO vo = invoiceService.getById(id);
+        if (vo == null) {
+            Result<SalesInvoiceVO> result = Result.fail(404, "销项发票不存在或已删除", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+        }
+        return ResponseEntity.ok(Result.success(vo));
+    }
+
+    /**
      * GET /api/sales-invoices/page: 分页查询销项发票列表
      *
      * @param query 分页及筛选条件

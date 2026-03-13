@@ -26,6 +26,12 @@ export const salesInvoiceApi = {
       body: data,
     }),
 
+  // 根据 ID 查询单个销项发票（含一票多明细）
+  getById: (id: number) =>
+    httpClient<SalesInvoiceVO>(`${BASE_URL}/${id}`, {
+      method: "GET",
+    }),
+
   // 删除销项发票
   remove: (id: number) =>
     httpClient<void>(`${BASE_URL}/${id}`, {

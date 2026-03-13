@@ -81,7 +81,78 @@
         ORDER BY pi.invoice_date DESC
     </select>
 
-    <!-- 根据 ID 查询单条 VO -->
+    <!-- 分页查询：只查发票ID（一张发票一条），用于先分页再聚合 -->
+    <select id="selectInvoiceIdsPage" resultType="java.lang.Long">
+        SELECT pi.id
+        FROM sales_invoices pi
+        INNER JOIN sales_invoice_details sid ON pi.id = sid.invoice_id
+        LEFT JOIN sales_orders so ON pi.sales_order_id = so.id
+        LEFT JOIN customers c ON pi.customer_id = c.id
+        <where>
+            pi.is_deleted = 0
+            <if test="query.companyName != null and query.companyName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{query.companyName}, '%')
+            </if>
+            <if test="query.salesOrderCode != null and query.salesOrderCode != ''">
+                AND so.order_code LIKE CONCAT('%', #{query.salesOrderCode}, '%')
+            </if>
+            <if test="query.productModel != null and query.productModel != ''">
+                AND sid.specification LIKE CONCAT('%', #{query.productModel}, '%')
+            </if>
+            <if test="query.itemName != null and query.itemName != ''">
+                AND sid.item_name LIKE CONCAT('%', #{query.itemName}, '%')
+            </if>
+            <if test="query.invoiceNo != null and query.invoiceNo != ''">
+                AND pi.invoice_no LIKE CONCAT('%', #{query.invoiceNo}, '%')
+            </if>
+        </where>
+        GROUP BY pi.id, pi.invoice_date
+        ORDER BY pi.invoice_date DESC
+    </select>
+
+    <!-- 根据发票ID列表查询并聚合明细，每张发票一条VO -->
+    <select id="selectVOByIdsWithAggregatedDetails" resultType="com.database.vo.SalesInvoiceVO">
+        SELECT
+            pi.id,
+            pi.invoice_no       AS invoiceNo,
+            pi.invoice_date     AS invoiceDate,
+            so.order_code       AS salesOrderCode,
+            c.customer_name     AS companyName,
+            GROUP_CONCAT(sid.item_name SEPARATOR '；')  AS itemName,
+            GROUP_CONCAT(sid.specification SEPARATOR '；')  AS specification,
+            GROUP_CONCAT(DISTINCT sid.unit SEPARATOR '；')   AS unit,
+            SUM(sid.quantity)   AS quantity,
+            CASE WHEN COUNT(sid.id) = 1 THEN MAX(sid.unit_price) ELSE NULL END AS unitPriceInclusiveTax,
+            SUM(sid.amount_inclusive_tax) AS amountInclusiveTax,
+            SUM(sid.amount_exclusive_tax) AS amountExclusiveTax,
+            SUM(sid.tax_amount) AS taxAmount,
+            DATEDIFF(pi.invoice_date, so.order_date) AS avgInvoiceDays,
+            (so.total_amount - IFNULL((
+                SELECT SUM(amount) FROM sales_invoices si2
+                WHERE si2.sales_order_id = so.id AND si2.is_deleted = 0
+            ), 0)) AS pendingInvoiceAmount
+        FROM sales_invoices pi
+        INNER JOIN sales_invoice_details sid ON pi.id = sid.invoice_id
+        LEFT JOIN sales_orders so ON pi.sales_order_id = so.id
+        LEFT JOIN customers c ON pi.customer_id = c.id
+        <where>
+            <if test="ids != null and ids.size() > 0">
+                pi.id IN
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY pi.id, pi.invoice_no, pi.invoice_date, so.order_code, c.customer_name,
+                 so.order_date, so.total_amount, so.id
+        ORDER BY FIELD(pi.id,
+        <foreach collection="ids" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </select>
+
+    <!-- 按 ID 查询发票头（不含明细，明细由 Service 二次查询）；仅查未删除 -->
     <select id="selectVOById" resultType="com.database.vo.SalesInvoiceVO">
         SELECT
             pi.id,
@@ -89,24 +160,15 @@
             pi.invoice_date     AS invoiceDate,
             so.order_code       AS salesOrderCode,
             c.customer_name     AS companyName,
-            sid.item_name       AS itemName,
-            sid.specification   AS specification,
-            sid.unit            AS unit,
-            sid.quantity        AS quantity,
-            sid.unit_price      AS unitPriceInclusiveTax,
-            sid.amount_inclusive_tax AS amountInclusiveTax,
-            sid.amount_exclusive_tax AS amountExclusiveTax,
-            sid.tax_amount      AS taxAmount,
             DATEDIFF(pi.invoice_date, so.order_date) AS avgInvoiceDays,
             (so.total_amount - IFNULL((
                 SELECT SUM(amount) FROM sales_invoices si2
                 WHERE si2.sales_order_id = so.id AND si2.is_deleted = 0
             ), 0)) AS pendingInvoiceAmount
         FROM sales_invoices pi
-            INNER JOIN sales_invoice_details sid ON pi.id = sid.invoice_id
             LEFT JOIN sales_orders so ON pi.sales_order_id = so.id
             LEFT JOIN customers c ON pi.customer_id = c.id
-        WHERE pi.id = #{id}
+        WHERE pi.id = #{id} AND pi.is_deleted = 0
     </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">

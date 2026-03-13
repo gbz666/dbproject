@@ -36,6 +36,18 @@
         where  id = #{id} 
     </select>
 
+    <select id="selectByInvoiceId" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from sales_invoice_details
+        where invoice_id = #{invoiceId}
+        order by id
+    </select>
+
+    <delete id="deleteByInvoiceId" parameterType="java.lang.Long">
+        delete from sales_invoice_details where invoice_id = #{invoiceId}
+    </delete>
+
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
         delete from sales_invoice_details
         where  id = #{id} 
@@ -159,7 +171,7 @@
             updated_by_id =  #{updatedById}
         where   id = #{id} 
     </update>
-    <!-- 根据 invoice_id 批量更新对应的明细（当前场景为一票一明细） -->
+    <!-- 按 invoice_id 批量更新，一票多明细时慎用（会把所有明细改成同一套值），建议用 deleteByInvoiceId + 逐条 insert -->
     <update id="updateByInvoiceId">
         UPDATE sales_invoice_details
         <set>

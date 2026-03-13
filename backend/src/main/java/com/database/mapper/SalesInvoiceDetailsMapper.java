@@ -2,6 +2,8 @@ package com.database.mapper;
 
 import com.database.pojo.SalesInvoiceDetails;
 
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【sales_invoice_details(销项发票明细)】的数据库操作Mapper
@@ -17,6 +19,10 @@ public interface SalesInvoiceDetailsMapper {
     int insertSelective(SalesInvoiceDetails record);
 
     SalesInvoiceDetails selectByPrimaryKey(Long id);
+
+    List<SalesInvoiceDetails> selectByInvoiceId(Long invoiceId);
+
+    int deleteByInvoiceId(Long invoiceId);
 
     int updateByPrimaryKeySelective(SalesInvoiceDetails record);
 

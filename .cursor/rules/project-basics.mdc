@@ -1,0 +1,11 @@
+---
+description: Always read README and CODE_STYLE before coding
+alwaysApply: true
+---
+
+# Project bootstrap habits
+
+- 在开始处理本仓库的任务前，先快速浏览根目录的 `README.md`，了解项目结构、模块划分与启动方式。
+- 紧接着阅读或回顾 `docs/CODE_STYLE.md`，遵循其中约定的 Controller / Service / Mapper / 前端编码规范。
+- 如需偏离约定风格（例如为了兼容历史代码），请在本次对话中说明原因，并在代码中保持局部一致性，而不是混用多种风格。
+
