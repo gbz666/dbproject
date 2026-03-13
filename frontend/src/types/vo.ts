@@ -231,4 +231,7 @@ export interface SalesInvoiceVO {
   // 统计字段
   avgInvoiceDays?: number;        // 平均开票时间
   pendingInvoiceAmount?: number;  // 未开金额
+
+  /** 按 id 查询时的完整明细列表（与 DTO 中 items 结构一致），用于编辑 */
+  items?: SalesInvoiceDetailItemDTO[];
 }

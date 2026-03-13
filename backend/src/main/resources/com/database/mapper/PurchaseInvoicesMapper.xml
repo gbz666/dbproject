@@ -34,7 +34,73 @@
         from purchase_invoices
         where  id = #{id}
     </select>
-    <!-- 分页列表：每张发票一行，展示发票全貌（总金额、明细数），不跟首行明细 -->
+    <!-- 分页：只查发票 ID，用于先分页再批量聚合 -->
+    <select id="selectInvoiceIdsPage" resultType="java.lang.Long">
+        SELECT pi.id
+        FROM purchase_invoices pi
+        LEFT JOIN suppliers s ON pi.supplier_id = s.id
+        LEFT JOIN purchase_orders po ON pi.purchase_order_id = po.id
+        <where>
+            (pi.is_deleted = 0 OR pi.is_deleted IS NULL)
+            <if test="query.supplierName != null and query.supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{query.supplierName}, '%')
+            </if>
+            <if test="query.purchaseCode != null and query.purchaseCode != ''">
+                AND po.purchase_code LIKE CONCAT('%', #{query.purchaseCode}, '%')
+            </if>
+            <if test="query.productModel != null and query.productModel != ''">
+                AND EXISTS (SELECT 1 FROM purchase_invoice_details pd WHERE pd.invoice_id = pi.id AND pd.specification LIKE CONCAT('%', #{query.productModel}, '%'))
+            </if>
+            <if test="query.itemName != null and query.itemName != ''">
+                AND EXISTS (SELECT 1 FROM purchase_invoice_details pd WHERE pd.invoice_id = pi.id AND pd.item_name LIKE CONCAT('%', #{query.itemName}, '%'))
+            </if>
+        </where>
+        ORDER BY pi.invoice_date DESC
+    </select>
+
+    <!-- 根据 ID 列表批量查询并聚合明细，每张发票一条 VO -->
+    <select id="selectVOByIdsWithAggregatedDetails" resultType="com.database.vo.PurchaseInvoiceVO">
+        SELECT
+            pi.id, pi.invoice_no, pi.invoice_date, pi.supplier_id, pi.amount AS totalAmount,
+            po.purchase_code AS purchaseCode, po.order_date AS orderDate, po.note AS orderNote,
+            s.supplier_name AS supplierName,
+            COUNT(pd.id) AS detailCount,
+            (SELECT MAX(invoice_date) FROM purchase_invoices WHERE supplier_id = pi.supplier_id AND (is_deleted = 0 OR is_deleted IS NULL)) AS lastInvoiceDate,
+            (SELECT SUM(amount) FROM purchase_invoices WHERE supplier_id = pi.supplier_id AND (is_deleted = 0 OR is_deleted IS NULL)) AS totalInvoicedAmount,
+            (SELECT COUNT(*) FROM purchase_invoices WHERE supplier_id = pi.supplier_id AND (is_deleted = 0 OR is_deleted IS NULL)) AS invoiceCount,
+            (po.total_amount - (SELECT IFNULL(SUM(amount), 0) FROM purchase_invoices WHERE supplier_id = pi.supplier_id AND (is_deleted = 0 OR is_deleted IS NULL))) AS pendingInvoiceAmount,
+            (CASE WHEN po.order_date IS NOT NULL THEN DATEDIFF(pi.invoice_date, po.order_date) ELSE NULL END) AS avgInvoiceDays,
+            GROUP_CONCAT(DISTINCT pd.item_name ORDER BY pd.item_name SEPARATOR '；') AS itemName,
+            GROUP_CONCAT(DISTINCT pd.specification ORDER BY pd.specification SEPARATOR '；') AS specification,
+            GROUP_CONCAT(DISTINCT pd.unit ORDER BY pd.unit SEPARATOR '；') AS unit,
+            SUM(pd.quantity) AS quantity,
+            CASE WHEN COUNT(pd.id) = 1 THEN MAX(pd.unit_price) ELSE NULL END AS unitPrice,
+            SUM(pd.amount_exclusive_tax) AS amountExclusiveTax,
+            CASE WHEN COUNT(pd.id) = 1 THEN MAX(pd.tax_rate) ELSE NULL END AS taxRate,
+            SUM(pd.tax_amount) AS taxAmount,
+            SUM(pd.amount_inclusive_tax) AS amountInclusiveTax
+        FROM purchase_invoices pi
+        LEFT JOIN purchase_invoice_details pd ON pi.id = pd.invoice_id
+        LEFT JOIN suppliers s ON pi.supplier_id = s.id
+        LEFT JOIN purchase_orders po ON pi.purchase_order_id = po.id
+        <where>
+            <if test="ids != null and ids.size() > 0">
+                pi.id IN
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY pi.id, pi.invoice_no, pi.invoice_date, pi.amount, pi.supplier_id,
+                 po.id, po.purchase_code, po.order_date, po.note, po.total_amount, s.supplier_name
+        ORDER BY FIELD(pi.id,
+        <foreach collection="ids" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </select>
+
+    <!-- 分页列表：每张发票一行（已废弃，改用 selectInvoiceIdsPage + selectVOByIdsWithAggregatedDetails） -->
     <select id="selectInvoicesPage" resultType="com.database.vo.PurchaseInvoiceVO">
         SELECT
         pi.id, pi.invoice_no, pi.invoice_date, pi.amount AS totalAmount,

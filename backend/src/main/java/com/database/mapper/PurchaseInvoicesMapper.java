@@ -27,9 +27,15 @@ public interface PurchaseInvoicesMapper {
 
     int updateByPrimaryKey(PurchaseInvoices record);
 
-    // 复杂的 VO 关联查询，包含所有统计字段
-    List<PurchaseInvoiceVO> selectInvoicesPage(@Param("query") PurchaseInvoiceQuery query);
+    /**
+     * 分页查询：只查符合条件的进项发票 ID 列表（一张发票一条）
+     */
+    List<Long> selectInvoiceIdsPage(@Param("query") PurchaseInvoiceQuery query);
 
+    /**
+     * 根据发票 ID 列表批量查询并聚合明细，返回每张发票一条 VO
+     */
+    List<PurchaseInvoiceVO> selectVOByIdsWithAggregatedDetails(@Param("ids") List<Long> ids);
 
     PurchaseInvoiceVO selectVOById(Long id);
 

@@ -3,3 +3,8 @@
 *.docx
 /loaddata/
 /backend/target/
+*.zip
+*.pdf
+*.mp4
+*.MP4
+*.txt

@@ -690,6 +690,7 @@ CREATE INDEX idx_sales_orders_code_date ON sales_orders(order_code, order_date);
 CREATE INDEX idx_purchase_orders_code_date ON purchase_orders(purchase_code, order_date);
 CREATE INDEX idx_inventory_product ON inventory(product_id);
 CREATE INDEX idx_inventory_warehouse ON inventory(warehouse_id);
+CREATE INDEX idx_sales_invoice_details_invoice_id ON sales_invoice_details(invoice_id);
 
 
 -- =================================================

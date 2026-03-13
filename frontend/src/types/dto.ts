@@ -170,20 +170,36 @@ export interface SalesInvoiceQuery {
   invoiceNo?: string;         // 发票编码
 }
 
-/** 销项发票创建/更新 DTO，对应后端 SalesInvoiceDTO */
+/** 销项发票单行明细 */
+export interface SalesInvoiceDetailItemDTO {
+  itemName?: string;
+  specification?: string;
+  unit?: string;
+  quantity?: number;
+  unitPriceInclusiveTax?: number;
+  amountExclusiveTax?: number;
+  taxAmount?: number;
+  amountInclusiveTax?: number;
+  remark?: string;
+}
+
+/** 销项发票创建/更新 DTO，支持一票多明细：优先用 items；或传扁平字段（兼容单明细） */
 export interface SalesInvoiceDTO {
-  id?: number;                    // 更新时使用
-  salesOrderCode: string;         // 销售订单号
-  invoiceNo: string;              // 发票编码
-  invoiceDate: string;            // 开票日期 YYYY-MM-DD
-  companyName?: string;           // 公司名称（前端展示，可选）
-  itemName: string;               // 货物或应税劳务、服务名称
-  specification: string;          // 规格型号
-  unit: string;                   // 单位
-  quantity: number;               // 数量
-  unitPriceInclusiveTax: number;  // 含税单价
-  amountInclusiveTax: number;     // 含税总金额
-  amountExclusiveTax: number;     // 未税销售金额
-  taxAmount: number;              // 税额
-  remark?: string;                // 备注
+  id?: number;
+  salesOrderCode: string;
+  invoiceNo: string;
+  invoiceDate: string;
+  companyName?: string;
+  remark?: string;
+  /** 多明细时使用，至少一行 */
+  items?: SalesInvoiceDetailItemDTO[];
+  /** 单明细兼容字段 */
+  itemName?: string;
+  specification?: string;
+  unit?: string;
+  quantity?: number;
+  unitPriceInclusiveTax?: number;
+  amountInclusiveTax?: number;
+  amountExclusiveTax?: number;
+  taxAmount?: number;
 }

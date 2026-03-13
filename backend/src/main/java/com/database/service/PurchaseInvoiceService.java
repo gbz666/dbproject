@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class PurchaseInvoiceService {
@@ -33,8 +35,32 @@ public class PurchaseInvoiceService {
 
     @Transactional(readOnly = true)
     public PageInfo<PurchaseInvoiceVO> findPage(PurchaseInvoiceQuery query) {
+        // 1. 先分页查发票 ID
         PageHelper.startPage(query.getPageNum(), query.getPageSize());
-        return new PageInfo<>(invoiceMapper.selectInvoicesPage(query));
+        List<Long> ids = invoiceMapper.selectInvoiceIdsPage(query);
+        PageInfo<Long> idPage = new PageInfo<>(ids);
+
+        if (ids == null || ids.isEmpty()) {
+            PageInfo<PurchaseInvoiceVO> result = new PageInfo<>();
+            result.setList(List.of());
+            result.setTotal(idPage.getTotal());
+            result.setPages(idPage.getPages());
+            result.setPageNum(idPage.getPageNum());
+            result.setPageSize(idPage.getPageSize());
+            return result;
+        }
+
+        // 2. 批量查并聚合明细
+        List<PurchaseInvoiceVO> list = invoiceMapper.selectVOByIdsWithAggregatedDetails(ids);
+        PageInfo<PurchaseInvoiceVO> result = new PageInfo<>();
+        result.setList(list);
+        result.setTotal(idPage.getTotal());
+        result.setPages(idPage.getPages());
+        result.setPageNum(idPage.getPageNum());
+        result.setPageSize(idPage.getPageSize());
+        result.setHasNextPage(idPage.isHasNextPage());
+        result.setHasPreviousPage(idPage.isHasPreviousPage());
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -45,22 +71,67 @@ public class PurchaseInvoiceService {
     private PurchaseInvoiceVO buildVOWithDetails(Long invoiceId) {
         PurchaseInvoiceVO vo = invoiceMapper.selectVOById(invoiceId);
         if (vo == null) return null;
-        List<PurchaseInvoiceDetails> details = detailMapper.selectByInvoiceId(invoiceId);
-        vo.setDetails(details);
-        if (details != null && !details.isEmpty()) {
-            PurchaseInvoiceDetails first = details.get(0);
-            vo.setItemName(first.getItemName());
-            vo.setSpecification(first.getSpecification());
-            vo.setUnit(first.getUnit());
-            vo.setQuantity(first.getQuantity());
-            vo.setUnitPrice(first.getUnitPrice());
-            vo.setAmountExclusiveTax(first.getAmountExclusiveTax());
-            vo.setTaxRate(first.getTaxRate());
-            vo.setTaxAmount(first.getTaxAmount());
-            vo.setAmountInclusiveTax(first.getAmountInclusiveTax());
-            vo.setRemark(first.getRemark());
-        }
+        fillDetailsAndAggregate(vo);
         return vo;
+    }
+
+    /**
+     * 为进项发票 VO 填充完整明细列表，并在 Java 层按“一票多明细”做聚合展示字段
+     */
+    private void fillDetailsAndAggregate(PurchaseInvoiceVO vo) {
+        if (vo == null || vo.getId() == null) {
+            return;
+        }
+        List<PurchaseInvoiceDetails> details = detailMapper.selectByInvoiceId(vo.getId());
+        vo.setDetails(details);
+        if (details == null || details.isEmpty()) {
+            return;
+        }
+
+        // 货物名称、规格型号、单位：用中文分号连接，单位去重
+        vo.setItemName(details.stream()
+                .map(PurchaseInvoiceDetails::getItemName)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining("；")));
+        vo.setSpecification(details.stream()
+                .map(PurchaseInvoiceDetails::getSpecification)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining("；")));
+        vo.setUnit(details.stream()
+                .map(PurchaseInvoiceDetails::getUnit)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.joining("；")));
+
+        // 数量与金额：求和
+        vo.setQuantity(details.stream()
+                .map(PurchaseInvoiceDetails::getQuantity)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        vo.setAmountExclusiveTax(details.stream()
+                .map(PurchaseInvoiceDetails::getAmountExclusiveTax)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        vo.setTaxAmount(details.stream()
+                .map(PurchaseInvoiceDetails::getTaxAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        vo.setAmountInclusiveTax(details.stream()
+                .map(PurchaseInvoiceDetails::getAmountInclusiveTax)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        // 单价、税率：若只有一行明细则直接取，否则置空（避免多行语义不清）
+        if (details.size() == 1) {
+            PurchaseInvoiceDetails first = details.get(0);
+            vo.setUnitPrice(first.getUnitPrice());
+            vo.setTaxRate(first.getTaxRate());
+        } else {
+            vo.setUnitPrice(null);
+            vo.setTaxRate(null);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
