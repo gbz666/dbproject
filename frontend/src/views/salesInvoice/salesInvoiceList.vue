@@ -102,6 +102,9 @@
       <!-- 总览列：订单号 / 日期 / 公司 / 金额汇总 / 编码 -->
       <el-table-column prop="invoiceNo" label="发票编码" width="140" fixed />
       <el-table-column prop="salesOrderCode" label="销售订单号" width="140" />
+      <el-table-column label="明细数" width="100" align="center">
+        <template #default="{ row }">共 {{ row.detailCount ?? 0 }} 项</template>
+      </el-table-column>
       <el-table-column prop="invoiceDate" label="开票日期" width="120">
         <template #default="{ row }">{{ row.invoiceDate?.toString().substring(0, 10) }}</template>
       </el-table-column>

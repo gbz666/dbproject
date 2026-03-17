@@ -118,6 +118,7 @@
             pi.invoice_date     AS invoiceDate,
             so.order_code       AS salesOrderCode,
             c.customer_name     AS companyName,
+            COUNT(sid.id)       AS detailCount,
             GROUP_CONCAT(sid.item_name SEPARATOR '；')  AS itemName,
             GROUP_CONCAT(sid.specification SEPARATOR '；')  AS specification,
             GROUP_CONCAT(DISTINCT sid.unit SEPARATOR '；')   AS unit,
@@ -160,6 +161,7 @@
             pi.invoice_date     AS invoiceDate,
             so.order_code       AS salesOrderCode,
             c.customer_name     AS companyName,
+            (SELECT COUNT(*) FROM sales_invoice_details sid WHERE sid.invoice_id = pi.id) AS detailCount,
             DATEDIFF(pi.invoice_date, so.order_date) AS avgInvoiceDays,
             (so.total_amount - IFNULL((
                 SELECT SUM(amount) FROM sales_invoices si2

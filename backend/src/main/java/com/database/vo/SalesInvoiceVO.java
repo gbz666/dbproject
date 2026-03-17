@@ -17,6 +17,11 @@ public class SalesInvoiceVO extends SalesInvoiceDTO {
     private Long id;
 
     /**
+     * 明细行数（发票下有多少条 sales_invoice_details）
+     */
+    private Integer detailCount;
+
+    /**
      * 平均开票时间（单位：天）
      * 例如：订单日期到各次开票日期的平均间隔
      */

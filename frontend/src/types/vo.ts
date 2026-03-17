@@ -210,10 +210,13 @@ export interface PurchaseInvoiceVO {
   details?: PurchaseInvoiceDetailVO[];
 }
 
+import type { SalesInvoiceDetailItemDTO } from "./dto";
+
 /** 销项发票 VO，对应后端 SalesInvoiceVO */
 export interface SalesInvoiceVO {
   id: number;
   // 来自 DTO 的字段
+  detailCount?: number;
   salesOrderCode: string;
   invoiceNo: string;
   invoiceDate: string;
