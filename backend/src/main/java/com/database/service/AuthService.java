@@ -45,6 +45,7 @@ public class AuthService {
         }
 
         // 3. 验证密码
+        log.info("TEMP: correct hash for [{}] = {}", request.getPassword(), passwordEncoder.encode(request.getPassword()));
         if (staff.getPassword() == null || !passwordEncoder.matches(request.getPassword(), staff.getPassword())) {
             throw new BusinessException("员工姓名或密码错误", 401);
         }
