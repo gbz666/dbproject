@@ -13,3 +13,6 @@
 *.env
 *.pyc
 *.log
+.env
+.env.example
+.yaml
