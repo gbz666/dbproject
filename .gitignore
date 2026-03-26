@@ -1,18 +1,47 @@
+# === 敏感文件 ===
+*.env
+.env
+.env.*
+!.env.example
+
+# === Python ===
+*.pyc
+__pycache__/
+.venv/
+venv/
+
+# === Java ===
+/backend/target/
+*.jar
+*.class
+
+# === 数据与运行时 ===
+*.db
+*.sqlite3
+*.sqlite
+/loaddata/
+memory_data/
+charts/
+
+# === 文档与媒体 ===
 *.xlsx
 *.pptx
 *.docx
-/loaddata/
-/backend/target/
-*.zip
 *.pdf
+*.zip
 *.mp4
 *.MP4
 *.txt
 *.tex
+
+# === 日志 ===
 *.log
-*.env
-*.pyc
-*.log
-.env
-.env.example
+
+# === IDE ===
+.idea/
+.vscode/
+*.iml
+
+# === 其他 ===
 .yaml
+node_modules/
