@@ -32,6 +32,13 @@ def load_settings() -> dict:
 
 
 def get_chart_output_dir() -> Path:
-    """返回图表输出目录。"""
+    """返回图表输出目录（相对路径基于项目根目录解析，避免受 CWD 影响）。"""
     settings = load_settings()
-    return Path(settings["chart_output_dir"])
+    raw = Path(settings["chart_output_dir"])
+    if raw.is_absolute():
+        resolved = raw
+    else:
+        resolved = (get_project_root() / raw).resolve()
+    import logging
+    logging.getLogger(__name__).info("图表输出目录: %s (project_root=%s)", resolved, get_project_root())
+    return resolved

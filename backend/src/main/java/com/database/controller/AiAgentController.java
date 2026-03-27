@@ -39,13 +39,13 @@ public class AiAgentController {
 
     /**
      * POST /api/ai/execute-sql: 安全执行参数化 SQL 并返回结果 + 图表
-     * @param request 包含 sqlTemplate、params、chartHint
+     * @param request 包含 sqlTemplate、params、chartHint、question
      * @return 查询列名、行数据、图表 URL
      */
     @PostMapping("/execute-sql")
     public ResponseEntity<Result<AiExecuteSqlResponse>> executeSql(
             @Valid @RequestBody AiExecuteSqlRequest request) {
-        AiExecuteSqlResponse response = aiAgentService.executeSql(request, null);
+        AiExecuteSqlResponse response = aiAgentService.executeSql(request, request.getQuestion());
         return ResponseEntity.ok(Result.success(response));
     }
 }

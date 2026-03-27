@@ -21,4 +21,6 @@ public class AiExecuteSqlRequest {
     private Map<String, Object> params;
 
     private Map<String, Object> chartHint;
+
+    private String question;
 }
