@@ -73,15 +73,11 @@
               库存展示
             </el-menu-item>
           </el-sub-menu>
-<!-- 
-          <el-sub-menu index="2">
-            <template #title>
-              <el-icon>
-                <Sell />
-              </el-icon>
-              <span>销售管理 (待开发)</span>
-            </template>
-          </el-sub-menu> -->
+
+          <el-menu-item index="/ai-query">
+            <el-icon><MagicStick /></el-icon>
+            <span>AI 智能查询</span>
+          </el-menu-item>
 
         </el-menu>
       </el-aside>

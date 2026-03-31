@@ -22,9 +22,14 @@ def generate_sql_payload(payload: GenerateSqlRequest) -> GenerateSqlResponse:
     if not schema_text:
         logger.warning("db.sql schema 为空，LLM 无法生成有意义的 SQL")
 
+    history_dicts = None
+    if payload.history:
+        history_dicts = [{"role": m.role, "content": m.content} for m in payload.history]
+
     sql_template, params_spec, reason, chart_hint, confidence, warnings = run_sql_agent(
         question=payload.question,
         schema_text=schema_text,
+        history=history_dicts,
     )
 
     if not sql_template:

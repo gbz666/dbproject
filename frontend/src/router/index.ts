@@ -76,6 +76,12 @@ const router = createRouter({
           component: () => import("@/views/profile/ProfileView.vue"),
           meta: { title: "个人中心" },
         },
+        {
+          path: "/ai-query",
+          name: "AiQuery",
+          component: () => import("@/views/ai/AiQueryView.vue"),
+          meta: { title: "AI 智能查询" },
+        },
       ],
     },
     // 如果有登录页等非布局页面，可以放在这里

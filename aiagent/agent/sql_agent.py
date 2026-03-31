@@ -98,23 +98,28 @@ def parse_llm_response(raw: dict) -> tuple[str, list[ParamSpec], str, ChartHint,
 def run_sql_agent(
     question: str,
     schema_text: str,
+    history: list[dict] | None = None,
 ) -> tuple[str, list[ParamSpec], str, ChartHint, float, list[str]]:
     """
     完整执行一次 NL->SQL 生成流程：
     1. 构建 prompt
-    2. 调用 LLM
-    3. 解析结构化输出
+    2. 如有 history 则加入对话上下文
+    3. 调用 LLM
+    4. 解析结构化输出
     返回 (sqlTemplate, paramsSpec, reason, chartHint, confidence, warnings)
     """
     system_msg = build_system_prompt(schema_text)
+
+    messages: list[dict] = [{"role": "system", "content": system_msg}]
+
+    if history:
+        for msg in history:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
     user_msg = build_sql_prompt(question)
+    messages.append({"role": "user", "content": user_msg})
 
-    messages = [
-        {"role": "system", "content": system_msg},
-        {"role": "user", "content": user_msg},
-    ]
-
-    logger.info("调用 LLM 生成 SQL，问题: %s", question)
+    logger.info("调用 LLM 生成 SQL，问题: %s, 历史轮数: %d", question, len(history or []))
     raw = call_llm_json(messages, temperature=0)
     logger.info("LLM 响应: %s", raw)
 

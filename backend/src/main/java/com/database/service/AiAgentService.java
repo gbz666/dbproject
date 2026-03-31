@@ -46,10 +46,13 @@ public class AiAgentService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("question", request.getQuestion());
+        if (request.getHistory() != null && !request.getHistory().isEmpty()) {
+            body.put("history", request.getHistory());
+        }
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
             ResponseEntity<AiGenerateSqlResponse> resp = restTemplate.exchange(

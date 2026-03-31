@@ -24,8 +24,14 @@ class ParamSpec(BaseModel):
 
 # --------------- generate-sql ---------------
 
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
 class GenerateSqlRequest(BaseModel):
     question: str
+    history: list[ChatMessage] | None = None
 
 
 class GenerateSqlResponse(BaseModel):
