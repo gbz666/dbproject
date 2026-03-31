@@ -10,7 +10,7 @@ _FEW_SHOT_EXAMPLES = textwrap.dedent("""\
 --- 示例1 ---
 问题: 查询本季度销售额前10的产品
 输出:
-{"sqlTemplate":"SELECT p.product_name, SUM(soi.quantity * soi.unit_price - soi.discount) AS total_sales FROM sales_order_items soi JOIN products p ON soi.product_id = p.id JOIN sales_orders so ON soi.sales_order_id = so.id WHERE so.is_deleted = 0 AND so.order_date >= {start_date} AND so.order_date < {end_date} GROUP BY p.product_name ORDER BY total_sales DESC LIMIT {top_n}","paramsSpec":[{"name":"start_date","type":"date","default":"2026-01-01","required":true,"label":"开始日期"},{"name":"end_date","type":"date","default":"2026-04-01","required":true,"label":"结束日期"},{"name":"top_n","type":"int","default":"10","required":false,"label":"前N名"}],"reason":"按产品分组聚合销售额并取前N","chartHint":{"type":"bar","x":"product_name","y":"total_sales","series":null},"confidence":0.85,"warnings":[]}
+{"sqlTemplate":"SELECT p.product_name, SUM(soi.quantity * (soi.unit_price - soi.cost_price)) AS total_sales FROM sales_order_items soi JOIN products p ON soi.product_id = p.id JOIN sales_orders so ON soi.sales_order_id = so.id WHERE so.is_deleted = 0 AND so.order_date >= {start_date} AND so.order_date < {end_date} GROUP BY p.product_name ORDER BY total_sales DESC LIMIT {top_n}","paramsSpec":[{"name":"start_date","type":"date","default":"2026-01-01","required":true,"label":"开始日期"},{"name":"end_date","type":"date","default":"2026-04-01","required":true,"label":"结束日期"},{"name":"top_n","type":"int","default":"10","required":false,"label":"前N名"}],"reason":"按产品分组聚合销售额并取前N","chartHint":{"type":"bar","x":"product_name","y":"total_sales","series":null},"confidence":0.85,"warnings":[]}
 
 --- 示例2 ---
 问题: 近6个月各月销售总额趋势

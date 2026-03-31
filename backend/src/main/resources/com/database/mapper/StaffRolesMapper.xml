@@ -16,6 +16,13 @@
         id,staff_id,role_id,assigned_at,created_at
     </sql>
 
+    <select id="selectRoleNamesByStaffId" parameterType="java.lang.Long" resultType="java.lang.String">
+        SELECT r.role_name
+        FROM staff_roles sr
+        JOIN roles r ON sr.role_id = r.id
+        WHERE sr.staff_id = #{staffId}
+    </select>
+
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />

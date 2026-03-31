@@ -1,6 +1,9 @@
 package com.database.mapper;
 
 import com.database.pojo.StaffRoles;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author 高柏舟
@@ -9,6 +12,8 @@ import com.database.pojo.StaffRoles;
 * @Entity com.database.pojo.StaffRoles
 */
 public interface StaffRolesMapper {
+
+    List<String> selectRoleNamesByStaffId(@Param("staffId") Long staffId);
 
     int deleteByPrimaryKey(Long id);
 
