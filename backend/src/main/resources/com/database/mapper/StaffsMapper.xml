@@ -65,6 +65,8 @@
                 <if test="email != null">email,</if>
                 <if test="phone != null">phone,</if>
                 <if test="title != null">title,</if>
+                <if test="password != null">password,</if>
+                <if test="status != null">status,</if>
                 <if test="createdById != null">created_by_id,</if>
                 <if test="updatedById != null">updated_by_id,</if>
         </trim>
@@ -75,6 +77,8 @@
                 <if test="email != null">#{email},</if>
                 <if test="phone != null">#{phone},</if>
                 <if test="title != null">#{title},</if>
+                <if test="password != null">#{password},</if>
+                <if test="status != null">#{status},</if>
                 <if test="createdById != null">#{createdById},</if>
                 <if test="updatedById != null">#{updatedById},</if>
         </trim>
@@ -121,4 +125,29 @@
             updated_by_id =  #{updatedById}
         where   id = #{id} 
     </update>
+
+    <select id="selectPageList" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" />
+        from staffs
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (staff_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR staff_code LIKE CONCAT('%', #{keyword}, '%')
+                    OR email LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        select count(*) from staffs
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (staff_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR staff_code LIKE CONCAT('%', #{keyword}, '%')
+                    OR email LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
 </mapper>

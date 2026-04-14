@@ -5,12 +5,13 @@ export interface AuthTokens {
   expiredAt: string
 }
 
-/** 登录接口返回的数据，对应后端 LoginResponse（仅使用 staffName，无 username） */
+/** 登录接口返回的数据，对应后端 LoginResponse */
 export interface LoginResponse {
   token: string
   userId: number | null
   staffName: string
   expiration: number | null
+  roles: string[]
 }
 
 export interface SearchFilters {

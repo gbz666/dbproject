@@ -69,4 +69,10 @@
             created_at =  #{createdAt}
         where   id = #{id} 
     </update>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" />
+        from roles
+        ORDER BY id
+    </select>
 </mapper>

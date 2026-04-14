@@ -79,6 +79,17 @@
             <span>AI 智能查询</span>
           </el-menu-item>
 
+          <el-sub-menu v-if="authStore.canManageStaff" index="system">
+            <template #title>
+              <el-icon><UserFilled /></el-icon>
+              <span>系统管理</span>
+            </template>
+            <el-menu-item index="/system/staff-manage">
+              <el-icon><User /></el-icon>
+              员工管理
+            </el-menu-item>
+          </el-sub-menu>
+
         </el-menu>
       </el-aside>
 

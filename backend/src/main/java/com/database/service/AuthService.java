@@ -3,12 +3,16 @@ package com.database.service;
 import com.database.dto.LoginRequest;
 import com.database.dto.LoginResponse;
 import com.database.exception.BusinessException;
+import com.database.mapper.StaffRolesMapper;
 import com.database.pojo.Staffs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 认证服务类
@@ -21,6 +25,7 @@ public class AuthService {
 
     private final StaffService staffService;
     private final TokenService tokenService;
+    private final StaffRolesMapper staffRolesMapper;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Value("${jwt.expiration:7200}")
@@ -56,14 +61,19 @@ public class AuthService {
         // 5. 更新最后登录时间
         staffService.updateLastLoginTime(staff.getId());
 
-        log.info("用户登录成功，员工姓名: {}, 用户ID: {}", staff.getStaffName(), staff.getId());
+        // 6. 查询用户角色
+        List<String> roles = staffRolesMapper.selectRoleNamesByStaffId(staff.getId());
+        if (roles == null) roles = Collections.emptyList();
 
-        // 6. 返回登录响应
+        log.info("用户登录成功，员工姓名: {}, 用户ID: {}, 角色: {}", staff.getStaffName(), staff.getId(), roles);
+
+        // 7. 返回登录响应
         return new LoginResponse(
                 token,
                 staff.getId(),
                 staff.getStaffName(),
-                expiration
+                expiration,
+                roles
         );
     }
 
@@ -96,6 +106,8 @@ public class AuthService {
         if (newToken == null) {
             return null;
         }
-        return new LoginResponse(newToken, userId, staffName, expiration);
+        List<String> roles = staffRolesMapper.selectRoleNamesByStaffId(userId);
+        if (roles == null) roles = Collections.emptyList();
+        return new LoginResponse(newToken, userId, staffName, expiration, roles);
     }
 }

@@ -3,6 +3,8 @@ package com.database.mapper;
 import com.database.pojo.Staffs;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【staffs(员工表:存放平台员工信息)】的数据库操作Mapper
@@ -25,8 +27,11 @@ public interface StaffsMapper {
 
     Long selectByStaffName(@Param("staffName") String staffName);
 
-    /**
-     * 更新最后登录时间
-     */
     int updateLastLoginTime(@Param("id") Long id);
+
+    List<Staffs> selectPageList(@Param("keyword") String keyword,
+                                @Param("offset") int offset,
+                                @Param("limit") int limit);
+
+    int selectCount(@Param("keyword") String keyword);
 }

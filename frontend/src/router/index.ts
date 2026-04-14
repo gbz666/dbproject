@@ -82,6 +82,12 @@ const router = createRouter({
           component: () => import("@/views/ai/AiQueryView.vue"),
           meta: { title: "AI 智能查询" },
         },
+        {
+          path: "/system/staff-manage",
+          name: "StaffManage",
+          component: () => import("@/views/staffManage/StaffManageView.vue"),
+          meta: { title: "员工管理", requireRoles: ["admin", "manager"] },
+        },
       ],
     },
     // 如果有登录页等非布局页面，可以放在这里

@@ -23,6 +23,14 @@
         WHERE sr.staff_id = #{staffId}
     </select>
 
+    <select id="selectRoleIdsByStaffId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        SELECT role_id FROM staff_roles WHERE staff_id = #{staffId}
+    </select>
+
+    <delete id="deleteByStaffId">
+        DELETE FROM staff_roles WHERE staff_id = #{staffId}
+    </delete>
+
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />

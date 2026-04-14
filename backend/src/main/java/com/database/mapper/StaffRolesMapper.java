@@ -15,6 +15,10 @@ public interface StaffRolesMapper {
 
     List<String> selectRoleNamesByStaffId(@Param("staffId") Long staffId);
 
+    List<Integer> selectRoleIdsByStaffId(@Param("staffId") Long staffId);
+
+    int deleteByStaffId(@Param("staffId") Long staffId);
+
     int deleteByPrimaryKey(Long id);
 
     int insert(StaffRoles record);

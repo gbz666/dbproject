@@ -7,11 +7,11 @@ const TOKEN_KEY = "access_token";
 const USER_KEY = "user_info";
 const DEFAULT_TOKEN_MAX_AGE = 7200; // 秒，与后端默认一致
 
-/** 前端存储的用户信息（与 LoginResponse 对应，仅 staffName 用于展示） */
+/** 前端存储的用户信息（与 LoginResponse 对应） */
 export interface AuthUser {
   userId: number | null;
   staffName: string;
-  role?: string;
+  roles: string[];
 }
 
 function getStoredToken(): string | null {
@@ -38,6 +38,11 @@ export const useAuthStore = defineStore("auth", {
     isLoggedIn(): boolean {
       return !!this.token;
     },
+    /** 当前用户是否拥有管理员或经理角色 */
+    canManageStaff(): boolean {
+      const roles = this.user?.roles ?? [];
+      return roles.includes("admin") || roles.includes("manager");
+    },
   },
 
   actions: {
@@ -48,6 +53,7 @@ export const useAuthStore = defineStore("auth", {
       this.user = {
         userId: data.userId ?? null,
         staffName: data.staffName ?? "",
+        roles: data.roles ?? [],
       };
       const expireSeconds = data.expiration ?? DEFAULT_TOKEN_MAX_AGE;
       setCookie(TOKEN_KEY, data.token, expireSeconds / 86400);

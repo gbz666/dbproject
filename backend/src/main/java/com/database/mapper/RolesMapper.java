@@ -2,6 +2,8 @@ package com.database.mapper;
 
 import com.database.pojo.Roles;
 
+import java.util.List;
+
 /**
 * @author 高柏舟
 * @description 针对表【roles(系统角色表)】的数据库操作Mapper
@@ -22,4 +24,5 @@ public interface RolesMapper {
 
     int updateByPrimaryKey(Roles record);
 
+    List<Roles> selectAll();
 }
