@@ -39,7 +39,7 @@ public class StaffController {
     /**
      * GET /api/staff/list: 分页查询员工列表（含角色）
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @GetMapping("/list")
     public ResponseEntity<Result<Map<String, Object>>> listStaffs(
             @RequestParam(defaultValue = "1") int pageNum,
@@ -52,7 +52,7 @@ public class StaffController {
     /**
      * GET /api/staff/roles: 获取所有可用角色
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @GetMapping("/roles")
     public ResponseEntity<Result<List<Roles>>> getAllRoles() {
         return ResponseEntity.ok(Result.success(staffService.getAllRoles()));
@@ -61,7 +61,7 @@ public class StaffController {
     /**
      * POST /api/staff/create: 新建员工
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @PostMapping("/create")
     public ResponseEntity<Result<Void>> createStaff(
             @Valid @RequestBody StaffCreateRequest request,
@@ -76,7 +76,7 @@ public class StaffController {
     /**
      * PUT /api/staff/{id}: 编辑员工信息
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @PutMapping("/{id}")
     public ResponseEntity<Result<Void>> updateStaff(
             @PathVariable Long id,
@@ -90,7 +90,7 @@ public class StaffController {
     /**
      * POST /api/staff/{id}/reset-password: 重置员工密码
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<Result<Void>> resetPassword(
             @PathVariable Long id,
@@ -106,7 +106,7 @@ public class StaffController {
     /**
      * PUT /api/staff/{id}/status: 切换员工账户状态
      */
-    @RequireRole({"admin", "manager"})
+    @RequireRole({"后台管理", "总经理"})
     @PutMapping("/{id}/status")
     public ResponseEntity<Result<Void>> toggleStatus(@PathVariable Long id) {
         staffService.toggleStatus(id);

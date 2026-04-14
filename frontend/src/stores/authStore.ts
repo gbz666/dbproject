@@ -41,7 +41,7 @@ export const useAuthStore = defineStore("auth", {
     /** 当前用户是否拥有管理员或经理角色 */
     canManageStaff(): boolean {
       const roles = this.user?.roles ?? [];
-      return roles.includes("admin") || roles.includes("manager");
+      return roles.includes("后台管理") || roles.includes("总经理");
     },
   },
 
