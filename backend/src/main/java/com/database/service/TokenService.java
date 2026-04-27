@@ -87,7 +87,7 @@ public class TokenService {
             String tokenKey = TOKEN_PREFIX + token;
             Object redisValue = redisTemplate.opsForValue().get(tokenKey);
             if (redisValue == null) {
-                log.warn("Token不存在于Redis中，可能已过期: {}", token);
+                log.warn("Token不存在于Redis中，可能已过期111: {}", token);
                 return null;
             }
 

@@ -28,6 +28,14 @@ def load_settings() -> dict:
         "chart_output_dir": os.getenv("CHART_OUTPUT_DIR", str(get_project_root() / "charts")),
         "host": os.getenv("AIAGENT_HOST", "0.0.0.0"),
         "port": int(os.getenv("AIAGENT_PORT", "8001")),
+        # Java MCP Server 地址
+        "java_backend_url": os.getenv("JAVA_BACKEND_URL", "http://localhost:8080"),
+        # Java 后端鉴权：二选一
+        # 1) 直接提供固定 Bearer Token（简单但会过期）
+        "java_backend_token": os.getenv("JAVA_BACKEND_TOKEN", ""),
+        # 2) 提供服务账号，aiagent 自动调用 /api/auth/login 获取 token
+        "java_backend_staff_name": os.getenv("JAVA_BACKEND_STAFF_NAME", ""),
+        "java_backend_password": os.getenv("JAVA_BACKEND_PASSWORD", ""),
     }
 
 

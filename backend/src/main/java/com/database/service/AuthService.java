@@ -41,7 +41,7 @@ public class AuthService {
         // 1. 根据员工姓名查询员工（登录使用 staffName）
         Staffs staff = staffService.getStaffByStaffName(request.getStaffName());
         if (staff == null) {
-            throw new BusinessException("员工姓名或密码错误", 401);
+            throw new BusinessException("员工姓名不存在", 401);
         }
 
         // 2. 检查账户状态
@@ -52,7 +52,7 @@ public class AuthService {
         // 3. 验证密码
         log.info("TEMP: correct hash for [{}] = {}", request.getPassword(), passwordEncoder.encode(request.getPassword()));
         if (staff.getPassword() == null || !passwordEncoder.matches(request.getPassword(), staff.getPassword())) {
-            throw new BusinessException("员工姓名或密码错误", 401);
+            throw new BusinessException("员工密码错误", 401);
         }
 
         // 4. 生成 Token（存入 staffName）
