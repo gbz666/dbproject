@@ -165,4 +165,82 @@ public class AiAgentService {
         }
         return null;
     }
+
+    @Value("${aiagent.db.readonly-url}")
+    private String readonlyUrl;
+
+    @Value("${aiagent.db.readonly-username}")
+    private String readonlyUsername;
+
+    @Value("${aiagent.db.readonly-password}")
+    private String readonlyPassword;
+
+    public com.database.dto.AiTrialExecuteResponse trialExecute(String sql) {
+        com.database.dto.AiTrialExecuteResponse response = new com.database.dto.AiTrialExecuteResponse();
+        
+        try {
+            // 前置安全拦截，确保哪怕是只读账号，也不要跑诸如包含;的多条语句
+            sqlSecurityService.validateSql(sql);
+            String finalSql = sqlSecurityService.ensureLimit(sql);
+            
+            // 手动创建 JDBC 连接使用只读账号
+            try (java.sql.Connection conn = java.sql.DriverManager.getConnection(readonlyUrl, readonlyUsername, readonlyPassword)) {
+                // 设置超时防止大查询
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.setQueryTimeout(10); // 10秒超时
+                    try (java.sql.ResultSet rs = stmt.executeQuery(finalSql)) {
+                        java.sql.ResultSetMetaData metaData = rs.getMetaData();
+                        int columnCount = metaData.getColumnCount();
+                        
+                        List<String> columns = new ArrayList<>();
+                        for (int i = 1; i <= columnCount; i++) {
+                            columns.add(metaData.getColumnLabel(i));
+                        }
+                        
+                        List<List<Object>> rows = new ArrayList<>();
+                        int count = 0;
+                        while(rs.next() && count < 20) { // 最多取 20 行用于给 AI 参考
+                            List<Object> row = new ArrayList<>();
+                            for (int i = 1; i <= columnCount; i++) {
+                                row.add(rs.getObject(i));
+                            }
+                            rows.add(row);
+                            count++;
+                        }
+                        
+                        response.setSuccess(true);
+                        response.setColumns(columns);
+                        response.setRows(rows);
+                        response.setRowCount(count);
+                        response.setError("");
+                        log.info("MCP 试跑成功: {} 列, {} 行 (前 {} 行)", columnCount, count, rows.size());
+                    }
+                }
+            } catch (java.sql.SQLException e) {
+                // 返回原汁原味的数据库报错，供 LLM 修正
+                response.setSuccess(false);
+                response.setColumns(new ArrayList<>());
+                response.setRows(new ArrayList<>());
+                response.setRowCount(0);
+                response.setError(e.getClass().getSimpleName() + ": " + e.getMessage());
+                log.warn("MCP 试跑执行失败(将被 LLM 修正): {}", response.getError());
+            }
+        } catch (BusinessException e) {
+            // 安全插件拦截的错误
+            response.setSuccess(false);
+            response.setColumns(new ArrayList<>());
+            response.setRows(new ArrayList<>());
+            response.setRowCount(0);
+            response.setError("SecurityServiceBlocked: " + e.getMessage());
+            log.warn("MCP 试跑安全拦截: {}", response.getError());
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setColumns(new ArrayList<>());
+            response.setRows(new ArrayList<>());
+            response.setRowCount(0);
+            response.setError("UnknownError: " + e.getMessage());
+        }
+        
+        return response;
+    }
 }

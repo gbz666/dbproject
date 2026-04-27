@@ -43,11 +43,24 @@ public class AiAgentController {
      * @param request 包含 sqlTemplate、params、chartHint、question
      * @return 查询列名、行数据、图表 URL
      */
-    @RequireRole({"admin", "analyst"})
+    @RequireRole({"后台管理", "总经理"})
     @PostMapping("/execute-sql")
     public ResponseEntity<Result<AiExecuteSqlResponse>> executeSql(
             @Valid @RequestBody AiExecuteSqlRequest request) {
         AiExecuteSqlResponse response = aiAgentService.executeSql(request, request.getQuestion());
         return ResponseEntity.ok(Result.success(response));
+    }
+
+    /**
+     * POST /api/ai/internal/trial-execute: 内部试跑 SQL，作为 MCP Tool Server 暴露给 AI Agent
+     * @param request 包含 sql
+     * @return 试跑结果
+     */
+    @RequireRole({"后台管理", "总经理"})
+    @PostMapping("/internal/trial-execute")
+    public ResponseEntity<com.database.dto.AiTrialExecuteResponse> trialExecute(
+            @Valid @RequestBody com.database.dto.AiTrialExecuteRequest request) {
+        com.database.dto.AiTrialExecuteResponse response = aiAgentService.trialExecute(request.getSql());
+        return ResponseEntity.ok(response);
     }
 }

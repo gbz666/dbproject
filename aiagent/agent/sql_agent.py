@@ -13,9 +13,53 @@ _FEW_SHOT_EXAMPLES = textwrap.dedent("""\
 {"sqlTemplate":"SELECT p.product_name, SUM(soi.quantity * (soi.unit_price - soi.cost_price)) AS total_sales FROM sales_order_items soi JOIN products p ON soi.product_id = p.id JOIN sales_orders so ON soi.sales_order_id = so.id WHERE so.is_deleted = 0 AND so.order_date >= {start_date} AND so.order_date < {end_date} GROUP BY p.product_name ORDER BY total_sales DESC LIMIT {top_n}","paramsSpec":[{"name":"start_date","type":"date","default":"2026-01-01","required":true,"label":"开始日期"},{"name":"end_date","type":"date","default":"2026-04-01","required":true,"label":"结束日期"},{"name":"top_n","type":"int","default":"10","required":false,"label":"前N名"}],"reason":"按产品分组聚合销售额并取前N","chartHint":{"type":"bar","x":"product_name","y":"total_sales","series":null},"confidence":0.85,"warnings":[]}
 
 --- 示例2 ---
-问题: 近6个月各月销售总额趋势
+问题: 查询2025年各月纯利润总额趋势
 输出:
-{"sqlTemplate":"SELECT DATE_FORMAT(so.order_date, '%Y-%m') AS month, SUM(so.total_amount) AS monthly_sales FROM sales_orders so WHERE so.is_deleted = 0 AND so.order_date >= {start_date} AND so.order_date < {end_date} GROUP BY month ORDER BY month","paramsSpec":[{"name":"start_date","type":"date","default":"2025-10-01","required":true,"label":"开始日期"},{"name":"end_date","type":"date","default":"2026-04-01","required":true,"label":"结束日期"}],"reason":"按月份聚合销售订单总额，展示趋势","chartHint":{"type":"line","x":"month","y":"monthly_sales","series":null},"confidence":0.88,"warnings":[]}
+{
+  "sqlTemplate": "SELECT 
+    DATE_FORMAT(so.order_date, '%Y-%m') AS month, 
+    -- 使用 IFNULL 确保哪怕字段是 NULL 也能当作 0 计算
+    SUM(
+        (IFNULL(soi.unit_price, 0) * IFNULL(soi.quantity, 0)) - 
+        (IFNULL(soi.cost_price, 0) * IFNULL(soi.quantity, 0)) - 
+        IFNULL(soi.discount, 0)
+    ) AS monthly_profit 
+FROM sales_order_items soi 
+JOIN sales_orders so ON soi.sales_order_id = so.id 
+WHERE so.is_deleted = 0 
+  AND so.order_date >= '2025-01-01' 
+  AND so.order_date < '2026-01-01' 
+GROUP BY month 
+ORDER BY month;",
+  "paramsSpec": [
+    {
+      "name": "start_date",
+      "type": "date",
+      "default": "2025-01-01",
+      "required": true,
+      "label": "开始日期"
+    },
+    {
+      "name": "end_date",
+      "type": "date",
+      "default": "2026-01-01",
+      "required": true,
+      "label": "结束日期"
+    }
+  ],
+  "reason": "按月份聚合销售利润（销售总额 - 商品成本总额），展示年度盈利变化趋势",
+  "chartHint": {
+    "type": "line",
+    "x": "month",
+    "y": "monthly_profit",
+    "series": null
+  },
+  "confidence": 0.95,
+  "warnings": [
+    "确保 sales_order_items 表中已包含有效的 cost_price 数据",
+    "利润计算结果已自动处理 NULL 值"
+  ]
+}
 
 --- 示例3 ---
 问题: 各产品分类的销售占比
@@ -40,7 +84,7 @@ def build_system_prompt(schema_text: str) -> str:
 5. 关联表时使用 JOIN，注意正确的外键关系
 6. 为每个占位参数提供 paramsSpec，包含 name/type/default/required/label
 7. chartHint.type 选择规则: 时间序列趋势→line, 分类对比→bar, 占比且分类≤8→pie, 其他→bar
-
+8. 涉及到数值计算，必须给可能为空的字段设置默认值（通常是 0）
 === 输出格式（严格遵守）===
 你**必须且只能**输出一个 JSON 对象，禁止输出 markdown 代码块、解释文字或任何非 JSON 内容。
 JSON 必须包含以下全部字段:
@@ -59,6 +103,31 @@ JSON 必须包含以下全部字段:
 def build_sql_prompt(question: str) -> str:
     """将用户自然语言问题转为 LLM 用户消息。"""
     return f"用户问题：{question}\n\n只输出 JSON，不要解释。"
+
+
+def build_correction_prompt(question: str, failed_sql: str, error_msg: str) -> str:
+    """
+    构建带错误反馈的修正 prompt，让 LLM 反思并修正 SQL。
+    用于 ReAct 循环中试跑失败后的重试。
+    """
+    return textwrap.dedent(f"""\
+用户问题：{question}
+
+你上一次生成的 SQL 在数据库试跑时失败了：
+
+=== 失败的 SQL ===
+{failed_sql}
+
+=== 数据库报错 ===
+{error_msg}
+
+请分析错误原因，修正 SQL 后重新输出。常见错误包括：
+- 列名或表名拼写错误
+- JOIN 关系不正确（检查外键列名）
+- 缺少 GROUP BY 中的非聚合列
+- 数据类型不匹配
+
+只输出修正后的 JSON，不要解释。""")
 
 
 def parse_llm_response(raw: dict) -> tuple[str, list[ParamSpec], str, ChartHint, float, list[str]]:
@@ -85,11 +154,20 @@ def parse_llm_response(raw: dict) -> tuple[str, list[ParamSpec], str, ChartHint,
         ))
 
     hint_raw = raw.get("chartHint", {}) or {}
+
+    # LLM 有时会返回 list 而非 string（如对比查询时 y 可能为 ['col1', 'col2']）
+    def _coerce_str(val) -> str | None:
+        if val is None:
+            return None
+        if isinstance(val, list):
+            return val[0] if val else None
+        return str(val)
+
     chart_hint = ChartHint(
-        type=hint_raw.get("type"),
-        x=hint_raw.get("x"),
-        y=hint_raw.get("y"),
-        series=hint_raw.get("series"),
+        type=_coerce_str(hint_raw.get("type")),
+        x=_coerce_str(hint_raw.get("x")),
+        y=_coerce_str(hint_raw.get("y")),
+        series=_coerce_str(hint_raw.get("series")),
     )
 
     return sql_template, params_spec, reason, chart_hint, confidence, warnings
@@ -99,28 +177,60 @@ def run_sql_agent(
     question: str,
     schema_text: str,
     history: list[dict] | None = None,
-) -> tuple[str, list[ParamSpec], str, ChartHint, float, list[str]]:
+) -> tuple[str, list[ParamSpec], str, ChartHint, float, list[str], dict]:
     """
-    完整执行一次 NL->SQL 生成流程：
-    1. 构建 prompt
-    2. 如有 history 则加入对话上下文
-    3. 调用 LLM
-    4. 解析结构化输出
-    返回 (sqlTemplate, paramsSpec, reason, chartHint, confidence, warnings)
+    使用 LangGraph ReAct Agent 执行 NL->SQL 生成流程（含自纠错循环）。
+
+    流程：生成 SQL → 试跑 → 失败则带错误重试 → 直到成功或达到最大重试次数
+
+    返回:
+        (sqlTemplate, paramsSpec, reason, chartHint, confidence, warnings, extra)
+        extra 包含: is_verified, retry_count, sample_columns, sample_rows
     """
-    system_msg = build_system_prompt(schema_text)
+    from aiagent.agent.react_sql_agent import run_react_sql_agent
 
-    messages: list[dict] = [{"role": "system", "content": system_msg}]
+    logger.info("启动 ReAct SQL Agent，问题: %s, 历史轮数: %d", question, len(history or []))
+    result = run_react_sql_agent(question, schema_text, history)
 
-    if history:
-        for msg in history:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+    # 解析 params_spec 从 dict 列表回到 ParamSpec 对象
+    params_spec = []
+    for p in result.get("params_spec", []):
+        if isinstance(p, dict):
+            params_spec.append(ParamSpec(
+                name=p.get("name", ""),
+                type=p.get("type", "str"),
+                default=p.get("default"),
+                required=p.get("required", True),
+                label=p.get("label", p.get("name", "")),
+            ))
+        else:
+            params_spec.append(p)
 
-    user_msg = build_sql_prompt(question)
-    messages.append({"role": "user", "content": user_msg})
+    # 解析 chart_hint
+    hint_raw = result.get("chart_hint", {}) or {}
+    if isinstance(hint_raw, dict):
+        chart_hint = ChartHint(
+            type=hint_raw.get("type"),
+            x=hint_raw.get("x"),
+            y=hint_raw.get("y"),
+            series=hint_raw.get("series"),
+        )
+    else:
+        chart_hint = hint_raw
 
-    logger.info("调用 LLM 生成 SQL，问题: %s, 历史轮数: %d", question, len(history or []))
-    raw = call_llm_json(messages, temperature=0)
-    logger.info("LLM 响应: %s", raw)
+    extra = {
+        "is_verified": result.get("is_verified", False),
+        "retry_count": result.get("retry_count", 0),
+        "sample_columns": result.get("sample_columns", []),
+        "sample_rows": result.get("sample_rows", []),
+    }
 
-    return parse_llm_response(raw)
+    return (
+        result.get("sql_template", ""),
+        params_spec,
+        result.get("reason", ""),
+        chart_hint,
+        result.get("confidence", 0.0),
+        result.get("warnings", []),
+        extra,
+    )

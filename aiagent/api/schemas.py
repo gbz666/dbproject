@@ -41,6 +41,11 @@ class GenerateSqlResponse(BaseModel):
     chartHint: ChartHint
     confidence: float
     warnings: list[str]
+    # ReAct Agent 自验证结果
+    isVerified: bool = False         # SQL 是否通过了试跑验证
+    retryCount: int = 0              # Agent 实际重试次数
+    sampleColumns: list[str] = []    # 试跑结果列名预览
+    sampleRows: list[list] = []      # 试跑结果前几行预览
 
 
 # --------------- execute-sql (Python 端不直接用，但定义便于类型共享) ---------------

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_sql_payload(payload: GenerateSqlRequest) -> GenerateSqlResponse:
-    """调用 sql_agent 生成参数化 SQL 模板。"""
+    """调用 ReAct SQL Agent 生成参数化 SQL 模板（含自纠错循环）。"""
     schema_text = load_db_schema_text(get_default_db_sql_path())
     logger.info("Schema 摘要长度: %d 字符", len(schema_text))
     if not schema_text:
@@ -26,7 +26,7 @@ def generate_sql_payload(payload: GenerateSqlRequest) -> GenerateSqlResponse:
     if payload.history:
         history_dicts = [{"role": m.role, "content": m.content} for m in payload.history]
 
-    sql_template, params_spec, reason, chart_hint, confidence, warnings = run_sql_agent(
+    sql_template, params_spec, reason, chart_hint, confidence, warnings, extra = run_sql_agent(
         question=payload.question,
         schema_text=schema_text,
         history=history_dicts,
@@ -42,6 +42,10 @@ def generate_sql_payload(payload: GenerateSqlRequest) -> GenerateSqlResponse:
         chartHint=chart_hint,
         confidence=confidence,
         warnings=warnings,
+        isVerified=extra.get("is_verified", False),
+        retryCount=extra.get("retry_count", 0),
+        sampleColumns=extra.get("sample_columns", []),
+        sampleRows=extra.get("sample_rows", []),
     )
 
 
