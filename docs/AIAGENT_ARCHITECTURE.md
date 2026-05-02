@@ -750,7 +750,7 @@ Week 4-6 ── Step 7
 ```bash
 # Python AI 服务
 cd aiagent
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+python -m uvicorn aiagent.main:app --host 0.0.0.0 --port 8001 --reload                                              
 
 # Java 后端
 cd backend
