@@ -112,6 +112,11 @@ pnpm dev
 - 默认开发地址通常为 `http://localhost:5173/`（以 Vite 配置为准）。
 - 前端通过环境变量（如 `VITE_API_BASE_URL`）配置后端地址，一般指向 `http://localhost:8080`。
 
+### 4.启动agent后端
+在根目录：
+```
+python -m uvicorn aiagent.main:app --host 0.0.0.0 --port 8001 --reload 
+```
 ## 前后端接口约定（简要）
 
 - **统一返回格式**：`{ code, message, data }`
