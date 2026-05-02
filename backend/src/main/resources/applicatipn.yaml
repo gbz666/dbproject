@@ -1,0 +1,83 @@
+server:
+  servlet:
+    context-path: /
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      url: ${DB_URL}
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DB}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# AI Agent 配置（Python 服务地址）
+aiagent:
+  base-url: ${AI_AGENT_URL}
+  chart-dir: ../charts
+  db:
+    readonly-url: ${AI_DB_URL}
+    readonly-username: ${AI_DB_USERNAME}
+    readonly-password: ${AI_DB_PASSWORD}
+  sql:
+    max-rows: 100
+    timeout-ms: 15000
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 7200 # Token过期时间（秒），默认2小时
+
+mybatis:
+  configuration:  # setting配置
+    auto-mapping-behavior: full
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  type-aliases-package: com.database.pojo # 配置别名
+  mapper-locations: classpath:/mapper/*.xml # mapperxml位置
+# PageHelper 分页插件配置
+pagehelper:
+  # 开启 PageHelper
+  helperDialect: mysql
+  # 是否合理化, 默认 false.
+  # 当 pageNum <= 0 时会查询第一页，当 pageNum > pages 时会查询最后一页。
+  reasonable: true
+  # 支持通过 Mapper 方法参数中的 RowBounds 对象进行分页
+  supportMethodsArguments: true
+  # 默认值 false, 设置为 true 时，如果 pageNum 和 pageSize 为 0，则执行不分页查询
+  pageSizeZero: true
+  # 启用 count.设置为 false 禁用 count 查询优化
+  autoRuntimeDialect: true
+logging:
+  level:
+    org:
+      mybatis:
+        #        DEBUG
+        INFO
+      apache:
+        INFO
+  file:
+    name: logs/stress-test.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB    # 单个日志文件大小
+      max-history: 7         # 保留最近7天的日志
