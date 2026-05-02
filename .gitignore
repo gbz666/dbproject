@@ -20,6 +20,7 @@ venv/
 *.sqlite3
 *.sqlite
 /loaddata/
+/scripts/
 memory_data/
 charts/
 
