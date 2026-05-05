@@ -37,7 +37,7 @@ charts/
 
 # === 日志 ===
 *.log
-
+*.gz
 # === IDE ===
 .idea/
 .vscode/
@@ -46,5 +46,5 @@ charts/
 # === 其他 ===
 .yaml
 node_modules/
-ai/
+/ai/
 .claude/*.json
