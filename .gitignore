@@ -47,3 +47,4 @@ charts/
 .yaml
 node_modules/
 ai/
+.claude/*.json
