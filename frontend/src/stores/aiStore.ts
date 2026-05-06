@@ -175,7 +175,7 @@ export const useAiStore = defineStore("ai", () => {
     conversations.value.splice(idx, 1);
     if (id === currentConversationId.value) {
       if (conversations.value.length > 0) {
-        currentConversationId.value = conversations.value[0].id;
+        currentConversationId.value = conversations.value[0]?.id ?? null;
       } else {
         createConversation();
       }
