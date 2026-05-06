@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.AiSqlExecLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.AiSqlExecLog">
+        <id property="id" column="id" />
+        <result property="memoryId" column="memory_id" />
+        <result property="userId" column="user_id" />
+        <result property="sqlHash" column="sql_hash" />
+        <result property="sqlText" column="sql_text" />
+        <result property="params" column="params" />
+        <result property="rowCount" column="row_count" />
+        <result property="latencyMs" column="latency_ms" />
+        <result property="status" column="status" />
+        <result property="errorMsg" column="error_msg" />
+        <result property="createdAt" column="created_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, memory_id, user_id, sql_hash, sql_text, params,
+        row_count, latency_ms, status, error_msg, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.database.pojo.AiSqlExecLog">
+        INSERT INTO ai_sql_exec_log (
+            memory_id, user_id, sql_hash, sql_text, params,
+            row_count, latency_ms, status, error_msg, created_at
+        ) VALUES (
+            #{memoryId}, #{userId}, #{sqlHash}, #{sqlText}, #{params},
+            #{rowCount}, #{latencyMs}, #{status}, #{errorMsg}, NOW()
+        )
+    </insert>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_sql_exec_log
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectRecent" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_sql_exec_log
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectBySqlHash" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_sql_exec_log
+        WHERE sql_hash = #{sqlHash}
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

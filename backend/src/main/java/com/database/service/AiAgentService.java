@@ -5,6 +5,9 @@ import com.database.dto.AiExecuteSqlResponse;
 import com.database.dto.AiGenerateSqlRequest;
 import com.database.dto.AiGenerateSqlResponse;
 import com.database.exception.BusinessException;
+import com.database.mapper.AiSqlExecLogMapper;
+import com.database.pojo.AiSqlExecLog;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -27,6 +33,8 @@ public class AiAgentService {
     private final RestTemplate restTemplate;
     private final SqlSecurityService sqlSecurityService;
     private final JdbcTemplate jdbcTemplate;
+    private final AiSqlExecLogMapper aiSqlExecLogMapper;
+    private final ObjectMapper objectMapper;
 
     @Value("${aiagent.base-url:http://localhost:8001}")
     private String aiagentBaseUrl;
@@ -70,56 +78,122 @@ public class AiAgentService {
 
     /**
      * 安全执行 SQL：参数替换 -> 安全校验 -> EXPLAIN 校验 -> 执行 -> 调图表服务
+     * 执行结果（成功/失败）自动写入 ai_sql_exec_log 审计日志。
      */
-    public AiExecuteSqlResponse executeSql(AiExecuteSqlRequest request, String question) {
+    public AiExecuteSqlResponse executeSql(AiExecuteSqlRequest request, String question, Long userId) {
         String sqlTemplate = request.getSqlTemplate();
         Map<String, Object> params = request.getParams();
 
         String finalSql = sqlSecurityService.renderSql(sqlTemplate, params);
         finalSql = sqlSecurityService.ensureLimit(finalSql);
+        String sqlHash = sha256(finalSql);
 
-        sqlSecurityService.validateSql(finalSql);
-
-        runExplainCheck(finalSql);
+        // 审计日志对象，在 finally 中统一写入
+        AiSqlExecLog auditLog = new AiSqlExecLog();
+        auditLog.setUserId(userId);
+        auditLog.setSqlHash(sqlHash);
+        auditLog.setSqlText(finalSql);
+        auditLog.setParams(serializeParams(params));
 
         long start = System.currentTimeMillis();
-        List<Map<String, Object>> resultMaps;
+        // 追踪当前阶段，用于异常时分类审计状态
+        String execStage = "security_reject";
         try {
+            sqlSecurityService.validateSql(finalSql);
+
+            execStage = "explain_fail";
+            runExplainCheck(finalSql);
+
+            execStage = "error";
+
             jdbcTemplate.setQueryTimeout(timeoutMs / 1000);
-            resultMaps = jdbcTemplate.queryForList(finalSql);
-        } catch (Exception e) {
-            log.error("AI SQL 执行失败: {}", e.getMessage(), e);
-            throw new BusinessException("SQL 执行失败: " + e.getMessage(), 400);
-        }
-        long elapsed = System.currentTimeMillis() - start;
-        log.info("AI SQL 执行完成，耗时 {}ms，返回 {} 行", elapsed, resultMaps.size());
+            List<Map<String, Object>> resultMaps = jdbcTemplate.queryForList(finalSql);
 
-        List<String> columns = new ArrayList<>();
-        List<List<Object>> rows = new ArrayList<>();
+            long elapsed = System.currentTimeMillis() - start;
+            log.info("AI SQL 执行完成，耗时 {}ms，返回 {} 行", elapsed, resultMaps.size());
 
-        if (!resultMaps.isEmpty()) {
-            columns.addAll(resultMaps.get(0).keySet());
-            for (Map<String, Object> row : resultMaps) {
-                List<Object> rowData = new ArrayList<>();
-                for (String col : columns) {
-                    rowData.add(row.get(col));
+            List<String> columns = new ArrayList<>();
+            List<List<Object>> rows = new ArrayList<>();
+
+            if (!resultMaps.isEmpty()) {
+                columns.addAll(resultMaps.get(0).keySet());
+                for (Map<String, Object> row : resultMaps) {
+                    List<Object> rowData = new ArrayList<>();
+                    for (String col : columns) {
+                        rowData.add(row.get(col));
+                    }
+                    rows.add(rowData);
                 }
-                rows.add(rowData);
+            }
+
+            String chartUrl = null;
+            if (request.getChartHint() != null && !rows.isEmpty()) {
+                chartUrl = callGenerateChart(question, columns, rows, request.getChartHint());
+            }
+
+            // 审计日志：成功
+            auditLog.setStatus("success");
+            auditLog.setRowCount(rows.size());
+            auditLog.setLatencyMs((int) (System.currentTimeMillis() - start));
+
+            AiExecuteSqlResponse response = new AiExecuteSqlResponse();
+            response.setColumns(columns);
+            response.setRows(rows);
+            response.setChartUrl(chartUrl);
+            response.setSqlTemplate(sqlTemplate);
+            response.setParams(params);
+            return response;
+
+        } catch (BusinessException e) {
+            auditLog.setStatus(execStage);
+            auditLog.setErrorMsg(e.getMessage());
+            auditLog.setLatencyMs((int) (System.currentTimeMillis() - start));
+            throw e;
+
+        } catch (Exception e) {
+            auditLog.setStatus("error");
+            auditLog.setErrorMsg(e.getMessage());
+            auditLog.setLatencyMs((int) (System.currentTimeMillis() - start));
+            throw new BusinessException("SQL 执行失败: " + e.getMessage(), 400);
+
+        } finally {
+            // 审计日志写入失败不影响主流程
+            try {
+                aiSqlExecLogMapper.insert(auditLog);
+            } catch (Exception e) {
+                log.warn("审计日志写入失败: {}", e.getMessage());
             }
         }
+    }
 
-        String chartUrl = null;
-        if (request.getChartHint() != null && !rows.isEmpty()) {
-            chartUrl = callGenerateChart(question, columns, rows, request.getChartHint());
+    /**
+     * 将 params Map 序列化为 JSON 字符串
+     */
+    private String serializeParams(Map<String, Object> params) {
+        if (params == null || params.isEmpty()) return null;
+        try {
+            return objectMapper.writeValueAsString(params);
+        } catch (Exception e) {
+            return params.toString();
         }
+    }
 
-        AiExecuteSqlResponse response = new AiExecuteSqlResponse();
-        response.setColumns(columns);
-        response.setRows(rows);
-        response.setChartUrl(chartUrl);
-        response.setSqlTemplate(sqlTemplate);
-        response.setParams(params);
-        return response;
+    /**
+     * 计算 SHA-256 哈希
+     */
+    private String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 在所有 JVM 中都可用，不会走到这里
+            return "";
+        }
     }
 
     /**

@@ -7,6 +7,7 @@ import com.database.dto.AiGenerateSqlRequest;
 import com.database.dto.AiGenerateSqlResponse;
 import com.database.service.AiAgentService;
 import com.database.vo.Result;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -46,8 +47,10 @@ public class AiAgentController {
     @RequireRole({"后台管理", "总经理"})
     @PostMapping("/execute-sql")
     public ResponseEntity<Result<AiExecuteSqlResponse>> executeSql(
-            @Valid @RequestBody AiExecuteSqlRequest request) {
-        AiExecuteSqlResponse response = aiAgentService.executeSql(request, request.getQuestion());
+            @Valid @RequestBody AiExecuteSqlRequest request,
+            HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        AiExecuteSqlResponse response = aiAgentService.executeSql(request, request.getQuestion(), userId);
         return ResponseEntity.ok(Result.success(response));
     }
 
