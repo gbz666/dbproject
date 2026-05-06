@@ -1,7 +1,7 @@
 <template>
   <div class="chat-panel">
     <div class="panel-header">
-      <span class="header-title">AI 对话</span>
+      <span class="header-title">{{ store.currentConversation?.title || "AI 对话" }}</span>
       <button
         v-if="store.messages.length"
         class="btn-text"

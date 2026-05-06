@@ -1,11 +1,13 @@
 <template>
   <div class="ai-page">
+    <ConversationList />
     <ChatPanel />
     <ExecPanel />
   </div>
 </template>
 
 <script setup lang="ts">
+import ConversationList from "./components/ConversationList.vue";
 import ChatPanel from "./components/ChatPanel.vue";
 import ExecPanel from "./components/ExecPanel.vue";
 </script>

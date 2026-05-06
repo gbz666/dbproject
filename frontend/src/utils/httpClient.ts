@@ -105,7 +105,8 @@ export const httpClient = async <TData>(
   const response: AxiosResponse<ApiResult<TData>> = await axiosInstance.request(config);
   const apiResult = response.data;
 
-  if (apiResult.success === false) {
+  // 后端 Result 类用 code 字段标识状态（200=成功），而非 success 布尔值
+  if (apiResult.code && apiResult.code !== 200) {
     throw {
       message: apiResult.message || "业务逻辑错误",
       status: response.status,
