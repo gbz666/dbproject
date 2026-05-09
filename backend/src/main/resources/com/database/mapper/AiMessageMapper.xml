@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.AiMessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.AiMessage">
+        <id property="id" column="id" />
+        <result property="conversationId" column="conversation_id" />
+        <result property="role" column="role" />
+        <result property="content" column="content" />
+        <result property="sqlResult" column="sql_result" />
+        <result property="errorMsg" column="error_msg" />
+        <result property="createdAt" column="created_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, conversation_id, role, content, sql_result, error_msg, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.database.pojo.AiMessage">
+        INSERT INTO ai_messages (conversation_id, role, content, sql_result, error_msg)
+        VALUES (#{conversationId}, #{role}, #{content}, #{sqlResult}, #{errorMsg})
+    </insert>
+
+    <select id="selectByConversationId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_messages
+        WHERE conversation_id = #{conversationId}
+        ORDER BY created_at ASC
+    </select>
+
+    <delete id="deleteByConversationId">
+        DELETE FROM ai_messages
+        WHERE conversation_id = #{conversationId}
+    </delete>
+
+</mapper>

@@ -45,3 +45,19 @@ python -m uvicorn aiagent.main:app --port 8001 --reload
 - 所有业务表含审计字段: `created_at`, `updated_at`, `created_by_id`, `updated_by_id`, `is_deleted`
 - AI 模块通过后端代理调用 Python AI Agent 服务
 - 环境变量配置见 `backend/.env.example`
+
+## Development Workflow
+
+**按可测试的功能点划分任务**：每次修改都应能独立测试，测试通过后再提交 git。
+
+划分原则：
+1. 数据库变更（建表/改表） → 执行 SQL 验证 → 提交
+2. 后端 POJO + Mapper → 单元测试验证 CRUD → 提交
+3. 后端 Service + Controller → curl/Postman 测试 API → 提交
+4. 前端 API/Store → 浏览器验证功能 → 提交
+5. 前端组件 → UI 交互测试 → 提交
+
+每个步骤完成后：
+- 运行测试确认功能正常
+- 提交 git（附带清晰的 commit message）
+- 再进行下一步

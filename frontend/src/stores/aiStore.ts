@@ -15,10 +15,13 @@ export interface ChatItem {
   sqlResult?: GenerateSqlResult;
   loading?: boolean;
   error?: string;
+  /** 后端消息 ID（已持久化的消息才有） */
+  dbId?: number;
 }
 
 export interface Conversation {
-  id: string;
+  /** 后端对话 ID（数字） */
+  id: number;
   title: string;
   createdAt: number;
   updatedAt: number;
@@ -29,12 +32,6 @@ let _seq = 0;
 function uid(): string {
   return `m-${Date.now()}-${++_seq}`;
 }
-
-function convId(): string {
-  return `conv-${Date.now()}-${++_seq}`;
-}
-
-const STORAGE_KEY = "ai_conversations";
 
 /** 将 SQL 模板中的 {param} 占位符替换为默认值，生成可直接执行的 SQL */
 function renderDefaults(
@@ -52,10 +49,17 @@ function renderDefaults(
   return sql;
 }
 
+/** 时间戳转换：后端返回 ISO 字符串，转为毫秒时间戳 */
+function toTimestamp(dateStr: string | Date | undefined): number {
+  if (!dateStr) return Date.now();
+  return new Date(dateStr).getTime();
+}
+
 export const useAiStore = defineStore("ai", () => {
   // ── 多对话管理（单一数据源） ──
   const conversations = ref<Conversation[]>([]);
-  const currentConversationId = ref<string | null>(null);
+  const currentConversationId = ref<number | null>(null);
+  const loadingConversations = ref(false);
 
   const currentConversation = computed(
     () =>
@@ -99,88 +103,111 @@ export const useAiStore = defineStore("ai", () => {
     });
   });
 
-  // ── 持久化 ──
+  // ── 从后端加载对话列表 ──
 
-  function persistConversations() {
+  async function loadConversations(): Promise<boolean> {
+    loadingConversations.value = true;
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          version: 1,
-          conversations: conversations.value,
-          currentConversationId: currentConversationId.value,
-        }),
-      );
+      const list = await aiService.getConversations();
+      conversations.value = list.map((c) => ({
+        id: c.id,
+        title: c.title,
+        createdAt: toTimestamp(c.createdAt),
+        updatedAt: toTimestamp(c.updatedAt),
+        messages: [], // 消息延迟加载
+      }));
+
+      if (conversations.value.length > 0 && currentConversationId.value === null) {
+        currentConversationId.value = conversations.value[0].id;
+        await loadMessages(currentConversationId.value);
+      }
+      return true;
     } catch (e) {
-      console.warn("保存对话历史失败:", e);
+      console.warn("加载对话列表失败:", e);
+      return false;
+    } finally {
+      loadingConversations.value = false;
     }
   }
 
-  function loadConversations() {
+  /** 加载指定对话的消息 */
+  async function loadMessages(conversationId: number) {
+    const conv = conversations.value.find((c) => c.id === conversationId);
+    if (!conv) return;
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const data = JSON.parse(raw);
-      if (data.version === 1 && Array.isArray(data.conversations)) {
-        // 恢复时重置所有 loading 状态（页面刷新后无活跃请求）
-        for (const conv of data.conversations) {
-          if (Array.isArray(conv.messages)) {
-            for (const msg of conv.messages) {
-              msg.loading = false;
-            }
-          }
-        }
-        conversations.value = data.conversations;
-        currentConversationId.value = data.currentConversationId ?? null;
-        return true;
-      }
+      const detail = await aiService.getConversationDetail(conversationId);
+      conv.messages = (detail.messages ?? []).map((m) => ({
+        id: uid(),
+        dbId: m.id,
+        role: m.role,
+        content: m.content,
+        sqlResult: m.sqlResult,
+        error: m.errorMsg,
+        loading: false,
+      }));
     } catch (e) {
-      console.warn("读取对话历史失败:", e);
+      console.warn("加载消息失败:", e);
     }
-    return false;
   }
 
   // ── 对话管理 ──
 
-  function createConversation(): string {
-    const id = convId();
-    const now = Date.now();
-    const conv: Conversation = {
-      id,
-      title: "新对话",
-      createdAt: now,
-      updatedAt: now,
-      messages: [],
-    };
-    conversations.value.unshift(conv);
-    currentConversationId.value = id;
-    inputText.value = "";
-    clearPanel();
-    persistConversations();
-    return id;
+  async function createConversation(): Promise<number> {
+    try {
+      const result = await aiService.createConversation();
+      const conv: Conversation = {
+        id: result.id,
+        title: result.title,
+        createdAt: toTimestamp(result.createdAt),
+        updatedAt: toTimestamp(result.updatedAt),
+        messages: [],
+      };
+      conversations.value.unshift(conv);
+      currentConversationId.value = conv.id;
+      inputText.value = "";
+      clearPanel();
+      return conv.id;
+    } catch (e) {
+      console.error("创建对话失败:", e);
+      throw e;
+    }
   }
 
-  function switchConversation(id: string) {
+  async function switchConversation(id: number) {
     if (id === currentConversationId.value) return;
     currentConversationId.value = id;
     inputText.value = "";
     sending.value = false;
     clearPanel();
-    persistConversations();
+
+    // 如果消息未加载，则加载
+    const conv = conversations.value.find((c) => c.id === id);
+    if (conv && conv.messages.length === 0) {
+      await loadMessages(id);
+    }
   }
 
-  function deleteConversation(id: string) {
-    const idx = conversations.value.findIndex((c) => c.id === id);
-    if (idx === -1) return;
-    conversations.value.splice(idx, 1);
-    if (id === currentConversationId.value) {
-      if (conversations.value.length > 0) {
-        currentConversationId.value = conversations.value[0]?.id ?? null;
-      } else {
-        createConversation();
+  async function deleteConversation(id: number) {
+    try {
+      await aiService.deleteConversation(id);
+
+      const idx = conversations.value.findIndex((c) => c.id === id);
+      if (idx === -1) return;
+      conversations.value.splice(idx, 1);
+
+      if (id === currentConversationId.value) {
+        if (conversations.value.length > 0) {
+          currentConversationId.value = conversations.value[0].id;
+          await loadMessages(currentConversationId.value);
+        } else {
+          await createConversation();
+        }
       }
+    } catch (e) {
+      console.error("删除对话失败:", e);
+      throw e;
     }
-    persistConversations();
   }
 
   // ── 对话逻辑 ──
@@ -210,20 +237,37 @@ export const useAiStore = defineStore("ai", () => {
 
     // 确保有当前对话
     if (!currentConversation.value) {
-      createConversation();
+      await createConversation();
     }
 
     const conv = currentConversation.value!;
 
-    // 1. 直接操作 conv.messages
-    conv.messages.push({ id: uid(), role: "user", content: text });
+    // 1. 添加用户消息到本地
+    const userMsg: ChatItem = { id: uid(), role: "user", content: text };
+    conv.messages.push(userMsg);
     inputText.value = "";
 
+    // 自动更新标题
     if (conv.title === "新对话") {
-      conv.title = text.length > 30 ? text.slice(0, 30) + "..." : text;
+      const newTitle = text.length > 30 ? text.slice(0, 30) + "..." : text;
+      conv.title = newTitle;
+      // 异步更新后端标题（不阻塞）
+      aiService.updateConversationTitle(conv.id, newTitle).catch((e) => {
+        console.warn("更新对话标题失败:", e);
+      });
     }
 
-    // 2. 用 reactive() 包裹，确保后续属性赋值通过 Vue Proxy 追踪
+    // 2. 保存用户消息到后端（异步，不阻塞）
+    aiService
+      .saveMessage(conv.id, { role: "user", content: text })
+      .then((saved) => {
+        userMsg.dbId = saved.id;
+      })
+      .catch((e) => {
+        console.warn("保存用户消息失败:", e);
+      });
+
+    // 3. 用 reactive() 包裹，确保后续属性赋值通过 Vue Proxy 追踪
     const assistantMsg = reactive<ChatItem>({
       id: uid(),
       role: "assistant",
@@ -232,7 +276,7 @@ export const useAiStore = defineStore("ai", () => {
       sqlResult: undefined,
     });
 
-    // 3. 将引用推入源数组
+    // 4. 将引用推入源数组
     conv.messages.push(assistantMsg);
     sending.value = true;
 
@@ -243,10 +287,24 @@ export const useAiStore = defineStore("ai", () => {
         history.length ? history : undefined,
       );
 
-      // 4. 直接修改局部引用的对象，Vue 会自动侦测到深层变更
+      // 5. 直接修改局部引用的对象，Vue 会自动侦测到深层变更
       if (result) {
         assistantMsg.sqlResult = result;
         assistantMsg.content = result.reason || "SQL 已生成";
+
+        // 保存 AI 消息到后端
+        aiService
+          .saveMessage(conv.id, {
+            role: "assistant",
+            content: assistantMsg.content,
+            sqlResult: result,
+          })
+          .then((saved) => {
+            assistantMsg.dbId = saved.id;
+          })
+          .catch((e) => {
+            console.warn("保存 AI 消息失败:", e);
+          });
       } else {
         assistantMsg.error = "AI 服务返回数据为空";
         assistantMsg.content = assistantMsg.error;
@@ -255,15 +313,21 @@ export const useAiStore = defineStore("ai", () => {
       console.error("[sendMessage] generateSql 失败:", err);
       assistantMsg.error = err?.message || "SQL 生成失败，请重试";
       assistantMsg.content = assistantMsg.error ?? "未知错误";
+
+      // 保存错误消息到后端
+      aiService
+        .saveMessage(conv.id, {
+          role: "assistant",
+          content: assistantMsg.content,
+          errorMsg: assistantMsg.error,
+        })
+        .catch((e) => {
+          console.warn("保存错误消息失败:", e);
+        });
     } finally {
       assistantMsg.loading = false;
       sending.value = false;
       conv.updatedAt = Date.now();
-      try {
-        persistConversations();
-      } catch (e) {
-        console.warn("[sendMessage] 持久化失败:", e);
-      }
     }
   }
 
@@ -300,7 +364,6 @@ export const useAiStore = defineStore("ai", () => {
     messages.value.splice(0);
     inputText.value = "";
     sending.value = false;
-    persistConversations();
   }
 
   function clearPanel() {
@@ -311,27 +374,22 @@ export const useAiStore = defineStore("ai", () => {
   }
 
   // ── 初始化 ──
-  const loaded = loadConversations();
-  if (!loaded || conversations.value.length === 0) {
-    const id = convId();
-    const now = Date.now();
-    conversations.value = [
-      {
-        id,
-        title: "新对话",
-        createdAt: now,
-        updatedAt: now,
-        messages: [],
-      },
-    ];
-    currentConversationId.value = id;
-  }
+  // 从后端加载对话列表（异步）
+  loadConversations().then((loaded) => {
+    if (!loaded || conversations.value.length === 0) {
+      // 如果加载失败或没有对话，创建一个新对话
+      createConversation().catch((e) => {
+        console.error("初始化创建对话失败:", e);
+      });
+    }
+  });
 
   return {
     // 多对话管理
     conversations,
     currentConversationId,
     currentConversation,
+    loadingConversations,
     createConversation,
     switchConversation,
     deleteConversation,

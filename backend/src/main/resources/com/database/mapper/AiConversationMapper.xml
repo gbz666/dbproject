@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.AiConversationMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.AiConversation">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="title" column="title" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+        <result property="isDeleted" column="is_deleted" />
+        <result property="deletedAt" column="deleted_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, title, created_at, updated_at, is_deleted, deleted_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.database.pojo.AiConversation">
+        INSERT INTO ai_conversations (user_id, title)
+        VALUES (#{userId}, #{title})
+    </insert>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_conversations
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_conversations
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY updated_at DESC
+    </select>
+
+    <update id="updateTitle">
+        UPDATE ai_conversations
+        SET title = #{title}, updated_at = NOW()
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="softDelete">
+        UPDATE ai_conversations
+        SET is_deleted = 1, deleted_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateTimestamp">
+        UPDATE ai_conversations
+        SET updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

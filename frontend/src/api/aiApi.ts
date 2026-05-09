@@ -39,6 +39,26 @@ export interface HistoryMessage {
   content: string;
 }
 
+// ── 对话管理相关接口 ──
+
+export interface AiConversationResponse {
+  id: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  messages?: AiMessageResponse[];
+}
+
+export interface AiMessageResponse {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  sqlResult?: GenerateSqlResult;
+  errorMsg?: string;
+  createdAt: string;
+}
+
 export const aiApi = {
   generateSql: (question: string, history?: HistoryMessage[]) =>
     httpClient<GenerateSqlResult>(`${BASE_URL}/generate-sql`, {
@@ -55,5 +75,50 @@ export const aiApi = {
     httpClient<ExecuteSqlResult>(`${BASE_URL}/execute-sql`, {
       method: "POST",
       body: payload,
+    }),
+
+  // ── 对话管理 API ──
+
+  createConversation: (title?: string) =>
+    httpClient<AiConversationResponse>(`${BASE_URL}/conversations`, {
+      method: "POST",
+      body: title ? { title } : {},
+    }),
+
+  getConversations: () =>
+    httpClient<AiConversationResponse[]>(`${BASE_URL}/conversations`, {
+      method: "GET",
+    }),
+
+  getConversationDetail: (id: number) =>
+    httpClient<AiConversationResponse>(`${BASE_URL}/conversations/${id}`, {
+      method: "GET",
+    }),
+
+  updateConversationTitle: (id: number, title: string) =>
+    httpClient<void>(`${BASE_URL}/conversations/${id}`, {
+      method: "PUT",
+      body: { title },
+    }),
+
+  deleteConversation: (id: number) =>
+    httpClient<void>(`${BASE_URL}/conversations/${id}`, {
+      method: "DELETE",
+    }),
+
+  saveMessage: (conversationId: number, message: {
+    role: "user" | "assistant";
+    content: string;
+    sqlResult?: GenerateSqlResult;
+    errorMsg?: string;
+  }) =>
+    httpClient<AiMessageResponse>(`${BASE_URL}/conversations/${conversationId}/messages`, {
+      method: "POST",
+      body: {
+        role: message.role,
+        content: message.content,
+        sqlResult: message.sqlResult ? JSON.stringify(message.sqlResult) : undefined,
+        errorMsg: message.errorMsg,
+      },
     }),
 };

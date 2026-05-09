@@ -38,7 +38,7 @@ function handleNew() {
   store.createConversation();
 }
 
-function handleDelete(id: string) {
+function handleDelete(id: number) {
   if (store.conversations.length <= 1) {
     store.deleteConversation(id);
     return;
