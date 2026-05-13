@@ -44,9 +44,17 @@ CREATE TABLE staffs (
     email VARCHAR(150) COMMENT '电子邮箱',
     phone VARCHAR(30) COMMENT '联系电话',
     title VARCHAR(100) COMMENT '职位/职称',
-    -- 新增审计字段 ( BIGINT 且允许 NULL )
+    password VARCHAR(255) COMMENT '登录密码（BCrypt加密）',
+    status TINYINT DEFAULT 1 COMMENT '账户状态：0=禁用,1=启用',
+    last_login_at DATETIME NULL COMMENT '最后登录时间',
+    -- 审计字段
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
     created_by_id BIGINT COMMENT '创建人ID，指向 staffs.id',
-    updated_by_id BIGINT COMMENT '最后修改人ID，指向 staffs.id'
+    updated_by_id BIGINT COMMENT '最后修改人ID，指向 staffs.id',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否软删除:0=正常,1=已删除',
+    deleted_at DATETIME NULL COMMENT '删除时间(软删除)',
+    INDEX idx_staffs_staff_name (staff_name)
 ) ENGINE=InnoDB COMMENT='员工表:存放平台员工信息';
 
 CREATE TABLE roles (
