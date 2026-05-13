@@ -52,12 +52,10 @@ flowchart LR
 ## Python（AI + 图表服务）
 - 只负责：
   - 将自然语言转为 SQL 与图表建议（`chartHint`）
+  - 通过 Java 后端 `/api/ai/internal/trial-execute` 接口试跑 SQL 验证
   - 将 Java 查询结果绘制为 png（`matplotlib`）
 - 不直接执行数据库查询
-- 框架建议：`FastAPI`
-- Agent 编排建议：
-  - 优先 `LangGraph`（可控）
-  - 若想轻依赖，可先用“手写最小状态机 + 结构化 JSON 输出”
+- 框架：`FastAPI` + `LangGraph`（ReAct Agent 编排）
 
 ---
 
@@ -69,22 +67,28 @@ flowchart LR
 - 请求：
 ```json
 {
-  "question": "近三个月各产品销售额趋势"
+  "question": "近三个月各产品销售额趋势",
+  "history": [
+    { "role": "user", "content": "..." },
+    { "role": "assistant", "content": "..." }
+  ]
 }
 ```
 - 响应（data）：
 ```json
 {
-  "sql": "SELECT ...",
+  "sqlTemplate": "SELECT ...",
+  "paramsSpec": [
+    { "name": "start_date", "type": "date", "default": "2026-01-01", "required": true, "label": "开始日期" }
+  ],
   "reason": "按月份聚合并按产品分组",
-  "chartHint": {
-    "type": "line",
-    "x": "month",
-    "y": "total_sales",
-    "series": "product_name"
-  },
+  "chartHint": { "type": "line", "x": "month", "y": "total_sales", "series": "product_name" },
   "confidence": 0.82,
-  "warnings": []
+  "warnings": [],
+  "isVerified": true,
+  "retryCount": 0,
+  "sampleColumns": ["month", "total_sales"],
+  "sampleRows": [["2026-01", 1000.0]]
 }
 ```
 
@@ -92,26 +96,23 @@ flowchart LR
 - 请求：
 ```json
 {
-  "sql": "SELECT ...",
-  "question": "近三个月各产品销售额趋势",
-  "chartHint": {
-    "type": "line",
-    "x": "month",
-    "y": "total_sales",
-    "series": "product_name"
-  }
+  "sqlTemplate": "SELECT ...",
+  "params": { "start_date": "2026-01-01", "end_date": "2026-04-01" },
+  "chartHint": { "type": "line", "x": "month", "y": "total_sales", "series": "product_name" },
+  "question": "近三个月各产品销售额趋势"
 }
 ```
 - 响应（data）：
 ```json
 {
-  "sql": "SELECT ...",
   "columns": ["month", "product_name", "total_sales"],
   "rows": [
     ["2026-01", "A产品", 1000.0],
     ["2026-02", "A产品", 1200.0]
   ],
-  "chartUrl": "/api/ai/chart/9f3e8c9a"
+  "chartUrl": "/api/ai/chart/9f3e8c9a",
+  "sqlTemplate": "SELECT ...",
+  "params": {}
 }
 ```
 
@@ -168,9 +169,76 @@ flowchart LR
   - 折线图：时间序列趋势
   - 柱状图：分类对比
   - 饼图：占比（分类数量较少时）
-- 图片文件写入共享目录（如 `backend/charts/`）
+- NaN/Inf 防护：`_safe_float()` 过滤非法值，饼图无有效正数数据时显示"暂无有效数据"占位图
+- `_is_numeric()` 拒绝 NaN/Inf（使用 `math.isfinite`），避免图表渲染崩溃
+- 图片文件写入共享目录（如 `aiagent/charts_output/`）
 - Java 通过 `chartId -> fileName` 映射读取并返回二进制图片
 - 前端只使用 `chartUrl` 渲染，不感知磁盘路径
+
+---
+
+## 7.1 ReAct SQL Agent 自纠错机制
+
+### 架构
+
+使用 LangGraph StateGraph 实现 "生成 → 试跑 → 检查 → 修正" 循环：
+
+```
+START → generate_sql → execute_sql → should_retry ─┐
+            ↑                                       │
+            └── (error & retries < MAX) ────────────┘
+                                                    │
+                                      (success or max retries)
+                                                    ↓
+                                                finalize → END
+```
+
+### 重试策略
+
+| 参数 | 值 | 说明 |
+|---|---|---|
+| `MAX_RETRIES` | 5 | 最大重试次数（不含首次生成） |
+| `MAX_CONSECUTIVE_EMPTY` | 2 | 连续空 SQL 达此次数立即停止 |
+
+- SQL 非空但执行失败时，`consecutive_empty` 重置为 0（不算连续空）
+- 空 SQL 时修正 prompt 引导 LLM 重新生成（非修正空字符串）
+- 非空 SQL 失败时修正 prompt 带错误信息让 LLM 修正
+
+### 试跑机制
+
+- Python 通过 Java 后端 `/api/ai/internal/trial-execute` 接口试跑 SQL
+- 使用只读账号（`ai_readonly`），仅有 SELECT 权限
+- 试跑结果（列名 + 前几行）返回给前端预览
+
+### Schema 强制
+
+系统提示词包含规则："严格禁止使用 Schema 中不存在的表名或列名"，减少 LLM 幻觉。
+
+---
+
+## 7.2 对话持久化
+
+### 数据表
+
+- `ai_conversations`：对话列表（标题、创建/更新时间）
+- `ai_messages`：消息记录（角色、内容、sqlResult JSON、errorMsg）
+
+### API
+
+| 接口 | 说明 |
+|---|---|
+| `POST /api/ai/conversations` | 创建对话 |
+| `GET /api/ai/conversations` | 获取对话列表 |
+| `GET /api/ai/conversations/{id}` | 获取对话详情（含消息） |
+| `DELETE /api/ai/conversations/{id}` | 删除对话 |
+| `PUT /api/ai/conversations/{id}/title` | 更新对话标题 |
+| `POST /api/ai/conversations/{id}/messages` | 保存消息 |
+
+### 前端流程
+
+1. 页面加载 → `loadConversations()` → 自动选中第一个对话
+2. 发送消息 → `sendMessage()` → 本地立即显示 → 异步保存到后端
+3. 切换对话 → `switchConversation()` → `loadMessages()` 加载历史
 
 ---
 

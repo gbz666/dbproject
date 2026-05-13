@@ -15,6 +15,7 @@
 |------|------|
 | 前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Element Plus、Axios |
 | 后端 | Spring Boot 3、Java 17、MyBatis、PageHelper、Druid、JWT（jjwt）、Spring Validation、AOP、Spring Data Redis |
+| AI Agent | FastAPI (Python)、LangGraph (ReAct Agent)、OpenAI SDK、matplotlib |
 | 数据库 | MySQL 8、Redis（Token/会话） |
 | 其他 | EasyExcel（Excel 导入）、Lombok |
 
@@ -47,5 +48,7 @@
 | 员工 | `/api/staff` | GET?name= 查员工ID |
 | 财务对账 | `/api/finance` | GET /purchase-reconciliation |
 | Excel | `/api/excel` | POST /init-product-categories, POST /import（file） |
+| AI 对话 | `/api/ai` | POST /generate-sql, POST /execute-sql, GET /chart/{id} |
+| AI 对话管理 | `/api/ai/conversations` | CRUD + 消息保存/加载 |
 
 前端调用上述路径与参数即可与后端一一对应；若某处命名不一致（如前端用 `currentUserId`、后端用 `currentStaffId`），以本表为准在前后端统一其一。
