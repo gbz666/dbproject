@@ -1,74 +1,65 @@
-// src/router/index.ts (完善后)
+// src/router/index.ts
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "@/views/HomeView.vue";
-import CustomerListView from "@/views/customer/CustomerList.vue";
-import SupplierListView from "@/views/supplier/SupplierList.vue";
-import ProductList from "@/views/product/ProductList.vue";
-import SalesOrderList from "@/views/salesOrder/salesOrderList.vue";
-import PurchaseOrderList from "@/views/purchaseOrder/purchaseOrderList.vue";
-import outBoundList from "@/views/outBound/outBoundList.vue";
-import StockInList from "@/views/StockIn/stockInList.vue";
-import InventoryList from "@/views/Inventory/InventoryList.vue";
-import PurchaseInvoiceList from "@/views/purchaseInvoice/purchaseInvoiceList.vue";
-import SalesInvoiceList from "@/views/salesInvoice/salesInvoiceList.vue";
+import { useAuthStore } from "@/stores/authStore";
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
       name: "Layout",
-      component: HomeView, // HomeView 现在是布局组件
-      redirect: "/basic/customer", // 默认重定向到客户列表
+      component: () => import("@/views/HomeView.vue"),
+      redirect: "/basic/customer",
       children: [
         {
           path: "/basic/customer",
           name: "CustomerList",
-          component: CustomerListView, // 直接使用您需要的视图
+          component: () => import("@/views/customer/CustomerList.vue"),
         },
         {
           path: "/basic/supplier",
           name: "SupplierList",
-          component: SupplierListView, // 直接使用您需要的视图
+          component: () => import("@/views/supplier/SupplierList.vue"),
         },
         {
           path: "/basic/product",
           name: "productList",
-          component: ProductList, // 直接使用您需要的视图
+          component: () => import("@/views/product/ProductList.vue"),
         },
         {
           path: "/basic/salesOrder",
           name: "salesOrderList",
-          component: SalesOrderList, // 直接使用您需要的视图
+          component: () => import("@/views/salesOrder/salesOrderList.vue"),
         },
         {
           path: "/basic/purchaseOrder",
           name: "purchaseOrderList",
-          component: PurchaseOrderList, // 直接使用您需要的视图
+          component: () => import("@/views/purchaseOrder/purchaseOrderList.vue"),
         },
         {
           path: "/basic/purchaseInvoice",
           name: "purchaseInvoiceList",
-          component: PurchaseInvoiceList,
+          component: () => import("@/views/purchaseInvoice/purchaseInvoiceList.vue"),
         },
         {
           path: "/basic/salesInvoice",
           name: "salesInvoiceList",
-          component: SalesInvoiceList,
+          component: () => import("@/views/salesInvoice/salesInvoiceList.vue"),
         },
         {
           path: "/basic/outBound",
           name: "outBoundList",
-          component: outBoundList, // 直接使用您需要的视图
+          component: () => import("@/views/outBound/outBoundList.vue"),
         },
         {
           path: "/basic/stockIn",
           name: "stockInList",
-          component: StockInList, // 直接使用您需要的视图
+          component: () => import("@/views/StockIn/stockInList.vue"),
         },
         {
           path: "/basic/inventory",
           name: "inventoryList",
-          component: InventoryList, // 直接使用您需要的视图
+          component: () => import("@/views/Inventory/InventoryList.vue"),
         },
         {
           path: "/profile",
@@ -90,13 +81,22 @@ const router = createRouter({
         },
       ],
     },
-    // 如果有登录页等非布局页面，可以放在这里
     {
       path: '/auth/login',
       name: 'Login',
       component: () => import('@/views/auth/login.vue')
     }
   ],
+});
+
+// 路由守卫：未登录用户只能访问登录页
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  if (to.name !== 'Login' && !authStore.isLoggedIn) {
+    next({ name: 'Login' });
+  } else {
+    next();
+  }
 });
 
 export default router;
