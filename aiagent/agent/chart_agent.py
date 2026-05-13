@@ -8,11 +8,13 @@ _TIME_KEYWORDS = {"date", "time", "month", "year", "quarter", "week", "day", "pe
 
 def _is_numeric(value: Any) -> bool:
     if isinstance(value, (int, float)):
-        return True
+        import math
+        return math.isfinite(value)
     if isinstance(value, str):
         try:
-            float(value)
-            return True
+            f = float(value)
+            import math
+            return math.isfinite(f)
         except (ValueError, TypeError):
             return False
     return False

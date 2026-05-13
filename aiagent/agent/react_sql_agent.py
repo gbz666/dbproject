@@ -47,6 +47,7 @@ class SqlAgentState(TypedDict, total=False):
     # 自纠错循环状态
     error_history: list[str]  # 历次试跑错误记录
     retry_count: int
+    consecutive_empty: int   # 连续生成空 SQL 的次数
     # 试跑结果
     sample_columns: list[str]
     sample_rows: list[list]
@@ -125,13 +126,18 @@ def execute_sql_node(state: SqlAgentState) -> dict:
     """用只读账号试跑 SQL，验证是否可执行。"""
     sql_template = state.get("sql_template", "")
     params_spec = state.get("params_spec") or []
+    error_history = state.get("error_history") or []
+    prev_empty = state.get("consecutive_empty", 0)
 
     if not sql_template:
-        logger.warning("[ReAct] SQL 模板为空，标记为未验证")
+        logger.warning("[ReAct] SQL 模板为空 (连续第 %d 次)", prev_empty + 1)
         return {
             "is_verified": False,
-            "error_history": (state.get("error_history") or []) + ["SQL 模板为空"],
+            "error_history": error_history + ["SQL 模板为空"],
             "retry_count": (state.get("retry_count", 0)) + 1,
+            "consecutive_empty": prev_empty + 1,
+            "sample_columns": [],
+            "sample_rows": [],
         }
 
     # 用默认参数渲染 SQL
@@ -147,6 +153,7 @@ def execute_sql_node(state: SqlAgentState) -> dict:
         )
         return {
             "is_verified": True,
+            "consecutive_empty": 0,
             "sample_columns": result["columns"],
             "sample_rows": result["rows"],
         }
@@ -155,6 +162,7 @@ def execute_sql_node(state: SqlAgentState) -> dict:
         logger.warning("[ReAct] 试跑失败 ✗ 错误: %s", error_msg[:300])
         return {
             "is_verified": False,
+            "consecutive_empty": 0,  # SQL 非空，重置连续空计数
             "error_history": (state.get("error_history") or []) + [error_msg],
             "retry_count": (state.get("retry_count", 0)) + 1,
             "sample_columns": [],
@@ -167,26 +175,48 @@ def finalize_node(state: SqlAgentState) -> dict:
     is_verified = state.get("is_verified", False)
     warnings = list(state.get("warnings") or [])
     retry_count = state.get("retry_count", 0)
+    sql_template = state.get("sql_template", "")
 
     if not is_verified:
         error_history = state.get("error_history") or []
-        last_err = error_history[-1] if error_history else "未知错误"
-        warnings.append(
-            f"SQL 未通过自动验证（重试 {retry_count} 次后仍失败: {last_err[:200]}）。"
-            "请人工检查后再执行。"
-        )
+        if not sql_template:
+            # LLM 始终未能生成 SQL
+            warnings.append(
+                "AI 未能理解您的问题，请尝试重新描述。\n"
+                "示例：\n"
+                "- 查询本季度销售额前10的产品\n"
+                "- 查看2025年各月利润趋势\n"
+                "- 统计各产品分类的销售占比"
+            )
+        else:
+            # 有 SQL 但验证失败
+            last_err = error_history[-1] if error_history else "未知错误"
+            warnings.append(
+                f"自动生成的 SQL 存在问题（重试 {retry_count} 次仍失败），已停止重试。\n"
+                f"错误: {last_err[:200]}\n\n"
+                "您可以：\n"
+                "1. 点击「使用此 SQL」查看并手动修正\n"
+                "2. 换一种方式描述您的查询需求，重新提问"
+            )
 
     if retry_count > 0:
-        logger.info("[ReAct] 最终状态: verified=%s, retries=%d", is_verified, retry_count)
+        logger.info("[ReAct] 最终状态: verified=%s, retries=%d, sql=%s", is_verified, retry_count, (sql_template or "")[:80])
 
     return {"warnings": warnings}
 
 
 # ─── 条件路由 ─────────────────────────────────────────────────────────────────
 
+# 连续空 SQL 达到此次数则停止重试（避免无意义循环）
+MAX_CONSECUTIVE_EMPTY = 2
+
+
 def should_retry(state: SqlAgentState) -> str:
     """决定是重试 generate_sql 还是进入 finalize。"""
     if state.get("is_verified", False):
+        return "finalize"
+    # 连续生成空 SQL 多次，说明 LLM 无法理解问题，停止重试
+    if state.get("consecutive_empty", 0) >= MAX_CONSECUTIVE_EMPTY:
         return "finalize"
     if state.get("retry_count", 0) >= MAX_RETRIES:
         return "finalize"
@@ -261,6 +291,7 @@ def run_react_sql_agent(
         "warnings": [],
         "error_history": [],
         "retry_count": 0,
+        "consecutive_empty": 0,
         "sample_columns": [],
         "sample_rows": [],
         "is_verified": False,

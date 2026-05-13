@@ -28,7 +28,7 @@ _AUDIT_COLUMNS = {
     "created_by_id", "updated_by_id",
 }
 
-MAX_SCHEMA_CHARS = 10000
+MAX_SCHEMA_CHARS = 20000
 
 
 def get_default_db_sql_path() -> Path:

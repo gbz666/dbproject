@@ -41,8 +41,10 @@ function renderDefaults(
   let sql = sqlTemplate;
   for (const p of paramsSpec ?? []) {
     if (p.default != null) {
-      const val =
-        typeof p.default === "string" ? `'${p.default}'` : String(p.default);
+      // 根据参数类型决定是否加引号：数值类型不加引号，其他类型加引号
+      const isNumericType =
+        p.type === "int" || p.type === "float" || p.type === "number";
+      const val = isNumericType ? String(p.default) : `'${p.default}'`;
       sql = sql.split(`{${p.name}}`).join(val);
     }
   }
@@ -218,13 +220,11 @@ export const useAiStore = defineStore("ai", () => {
       if (msg.role === "user") {
         hist.push({ role: "user", content: msg.content });
       } else if (msg.role === "assistant" && msg.sqlResult) {
+        // 将 assistant 的 JSON 结果转换为自然语言摘要，避免 LLM 困惑
+        const reason = msg.sqlResult.reason || "已生成 SQL 查询";
         hist.push({
           role: "assistant",
-          content: JSON.stringify({
-            sqlTemplate: msg.sqlResult.sqlTemplate,
-            reason: msg.sqlResult.reason,
-            chartHint: msg.sqlResult.chartHint,
-          }),
+          content: reason,
         });
       }
     }

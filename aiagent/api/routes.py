@@ -1,4 +1,6 @@
-from fastapi import APIRouter, FastAPI
+import logging
+
+from fastapi import APIRouter, FastAPI, HTTPException
 
 from aiagent.api.schemas import (
     GenerateChartRequest,
@@ -9,6 +11,7 @@ from aiagent.api.schemas import (
 )
 from aiagent.services.ai_service import generate_chart_artifact, generate_sql_payload
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -29,4 +32,8 @@ def generate_sql_endpoint(payload: GenerateSqlRequest) -> GenerateSqlResponse:
 
 @router.post("/generate-chart", response_model=GenerateChartResponse)
 def generate_chart_endpoint(payload: GenerateChartRequest) -> GenerateChartResponse:
-    return generate_chart_artifact(payload)
+    try:
+        return generate_chart_artifact(payload)
+    except Exception as e:
+        logger.error("图表生成失败: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"图表生成失败: {e}")

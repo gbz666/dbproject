@@ -48,3 +48,5 @@ charts/
 node_modules/
 /ai/
 .claude/*.json
+/.claude
+/*.png

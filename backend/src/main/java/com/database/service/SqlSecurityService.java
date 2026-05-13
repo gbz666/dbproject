@@ -65,7 +65,24 @@ public class SqlSecurityService {
     }
 
     /**
-     * 将 SQL 模板中的 {param} 占位符替换为实际参数值（字符串会加引号）
+     * 判断值是否应视为数值（不加引号）。
+     * 兼容 LLM 返回 string "10" 但 type 声明为 int 的情况。
+     */
+    private boolean isNumericValue(Object val) {
+        if (val instanceof Number) return true;
+        if (val instanceof String s) {
+            try {
+                Double.parseDouble(s);
+                return true;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 将 SQL 模板中的 {param} 占位符替换为实际参数值（数值不加引号，字符串加引号）
      */
     public String renderSql(String sqlTemplate, Map<String, Object> params) {
         if (params == null || params.isEmpty()) {
@@ -76,7 +93,7 @@ public class SqlSecurityService {
             String placeholder = "{" + entry.getKey() + "}";
             Object val = entry.getValue();
             String replacement;
-            if (val instanceof Number) {
+            if (isNumericValue(val)) {
                 replacement = val.toString();
             } else {
                 String escaped = val.toString().replace("'", "''");

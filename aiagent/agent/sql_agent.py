@@ -85,6 +85,7 @@ def build_system_prompt(schema_text: str) -> str:
 6. 为每个占位参数提供 paramsSpec，包含 name/type/default/required/label
 7. chartHint.type 选择规则: 时间序列趋势→line, 分类对比→bar, 占比且分类≤8→pie, 其他→bar
 8. 涉及到数值计算，必须给可能为空的字段设置默认值（通常是 0）
+9. **严格禁止使用 Schema 中不存在的表名或列名**。如果不确定某张表是否存在，不要猜测，只使用上方 Schema 中列出的表和列。如果问题涉及的表在 Schema 中找不到，请在 warnings 中说明，并尽量用已有的表生成最接近的查询
 === 输出格式（严格遵守）===
 你**必须且只能**输出一个 JSON 对象，禁止输出 markdown 代码块、解释文字或任何非 JSON 内容。
 JSON 必须包含以下全部字段:
@@ -109,7 +110,21 @@ def build_correction_prompt(question: str, failed_sql: str, error_msg: str) -> s
     """
     构建带错误反馈的修正 prompt，让 LLM 反思并修正 SQL。
     用于 ReAct 循环中试跑失败后的重试。
+    如果 failed_sql 为空，改为让 LLM 重新生成。
     """
+    if not failed_sql or not failed_sql.strip():
+        return textwrap.dedent(f"""\
+用户问题：{question}
+
+你上一次未能生成有效的 SQL 查询。请重新分析用户问题，结合数据库 Schema 生成正确的参数化 SQL。
+
+注意：
+- 确保输出完整的 SELECT 语句
+- 如果问题不够明确，根据 Schema 做合理假设
+- 不要输出空的 sqlTemplate
+
+只输出 JSON，不要解释。""")
+
     return textwrap.dedent(f"""\
 用户问题：{question}
 
