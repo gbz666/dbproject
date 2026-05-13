@@ -18,12 +18,29 @@
     </div>
 
     <div v-else class="exec-body">
+      <!-- 参数表单 -->
+      <ParamForm
+        :params-spec="store.panelParamsSpec"
+        :model-value="store.panelParams"
+        @update:model-value="store.panelParams = $event"
+      />
+
       <div class="sql-section">
-        <label class="field-label">SQL 查询</label>
+        <div class="sql-header">
+          <label class="field-label">SQL 查询</label>
+          <button
+            v-if="store.panelParamsSpec.length"
+            class="btn-text"
+            @click="showRawTemplate = !showRawTemplate"
+          >
+            {{ showRawTemplate ? "显示最终 SQL" : "显示原始模板" }}
+          </button>
+        </div>
         <textarea
-          v-model="store.panelSql"
+          :value="showRawTemplate ? store.panelSql : store.renderedSql"
           class="sql-editor"
           spellcheck="false"
+          readonly
         />
       </div>
 
@@ -56,11 +73,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { ElMessage } from "element-plus";
 import { useAiStore } from "@/stores/aiStore";
+import ParamForm from "./ParamForm.vue";
 import ResultTable from "./ResultTable.vue";
 
 const store = useAiStore();
+const showRawTemplate = ref(false);
 
 async function handleExecute() {
   await store.executePanel();
@@ -156,6 +176,13 @@ async function handleExecute() {
 
 .sql-section {
   margin-bottom: 12px;
+}
+
+.sql-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .field-label {

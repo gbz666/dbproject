@@ -4,7 +4,7 @@
 
 ---
 
-## Phase 1：审计日志写入（ai_sql_exec_log）
+## Phase 1：审计日志写入（ai_sql_exec_log）✅ 已完成
 
 **目标**：每次通过 AI 接口执行 SQL 后，自动写入审计日志。
 
@@ -56,40 +56,42 @@
 
 **目标**：根据 `paramsSpec` 动态渲染参数表单，用户可修改参数后执行 SQL，不再直接编辑原始 SQL 模板。
 
-### 2.1 前端：新增 `ParamForm.vue` 组件
+### 2.1 修改 aiStore
+
+- 新增 `panelParamsSpec: ref<ParamSpec[]>([])` 存储参数规格
+- 新增 `panelParams: ref<Record<string, unknown>>({})` 存储当前参数值
+- 修改 `loadToPanel()`：
+  - 保存原始 `sqlTemplate` 到 `panelSql`（不再调用 `renderDefaults`）
+  - 保存 `paramsSpec` 到 `panelParamsSpec`
+  - 初始化 `panelParams` 为默认值
+- 新增 `renderedSql: computed`：根据 `panelSql` + `panelParams` 动态生成最终 SQL
+- 修改 `executePanel()`：使用 `renderedSql.value` 替代 `panelSql.value`
+- 修改 `clearPanel()`：清空 `panelParamsSpec` 和 `panelParams`
+
+### 2.2 新建 `ParamForm.vue` 组件
 
 - **文件**：`frontend/src/views/ai/components/ParamForm.vue`
 - **Props**：`paramsSpec: ParamSpec[]`，`modelValue: Record<string, unknown>`
 - **Emits**：`update:modelValue`
 - **功能**：
   - 根据 `type` 渲染不同输入控件：
-    - `date` → `<el-date-picker>`
-    - `number` → `<el-input-number>`
-    - `string` → `<el-input>`
-    - `select` → `<el-select>`（如果 spec 有 options）
+    - `date` → `<el-date-picker>`（value-format="YYYY-MM-DD"）
+    - `number`/`int`/`float` → `<el-input-number>`
+    - `string`（默认）→ `<el-input>`
   - 每个参数显示 `label`，必填标 `*`
-  - 默认值从 `default` 字段填充
+  - 值变化时 emit `update:modelValue`
 
-### 2.2 修改 `ExecPanel.vue`
+### 2.3 修改 `ExecPanel.vue`
 
-- 在 SQL textarea 上方渲染 `ParamForm`（仅当有 paramsSpec 时）
-- 新增 `panelParamsSpec` 状态到 aiStore
-- `loadToPanel()` 时保存 paramsSpec
-- 参数变化时重新调用 `renderDefaults()` 生成最终 SQL
-- 保留"显示原始 SQL"折叠开关（高级用户可手动编辑）
-
-### 2.3 修改 aiStore
-
-- 新增 `panelParamsSpec` ref
-- `loadToPanel()` 保存 paramsSpec + 初始化 params 默认值
-- `executePanel()` 使用 params 而非空对象
-- 新增 `panelParams` ref 存储当前参数值
+- 在 SQL textarea 上方渲染 `ParamForm`（仅当 `panelParamsSpec` 非空时）
+- SQL textarea 绑定 `renderedSql`（只读展示，或允许手动覆盖）
+- 新增"显示原始模板"折叠开关，展开时可编辑模板
 
 ### 2.4 测试
 
 - 前端 `vue-tsc --noEmit` 类型检查
 - `vite build` 构建验证
-- 手动验证：生成 SQL → 参数表单正确渲染 → 修改参数 → 执行
+- 手动验证：生成 SQL → 参数表单正确渲染 → 修改参数 → SQL 自动更新 → 执行
 
 ---
 

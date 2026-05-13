@@ -6,6 +6,7 @@ import type {
   ExecuteSqlResult,
   HistoryMessage,
   ChartHint,
+  ParamSpec,
 } from "@/api/aiApi";
 
 export interface ChatItem {
@@ -33,19 +34,21 @@ function uid(): string {
   return `m-${Date.now()}-${++_seq}`;
 }
 
-/** 将 SQL 模板中的 {param} 占位符替换为默认值，生成可直接执行的 SQL */
+/** 将 SQL 模板中的 {param} 占位符替换为参数值，生成可直接执行的 SQL */
 function renderDefaults(
   sqlTemplate: string,
-  paramsSpec: GenerateSqlResult["paramsSpec"],
+  paramsSpec: ParamSpec[],
+  params?: Record<string, unknown>,
 ): string {
   let sql = sqlTemplate;
   for (const p of paramsSpec ?? []) {
-    if (p.default != null) {
+    const val = params?.[p.name] ?? p.default;
+    if (val != null) {
       // 根据参数类型决定是否加引号：数值类型不加引号，其他类型加引号
       const isNumericType =
         p.type === "int" || p.type === "float" || p.type === "number";
-      const val = isNumericType ? String(p.default) : `'${p.default}'`;
-      sql = sql.split(`{${p.name}}`).join(val);
+      const strVal = isNumericType ? String(val) : `'${val}'`;
+      sql = sql.split(`{${p.name}}`).join(strVal);
     }
   }
   return sql;
@@ -79,13 +82,20 @@ export const useAiStore = defineStore("ai", () => {
   const hasInput = computed(() => inputText.value.trim().length > 0);
 
   // ── 执行面板 ──
-  const panelSql = ref("");
+  const panelSql = ref(""); // 原始 SQL 模板（含 {param} 占位符）
+  const panelParamsSpec = ref<ParamSpec[]>([]);
+  const panelParams = ref<Record<string, unknown>>({});
   const panelChartHint = ref<ChartHint | null>(null);
   const panelQuestion = ref("");
   const executing = ref(false);
   const execResult = ref<ExecuteSqlResult | null>(null);
   const execError = ref("");
   const panelActive = computed(() => panelSql.value.length > 0);
+
+  /** 根据模板 + 参数动态生成可执行 SQL */
+  const renderedSql = computed(() =>
+    renderDefaults(panelSql.value, panelParamsSpec.value, panelParams.value),
+  );
 
   const chartFullUrl = computed(() => {
     if (!execResult.value?.chartUrl) return "";
@@ -334,7 +344,14 @@ export const useAiStore = defineStore("ai", () => {
   // ── 面板逻辑 ──
 
   function loadToPanel(result: GenerateSqlResult, question: string) {
-    panelSql.value = renderDefaults(result.sqlTemplate, result.paramsSpec);
+    panelSql.value = result.sqlTemplate; // 保存原始模板
+    panelParamsSpec.value = result.paramsSpec ?? [];
+    // 初始化参数默认值
+    const initParams: Record<string, unknown> = {};
+    for (const p of result.paramsSpec ?? []) {
+      if (p.default != null) initParams[p.name] = p.default;
+    }
+    panelParams.value = initParams;
     panelChartHint.value = result.chartHint;
     panelQuestion.value = question;
     execResult.value = null;
@@ -342,14 +359,15 @@ export const useAiStore = defineStore("ai", () => {
   }
 
   async function executePanel() {
-    if (!panelSql.value.trim()) return;
+    const sql = renderedSql.value.trim();
+    if (!sql) return;
     executing.value = true;
     execResult.value = null;
     execError.value = "";
     try {
       execResult.value = await aiService.executeSql(
-        panelSql.value,
-        {},
+        sql,
+        panelParams.value,
         panelChartHint.value,
         panelQuestion.value,
       );
@@ -368,6 +386,8 @@ export const useAiStore = defineStore("ai", () => {
 
   function clearPanel() {
     panelSql.value = "";
+    panelParamsSpec.value = [];
+    panelParams.value = {};
     panelChartHint.value = null;
     execResult.value = null;
     execError.value = "";
@@ -400,6 +420,9 @@ export const useAiStore = defineStore("ai", () => {
     hasInput,
     // 执行面板
     panelSql,
+    panelParamsSpec,
+    panelParams,
+    renderedSql,
     panelChartHint,
     panelQuestion,
     executing,
