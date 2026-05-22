@@ -3,9 +3,11 @@ package com.database.controller;
 import com.database.aop.RequireRole;
 import com.database.dto.AiExecuteSqlRequest;
 import com.database.dto.AiExecuteSqlResponse;
+import com.database.dto.AiFeedbackRequest;
 import com.database.dto.AiGenerateSqlRequest;
 import com.database.dto.AiGenerateSqlResponse;
 import com.database.service.AiAgentService;
+import com.database.service.AiMemoryService;
 import com.database.vo.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -21,10 +23,12 @@ import org.springframework.web.bind.annotation.*;
 public class AiAgentController {
 
     private final AiAgentService aiAgentService;
+    private final AiMemoryService aiMemoryService;
 
     @Autowired
-    public AiAgentController(AiAgentService aiAgentService) {
+    public AiAgentController(AiAgentService aiAgentService, AiMemoryService aiMemoryService) {
         this.aiAgentService = aiAgentService;
+        this.aiMemoryService = aiMemoryService;
     }
 
     /**
@@ -65,5 +69,18 @@ public class AiAgentController {
             @Valid @RequestBody com.database.dto.AiTrialExecuteRequest request) {
         com.database.dto.AiTrialExecuteResponse response = aiAgentService.trialExecute(request.getSql());
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /api/ai/feedback: 对某条 ai_sql_memory 点赞 / 点踩
+     */
+    @RequireRole({"后台管理", "总经理"})
+    @PostMapping("/feedback")
+    public ResponseEntity<Result<Void>> feedback(
+            @Valid @RequestBody AiFeedbackRequest request,
+            HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        aiMemoryService.recordFeedback(request.getMemoryId(), userId, request.getVote());
+        return ResponseEntity.ok(Result.success());
     }
 }
