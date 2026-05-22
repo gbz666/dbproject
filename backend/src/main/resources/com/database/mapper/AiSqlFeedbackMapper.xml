@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.database.mapper.AiSqlFeedbackMapper">
+
+    <resultMap id="BaseResultMap" type="com.database.pojo.AiSqlFeedback">
+        <id property="id" column="id" />
+        <result property="memoryId" column="memory_id" />
+        <result property="userId" column="user_id" />
+        <result property="vote" column="vote" />
+        <result property="createdAt" column="created_at" />
+    </resultMap>
+
+    <insert id="insertOrUpdate" parameterType="com.database.pojo.AiSqlFeedback">
+        INSERT INTO ai_sql_feedback (memory_id, user_id, vote)
+        VALUES (#{memoryId}, #{userId}, #{vote})
+        ON DUPLICATE KEY UPDATE
+            vote = VALUES(vote),
+            created_at = NOW()
+    </insert>
+
+    <select id="countUpvotes" resultType="int">
+        SELECT COUNT(*) FROM ai_sql_feedback
+        WHERE memory_id = #{memoryId} AND vote = 1
+    </select>
+
+    <select id="countDownvotes" resultType="int">
+        SELECT COUNT(*) FROM ai_sql_feedback
+        WHERE memory_id = #{memoryId} AND vote = -1
+    </select>
+
+</mapper>
