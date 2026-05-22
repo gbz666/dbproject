@@ -1,10 +1,12 @@
 <template>
   <div class="common-layout">
     <el-container>
-      <el-aside width="200px" class="main-sidebar">
-        <div class="logo-container">数据库课设系统</div>
-        <el-menu router :default-active="activeMenu" class="el-menu-vertical-demo" :collapse="isCollapse"
-          background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+      <el-aside :width="isCollapse ? '64px' : '220px'" class="main-sidebar">
+        <div class="logo-container">
+          <span v-if="!isCollapse">企业管理系统</span>
+          <span v-else class="logo-mini">企</span>
+        </div>
+        <el-menu router :default-active="activeMenu" class="sidebar-menu" :collapse="isCollapse">
           <el-sub-menu index="1">
             <template #title>
               <el-icon>
@@ -181,8 +183,6 @@
 </script>
 
 <style scoped>
-
-  /* 样式保持不变 */
   .common-layout {
     height: 100vh;
   }
@@ -191,67 +191,124 @@
     height: 100%;
   }
 
-  /* 侧边栏样式 */
+  /* ── 侧边栏：白底 + 苹果灰 hover + 浅蓝选中 ── */
   .main-sidebar {
-    background-color: #545c64;
+    background-color: var(--color-bg);
     height: 100%;
     overflow-y: auto;
-    transition: width 0.3s;
-    /* 添加折叠过渡 */
+    transition: width var(--transition-base);
+    border-right: 1px solid var(--color-border-soft);
   }
 
   .logo-container {
-    height: 60px;
-    line-height: 60px;
-    color: white;
-    text-align: center;
-    font-size: 18px;
-    font-weight: bold;
-    background-color: #545c64;
+    height: var(--layout-header-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border-soft);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-tight);
     white-space: nowrap;
-    /* 防止 logo 文本折叠 */
     overflow: hidden;
   }
 
-  .el-menu {
+  .logo-mini {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary);
+  }
+
+  .sidebar-menu {
     border-right: none;
+    background: var(--color-bg);
+    padding: var(--space-2) var(--space-2);
   }
 
-  .el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 200px;
+  .sidebar-menu:not(.el-menu--collapse) {
+    width: 220px;
   }
 
-  /* 顶部 Header 样式 */
+  /* 菜单项 Apple 风：白底、轻 hover、浅蓝选中 */
+  :deep(.el-menu-item),
+  :deep(.el-sub-menu__title) {
+    height: 40px;
+    line-height: 40px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-1);
+  }
+
+  :deep(.el-menu-item:hover),
+  :deep(.el-sub-menu__title:hover) {
+    background-color: var(--color-bg-mute);
+    color: var(--color-text);
+  }
+
+  :deep(.el-menu-item.is-active) {
+    background-color: var(--color-primary-bg);
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+
+  :deep(.el-sub-menu .el-menu-item) {
+    padding-left: 44px !important;
+    min-width: auto;
+  }
+
+  /* ── 顶部 Header ── */
   .main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #fff;
-    border-bottom: 1px solid #eee;
-    padding: 0 20px;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border-soft);
+    padding: 0 var(--space-6);
+    height: var(--layout-header-height);
+    line-height: var(--layout-header-height);
   }
 
   .header-left .collapse-icon {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
     cursor: pointer;
-    margin-right: 20px;
+    color: var(--color-text-secondary);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
   }
 
-  /* 主内容区样式 */
+  .header-left .collapse-icon:hover {
+    background: var(--color-bg-mute);
+    color: var(--color-text);
+  }
+
+  /* ── 主内容区 ── */
   .main-content {
-    background-color: #f0f2f5;
-    padding: 10px;
+    background-color: var(--color-bg-mute);
+    padding: var(--space-6);
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--space-3);
   }
 
   .el-dropdown-link {
     cursor: pointer;
     display: flex;
     align-items: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+  }
+
+  .el-dropdown-link:hover {
+    background: var(--color-bg-mute);
+    color: var(--color-text);
   }
 </style>
