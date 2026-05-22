@@ -95,7 +95,33 @@
 
 ---
 
-## Phase 3：SQL-RAG 记忆与反馈（Phase 2 业务逻辑）
+## Phase 3：SQL-RAG 记忆与反馈（极简版） ✅ 已完成
+
+> 范围调整：原计划包含检索排序、相似度评分、few-shot 注入等。考虑到当前
+> 模型是 `qwen2.5-coder:7b` 本地小模型，多跳推理能力弱，PageIndex 式层级
+> 导航在小模型上正确率累积下降明显，故本期只交付**反馈数据采集基础设施**，
+> 检索/few-shot 推迟到积累一定数据后做。
+>
+> 顺手修复了 Ollama OpenAI 兼容层 `num_ctx` 默认 2048 的问题
+> （见 `aiagent/Modelfile` + `llm_client.py:NUM_CTX`）。
+
+**已完成**：
+- `AiSqlMemory` / `AiSqlFeedback` POJO + Mapper（含 XML）
+- `AiMemoryService` 三个方法：saveOrReuseMemory / recordExecSuccess / recordFeedback
+- 置信度公式：base 0.30 + 0.05·min(successCount,6) + 0.10·upvotes − 0.15·downvotes，clamp 到 [0,1]
+- `POST /api/ai/feedback`（@RequireRole 同其他 AI 接口）
+- `generateSql` 后自动保存 memory，`executeSql` 成功后 `success_count++` 并重算 confidence
+- 前端 ChatMessage 增加"有用 / 有问题"按钮，store 端追踪 feedbackVote
+
+**未做（留下一版）**：
+- `selectByNormalizedQuestion` / `selectByTablesUsed` 检索方法
+- LLM rerank
+- few-shot 注入到 Python prompt
+- 反馈状态持久化（`loadMessages` 不读取 ai_sql_feedback）
+
+---
+
+## Phase 3 原始规划存档（未实现部分留作参考）
 
 **目标**：启用 `ai_sql_memory` + `ai_sql_feedback`，实现历史 SQL 检索复用和用户反馈。
 
