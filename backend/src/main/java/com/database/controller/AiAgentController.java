@@ -34,12 +34,14 @@ public class AiAgentController {
     /**
      * POST /api/ai/generate-sql: 将自然语言问题转为参数化 SQL 模板
      * @param request 包含 question 字段
-     * @return SQL 模板、参数规格、图表建议等
+     * @return SQL 模板、参数规格、图表建议等（含 memoryId 用于后续点赞/踩）
      */
     @PostMapping("/generate-sql")
     public ResponseEntity<Result<AiGenerateSqlResponse>> generateSql(
-            @Valid @RequestBody AiGenerateSqlRequest request) {
-        AiGenerateSqlResponse response = aiAgentService.generateSql(request);
+            @Valid @RequestBody AiGenerateSqlRequest request,
+            HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        AiGenerateSqlResponse response = aiAgentService.generateSql(request, userId);
         return ResponseEntity.ok(Result.success(response));
     }
 

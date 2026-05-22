@@ -22,6 +22,8 @@ public class AiGenerateSqlResponse {
     private Map<String, Object> chartHint;
     private Double confidence;
     private List<String> warnings;
+    /** ai_sql_memory 主键，前端执行成功后或点赞/踩时回传 */
+    private Long memoryId;
 
     /**
      * 参数规格，描述 SQL 模板中的占位符参数

@@ -23,4 +23,7 @@ public class AiExecuteSqlRequest {
     private Map<String, Object> chartHint;
 
     private String question;
+
+    /** ai_sql_memory 主键，由 generate-sql 透传过来用于关联审计与统计 */
+    private Long memoryId;
 }

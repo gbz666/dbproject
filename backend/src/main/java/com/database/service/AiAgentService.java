@@ -35,6 +35,7 @@ public class AiAgentService {
     private final JdbcTemplate jdbcTemplate;
     private final AiSqlExecLogMapper aiSqlExecLogMapper;
     private final ObjectMapper objectMapper;
+    private final AiMemoryService aiMemoryService;
 
     @Value("${aiagent.base-url:http://localhost:8001}")
     private String aiagentBaseUrl;
@@ -46,9 +47,11 @@ public class AiAgentService {
     private int timeoutMs;
 
     /**
-     * 调用 Python 服务生成参数化 SQL 模板
+     * 调用 Python 服务生成参数化 SQL 模板，同时把模板保存进 ai_sql_memory。
+     *
+     * @param userId 当前用户（用于 created_by）；可为 null（未登录调用 generate-sql 时）
      */
-    public AiGenerateSqlResponse generateSql(AiGenerateSqlRequest request) {
+    public AiGenerateSqlResponse generateSql(AiGenerateSqlRequest request, Long userId) {
         String url = aiagentBaseUrl + "/generate-sql";
 
         HttpHeaders headers = new HttpHeaders();
@@ -62,18 +65,30 @@ public class AiAgentService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
+        AiGenerateSqlResponse response;
         try {
             ResponseEntity<AiGenerateSqlResponse> resp = restTemplate.exchange(
                     url, HttpMethod.POST, entity, AiGenerateSqlResponse.class
             );
             if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
-                return resp.getBody();
+                response = resp.getBody();
+            } else {
+                throw new BusinessException("AI 服务返回异常", 502);
             }
-            throw new BusinessException("AI 服务返回异常", 502);
         } catch (RestClientException e) {
             log.error("调用 Python AI 服务失败: {}", e.getMessage(), e);
             throw new BusinessException("AI 服务暂时不可用，请稍后重试", 503);
         }
+
+        // 保存/复用记忆，把 memoryId 透传给前端
+        try {
+            Long memoryId = aiMemoryService.saveOrReuseMemory(request.getQuestion(), response, userId);
+            response.setMemoryId(memoryId);
+        } catch (Exception e) {
+            log.warn("saveOrReuseMemory 失败（非致命）: {}", e.getMessage());
+        }
+
+        return response;
     }
 
     /**
@@ -83,6 +98,7 @@ public class AiAgentService {
     public AiExecuteSqlResponse executeSql(AiExecuteSqlRequest request, String question, Long userId) {
         String sqlTemplate = request.getSqlTemplate();
         Map<String, Object> params = request.getParams();
+        Long memoryId = request.getMemoryId();
 
         String finalSql = sqlSecurityService.renderSql(sqlTemplate, params);
         finalSql = sqlSecurityService.ensureLimit(finalSql);
@@ -90,6 +106,7 @@ public class AiAgentService {
 
         // 审计日志对象，在 finally 中统一写入
         AiSqlExecLog auditLog = new AiSqlExecLog();
+        auditLog.setMemoryId(memoryId);
         auditLog.setUserId(userId);
         auditLog.setSqlHash(sqlHash);
         auditLog.setSqlText(finalSql);
@@ -135,6 +152,15 @@ public class AiAgentService {
             auditLog.setStatus("success");
             auditLog.setRowCount(rows.size());
             auditLog.setLatencyMs((int) (System.currentTimeMillis() - start));
+
+            // 记忆统计：success_count++ 并重算置信度
+            if (memoryId != null) {
+                try {
+                    aiMemoryService.recordExecSuccess(memoryId);
+                } catch (Exception e) {
+                    log.warn("recordExecSuccess 失败（非致命）: {}", e.getMessage());
+                }
+            }
 
             AiExecuteSqlResponse response = new AiExecuteSqlResponse();
             response.setColumns(columns);
