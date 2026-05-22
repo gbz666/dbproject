@@ -7,10 +7,11 @@ import App from './App.vue';
 import router from './router';
 
 // 1. 导入所有需要的图标
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'; 
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
-// 引入全局样式
-import './assets/main.css'; 
+// 全局样式：tokens 必须在 main.css 之前，保证变量先于使用注册
+import './assets/tokens.css';
+import './assets/main.css';
 
 const app = createApp(App);
 
