@@ -39,4 +39,9 @@ public class AiMessageResponse {
      * 创建时间
      */
     private Date createdAt;
+
+    /**
+     * 当前用户对该消息对应 memory 的反馈状态：+1 / -1 / null（未反馈）
+     */
+    private Integer feedbackVote;
 }

@@ -161,6 +161,8 @@ export const useAiStore = defineStore("ai", () => {
         sqlResult: m.sqlResult,
         error: m.errorMsg,
         loading: false,
+        feedbackVote:
+          m.feedbackVote === 1 ? 1 : m.feedbackVote === -1 ? -1 : undefined,
       }));
     } catch (e) {
       console.warn("加载消息失败:", e);
@@ -390,12 +392,8 @@ export const useAiStore = defineStore("ai", () => {
       console.warn("submitFeedback: 当前消息没有 memoryId，无法提交反馈");
       return;
     }
-    // 再点同一票视为取消（前端体验优化），但后端只支持 +1/-1，不撤销，
-    // 所以仅本地视觉切换为未选中状态，不再 POST
-    if (msg.feedbackVote === vote) {
-      msg.feedbackVote = undefined;
-      return;
-    }
+    // 已是当前态：不重复 POST。要切换请按另一个按钮。
+    if (msg.feedbackVote === vote) return;
     try {
       await aiService.feedback(memoryId, vote);
       msg.feedbackVote = vote;

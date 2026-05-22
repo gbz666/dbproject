@@ -4,8 +4,10 @@ import com.database.dto.*;
 import com.database.exception.BusinessException;
 import com.database.mapper.AiConversationMapper;
 import com.database.mapper.AiMessageMapper;
+import com.database.mapper.AiSqlFeedbackMapper;
 import com.database.pojo.AiConversation;
 import com.database.pojo.AiMessage;
+import com.database.pojo.AiSqlFeedback;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * AI 对话服务：管理对话和消息的 CRUD
@@ -26,6 +32,7 @@ public class AiConversationService {
 
     private final AiConversationMapper conversationMapper;
     private final AiMessageMapper messageMapper;
+    private final AiSqlFeedbackMapper feedbackMapper;
     private final ObjectMapper objectMapper;
 
     /**
@@ -92,6 +99,8 @@ public class AiConversationService {
         List<AiMessage> messages = messageMapper.selectByConversationId(conversationId);
         List<AiMessageResponse> messageResponses = new ArrayList<>();
 
+        // 第一次遍历：解析 sqlResult，顺手收集 memoryId 用于后续批量查反馈
+        Set<Long> memoryIds = new HashSet<>();
         for (AiMessage msg : messages) {
             AiMessageResponse msgResponse = new AiMessageResponse();
             msgResponse.setId(msg.getId());
@@ -100,10 +109,12 @@ public class AiConversationService {
             msgResponse.setErrorMsg(msg.getErrorMsg());
             msgResponse.setCreatedAt(msg.getCreatedAt());
 
-            // 解析 sqlResult JSON
             if (msg.getSqlResult() != null) {
                 try {
-                    msgResponse.setSqlResult(objectMapper.readValue(msg.getSqlResult(), Object.class));
+                    Object parsed = objectMapper.readValue(msg.getSqlResult(), Object.class);
+                    msgResponse.setSqlResult(parsed);
+                    Long mid = extractMemoryId(parsed);
+                    if (mid != null) memoryIds.add(mid);
                 } catch (JsonProcessingException e) {
                     log.warn("解析 sqlResult JSON 失败: {}", e.getMessage());
                     msgResponse.setSqlResult(msg.getSqlResult());
@@ -113,10 +124,43 @@ public class AiConversationService {
             messageResponses.add(msgResponse);
         }
 
+        // 一次性查询当前用户对这批 memory 的反馈，回填到 messages
+        if (!memoryIds.isEmpty()) {
+            Map<Long, Integer> voteByMemory = new HashMap<>();
+            List<AiSqlFeedback> feedbacks = feedbackMapper.selectByUserAndMemoryIds(userId, memoryIds);
+            for (AiSqlFeedback fb : feedbacks) {
+                voteByMemory.put(fb.getMemoryId(), fb.getVote());
+            }
+            for (AiMessageResponse msgResp : messageResponses) {
+                Long mid = extractMemoryId(msgResp.getSqlResult());
+                if (mid != null && voteByMemory.containsKey(mid)) {
+                    msgResp.setFeedbackVote(voteByMemory.get(mid));
+                }
+            }
+        }
+
         response.setMessageCount(messageResponses.size());
         response.setMessages(messageResponses);
 
         return response;
+    }
+
+    /**
+     * 从已解析的 sqlResult（LinkedHashMap）里取出 memoryId 字段。
+     * 兼容字符串/数字两种形态（Jackson 默认会把整数反序列化为 Integer/Long）。
+     */
+    private Long extractMemoryId(Object sqlResult) {
+        if (!(sqlResult instanceof Map<?, ?>)) return null;
+        Object raw = ((Map<?, ?>) sqlResult).get("memoryId");
+        if (raw instanceof Number) return ((Number) raw).longValue();
+        if (raw instanceof String) {
+            try {
+                return Long.parseLong((String) raw);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**

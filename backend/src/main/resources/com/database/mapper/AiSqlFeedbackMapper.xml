@@ -30,4 +30,14 @@
         WHERE memory_id = #{memoryId} AND vote = -1
     </select>
 
+    <select id="selectByUserAndMemoryIds" resultMap="BaseResultMap">
+        SELECT id, memory_id, user_id, vote, created_at
+        FROM ai_sql_feedback
+        WHERE user_id = #{userId}
+          AND memory_id IN
+        <foreach collection="memoryIds" item="mid" open="(" separator="," close=")">
+            #{mid}
+        </foreach>
+    </select>
+
 </mapper>

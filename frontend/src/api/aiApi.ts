@@ -59,6 +59,8 @@ export interface AiMessageResponse {
   sqlResult?: GenerateSqlResult;
   errorMsg?: string;
   createdAt: string;
+  /** 当前用户对该消息对应 memory 的反馈：+1 / -1 / null */
+  feedbackVote?: number | null;
 }
 
 export const aiApi = {
