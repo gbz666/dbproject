@@ -82,6 +82,9 @@ def _normalize_keys(raw: dict) -> dict:
     return normalized
 
 
+NUM_CTX = 8192  # Ollama 默认 num_ctx=2048，对 qwen2.5-coder:7b（原生 32K）严重欠配
+
+
 def call_llm_json(messages: list[dict], temperature: float = 0.1) -> dict:
     """调用 LLM 并解析 JSON 响应。"""
     client = create_llm_client()
@@ -89,12 +92,16 @@ def call_llm_json(messages: list[dict], temperature: float = 0.1) -> dict:
 
     total_chars = sum(len(m.get("content", "")) for m in messages)
     estimated_tokens = total_chars // 2
-    logger.info("Prompt 总字符数: %d, 估算 token 数: ~%d", total_chars, estimated_tokens)
+    logger.info(
+        "Prompt 总字符数: %d, 估算 token 数: ~%d, num_ctx 上限: %d",
+        total_chars, estimated_tokens, NUM_CTX,
+    )
 
     response = client.chat.completions.create(
         model=settings["llm_model_id"],
         messages=messages,
         temperature=temperature,
+        extra_body={"options": {"num_ctx": NUM_CTX}},
     )
 
     content = response.choices[0].message.content or ""
