@@ -24,6 +24,8 @@ export interface GenerateSqlResult {
   chartHint: ChartHint | null;
   confidence: number;
   warnings: string[];
+  /** ai_sql_memory.id，用于后续点赞/踩与执行关联 */
+  memoryId?: number;
 }
 
 export interface ExecuteSqlResult {
@@ -71,10 +73,17 @@ export const aiApi = {
     params: Record<string, unknown>;
     chartHint: ChartHint | null;
     question: string;
+    memoryId?: number;
   }) =>
     httpClient<ExecuteSqlResult>(`${BASE_URL}/execute-sql`, {
       method: "POST",
       body: payload,
+    }),
+
+  feedback: (memoryId: number, vote: 1 | -1) =>
+    httpClient<void>(`${BASE_URL}/feedback`, {
+      method: "POST",
+      body: { memoryId, vote },
     }),
 
   // ── 对话管理 API ──

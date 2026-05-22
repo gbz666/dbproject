@@ -31,23 +31,65 @@
           class="msg-alert"
         />
         <pre class="sql-preview"><code>{{ msg.sqlResult.sqlTemplate }}</code></pre>
-        <button class="btn-use" @click="$emit('use', msg)">使用此 SQL</button>
+        <div class="msg-actions">
+          <button class="btn-use" @click="$emit('use', msg)">使用此 SQL</button>
+          <div v-if="msg.sqlResult.memoryId" class="vote-group">
+            <button
+              class="btn-vote"
+              :class="{ active: msg.feedbackVote === 1 }"
+              :disabled="voting"
+              title="这条 SQL 有用"
+              @click="onVote(1)"
+            >
+              <el-icon><CaretTop /></el-icon>
+              <span>有用</span>
+            </button>
+            <button
+              class="btn-vote"
+              :class="{ active: msg.feedbackVote === -1 }"
+              :disabled="voting"
+              title="这条 SQL 有问题"
+              @click="onVote(-1)"
+            >
+              <el-icon><CaretBottom /></el-icon>
+              <span>有问题</span>
+            </button>
+          </div>
+        </div>
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Loading } from "@element-plus/icons-vue";
+import { ref } from "vue";
+import { ElMessage } from "element-plus";
+import { Loading, CaretTop, CaretBottom } from "@element-plus/icons-vue";
+import { useAiStore } from "@/stores/aiStore";
 import type { ChatItem } from "@/stores/aiStore";
 
-defineProps<{
+const props = defineProps<{
   msg: ChatItem;
 }>();
 
 defineEmits<{
   use: [msg: ChatItem];
 }>();
+
+const aiStore = useAiStore();
+const voting = ref(false);
+
+async function onVote(vote: 1 | -1) {
+  if (voting.value) return;
+  voting.value = true;
+  try {
+    await aiStore.submitFeedback(props.msg, vote);
+  } catch {
+    ElMessage.error("反馈提交失败，请稍后重试");
+  } finally {
+    voting.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -116,8 +158,16 @@ defineEmits<{
   word-break: break-all;
 }
 
-.btn-use {
+.msg-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-use {
   padding: 8px 20px;
   font-size: 14px;
   font-weight: 400;
@@ -134,5 +184,37 @@ defineEmits<{
 }
 .btn-use:active {
   transform: scale(0.95);
+}
+
+.vote-group {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #555;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-vote:hover:not(:disabled) {
+  background: #f5f5f7;
+  border-color: #b0b0b0;
+}
+.btn-vote:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-vote.active {
+  color: #ffffff;
+  background: #0066cc;
+  border-color: #0066cc;
 }
 </style>

@@ -20,9 +20,14 @@ export const aiService = {
     sqlTemplate: string,
     params: Record<string, unknown>,
     chartHint: ChartHint | null,
-    question: string
+    question: string,
+    memoryId?: number
   ): Promise<ExecuteSqlResult> {
-    return await aiApi.executeSql({ sqlTemplate, params, chartHint, question });
+    return await aiApi.executeSql({ sqlTemplate, params, chartHint, question, memoryId });
+  },
+
+  async feedback(memoryId: number, vote: 1 | -1): Promise<void> {
+    return await aiApi.feedback(memoryId, vote);
   },
 
   // ── 对话管理 ──

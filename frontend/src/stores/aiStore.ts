@@ -18,6 +18,9 @@ export interface ChatItem {
   error?: string;
   /** 后端消息 ID（已持久化的消息才有） */
   dbId?: number;
+  /** 本地反馈状态：1=已点赞，-1=已点踩，undefined=未操作。
+   *  本期只在当前会话内追踪，刷新后丢失（下一版从后端读取） */
+  feedbackVote?: 1 | -1;
 }
 
 export interface Conversation {
@@ -87,6 +90,7 @@ export const useAiStore = defineStore("ai", () => {
   const panelParams = ref<Record<string, unknown>>({});
   const panelChartHint = ref<ChartHint | null>(null);
   const panelQuestion = ref("");
+  const panelMemoryId = ref<number | undefined>(undefined);
   const executing = ref(false);
   const execResult = ref<ExecuteSqlResult | null>(null);
   const execError = ref("");
@@ -354,6 +358,7 @@ export const useAiStore = defineStore("ai", () => {
     panelParams.value = initParams;
     panelChartHint.value = result.chartHint;
     panelQuestion.value = question;
+    panelMemoryId.value = result.memoryId;
     execResult.value = null;
     execError.value = "";
   }
@@ -370,11 +375,33 @@ export const useAiStore = defineStore("ai", () => {
         panelParams.value,
         panelChartHint.value,
         panelQuestion.value,
+        panelMemoryId.value,
       );
     } catch (err: any) {
       execError.value = err?.message || "SQL 执行失败";
     } finally {
       executing.value = false;
+    }
+  }
+
+  async function submitFeedback(msg: ChatItem, vote: 1 | -1): Promise<void> {
+    const memoryId = msg.sqlResult?.memoryId;
+    if (!memoryId) {
+      console.warn("submitFeedback: 当前消息没有 memoryId，无法提交反馈");
+      return;
+    }
+    // 再点同一票视为取消（前端体验优化），但后端只支持 +1/-1，不撤销，
+    // 所以仅本地视觉切换为未选中状态，不再 POST
+    if (msg.feedbackVote === vote) {
+      msg.feedbackVote = undefined;
+      return;
+    }
+    try {
+      await aiService.feedback(memoryId, vote);
+      msg.feedbackVote = vote;
+    } catch (e) {
+      console.error("提交反馈失败:", e);
+      throw e;
     }
   }
 
@@ -389,6 +416,7 @@ export const useAiStore = defineStore("ai", () => {
     panelParamsSpec.value = [];
     panelParams.value = {};
     panelChartHint.value = null;
+    panelMemoryId.value = undefined;
     execResult.value = null;
     execError.value = "";
   }
@@ -425,6 +453,7 @@ export const useAiStore = defineStore("ai", () => {
     renderedSql,
     panelChartHint,
     panelQuestion,
+    panelMemoryId,
     executing,
     execResult,
     execError,
@@ -435,6 +464,7 @@ export const useAiStore = defineStore("ai", () => {
     sendMessage,
     loadToPanel,
     executePanel,
+    submitFeedback,
     clearConversation,
     clearPanel,
   };
