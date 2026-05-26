@@ -38,6 +38,9 @@ charts/
 # === 日志 ===
 *.log
 *.gz
+
+# === Playwright 自动化测试产物 ===
+.playwright-mcp/
 # === IDE ===
 .idea/
 .vscode/

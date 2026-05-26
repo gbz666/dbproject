@@ -102,11 +102,11 @@ public class StaffService {
         }
 
         Staffs staff = new Staffs();
-        staff.setStaffCode(req.getStaffCode());
+        staff.setStaffCode(blankToNull(req.getStaffCode()));
         staff.setStaffName(req.getStaffName());
-        staff.setEmail(req.getEmail());
-        staff.setPhone(req.getPhone());
-        staff.setTitle(req.getTitle());
+        staff.setEmail(blankToNull(req.getEmail()));
+        staff.setPhone(blankToNull(req.getPhone()));
+        staff.setTitle(blankToNull(req.getTitle()));
         staff.setPassword(passwordEncoder.encode(req.getPassword()));
         staff.setStatus(1);
         staff.setCreatedById(operatorId);
@@ -131,10 +131,10 @@ public class StaffService {
         Staffs update = new Staffs();
         update.setId(staffId);
         if (req.getStaffName() != null) update.setStaffName(req.getStaffName());
-        if (req.getStaffCode() != null) update.setStaffCode(req.getStaffCode());
-        if (req.getEmail() != null) update.setEmail(req.getEmail());
-        if (req.getPhone() != null) update.setPhone(req.getPhone());
-        if (req.getTitle() != null) update.setTitle(req.getTitle());
+        if (req.getStaffCode() != null) update.setStaffCode(blankToNull(req.getStaffCode()));
+        if (req.getEmail() != null) update.setEmail(blankToNull(req.getEmail()));
+        if (req.getPhone() != null) update.setPhone(blankToNull(req.getPhone()));
+        if (req.getTitle() != null) update.setTitle(blankToNull(req.getTitle()));
         update.setUpdatedById(operatorId);
         staffsMapper.updateByPrimaryKeySelective(update);
 
@@ -184,6 +184,11 @@ public class StaffService {
      */
     public List<Roles> getAllRoles() {
         return rolesMapper.selectAll();
+    }
+
+    /** 空串 / 全空白 → null，避免 UNIQUE 列（如 staff_code）多条空串触发唯一键冲突 */
+    private static String blankToNull(String s) {
+        return (s == null || s.trim().isEmpty()) ? null : s;
     }
 
     private void assignRolesInternal(Long staffId, List<Integer> roleIds) {

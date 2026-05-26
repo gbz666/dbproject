@@ -293,6 +293,7 @@ const handleSubmit = async () => {
       } else {
         await staffManageApi.create({ ...form });
         ElMessage.success("员工创建成功");
+        pageNum.value = 1;
       }
       formDialogVisible.value = false;
       fetchList();

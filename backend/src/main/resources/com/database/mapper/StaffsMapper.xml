@@ -136,7 +136,7 @@
                     OR email LIKE CONCAT('%', #{keyword}, '%'))
             </if>
         </where>
-        ORDER BY id ASC
+        ORDER BY id DESC
         LIMIT #{offset}, #{limit}
     </select>
 
