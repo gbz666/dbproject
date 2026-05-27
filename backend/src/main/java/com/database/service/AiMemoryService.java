@@ -63,20 +63,35 @@ public class AiMemoryService {
             return null;
         }
 
-        AiSqlMemory existing = memoryMapper.selectBySqlTemplate(result.getSqlTemplate());
-        if (existing != null) {
-            memoryMapper.incrementUseCount(existing.getId());
-            return existing.getId();
+        // 计算三个 RAG 字段
+        String normalized = AiSqlNormalizer.normalize(question);
+        String tablesUsed = SqlTableExtractor.extract(result.getSqlTemplate());
+        String intentTag = AiIntentTagger.tag(normalized);
+
+        // 复用优先级 1：归一化问题完全相同（同义问题命中）
+        if (!normalized.isEmpty()) {
+            AiSqlMemory byNorm = memoryMapper.selectByNormalizedQuestion(normalized);
+            if (byNorm != null) {
+                memoryMapper.incrementUseCount(byNorm.getId());
+                return byNorm.getId();
+            }
+        }
+
+        // 复用优先级 2：SQL 模板完全相同（旧逻辑兼容）
+        AiSqlMemory bySql = memoryMapper.selectBySqlTemplate(result.getSqlTemplate());
+        if (bySql != null) {
+            memoryMapper.incrementUseCount(bySql.getId());
+            return bySql.getId();
         }
 
         AiSqlMemory memory = new AiSqlMemory();
         memory.setQuestionText(question);
-        memory.setNormalizedQuestion("");
+        memory.setNormalizedQuestion(normalized);
         memory.setSqlTemplate(result.getSqlTemplate());
         memory.setParamsSpec(safeToJson(result.getParamsSpec()));
         memory.setChartHint(safeToJson(result.getChartHint()));
-        memory.setTablesUsed("");
-        memory.setIntentTag("");
+        memory.setTablesUsed(tablesUsed);
+        memory.setIntentTag(intentTag);
         memory.setConfidence(DEFAULT_CONFIDENCE);
         memory.setUseCount(1);
         memory.setSuccessCount(0);

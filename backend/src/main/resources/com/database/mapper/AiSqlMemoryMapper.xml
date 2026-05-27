@@ -56,6 +56,16 @@
         LIMIT 1
     </select>
 
+    <select id="selectByNormalizedQuestion" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_sql_memory
+        WHERE normalized_question = #{normalizedQuestion}
+          AND normalized_question &lt;&gt; ''
+          AND status &lt;&gt; 'archived'
+        ORDER BY confidence DESC, use_count DESC, id DESC
+        LIMIT 1
+    </select>
+
     <update id="incrementUseCount">
         UPDATE ai_sql_memory
         SET use_count = use_count + 1,

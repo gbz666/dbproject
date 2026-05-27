@@ -8,9 +8,6 @@ import java.math.BigDecimal;
 /**
  * 针对表【ai_sql_memory(AI SQL 模板记忆表)】的数据库操作 Mapper
  * @Entity com.database.pojo.AiSqlMemory
- *
- * 注：本期 Phase 3 极简版只提供保存/复用/反馈相关的方法，
- * 检索方法（按归一化问题、表重叠度）留到下一版做 RAG 时再加。
  */
 public interface AiSqlMemoryMapper {
 
@@ -28,6 +25,12 @@ public interface AiSqlMemoryMapper {
      * 按 SQL 模板完全相同查询（用于 saveOrReuseMemory 去重）
      */
     AiSqlMemory selectBySqlTemplate(@Param("sqlTemplate") String sqlTemplate);
+
+    /**
+     * 按归一化问题精确匹配（用于 RAG 检索的首选复用通道）。
+     * 空串归一化问题不参与匹配，避免历史脏数据被误命中。
+     */
+    AiSqlMemory selectByNormalizedQuestion(@Param("normalizedQuestion") String normalizedQuestion);
 
     /**
      * 复用次数 +1 并更新 last_used_at
