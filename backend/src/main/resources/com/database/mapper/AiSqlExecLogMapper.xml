@@ -54,4 +54,10 @@
         ORDER BY created_at DESC
     </select>
 
+    <select id="countFailuresByMemoryId" resultType="int">
+        SELECT COUNT(*) FROM ai_sql_exec_log
+        WHERE memory_id = #{memoryId}
+          AND status &lt;&gt; 'success'
+    </select>
+
 </mapper>

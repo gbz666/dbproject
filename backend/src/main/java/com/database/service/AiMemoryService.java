@@ -1,6 +1,7 @@
 package com.database.service;
 
 import com.database.dto.AiGenerateSqlResponse;
+import com.database.mapper.AiSqlExecLogMapper;
 import com.database.mapper.AiSqlFeedbackMapper;
 import com.database.mapper.AiSqlMemoryMapper;
 import com.database.pojo.AiSqlFeedback;
@@ -13,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * AI SQL 记忆与反馈服务。Phase 3 极简版。
@@ -40,6 +45,7 @@ public class AiMemoryService {
 
     private final AiSqlMemoryMapper memoryMapper;
     private final AiSqlFeedbackMapper feedbackMapper;
+    private final AiSqlExecLogMapper execLogMapper;
     private final ObjectMapper objectMapper;
 
     private static final BigDecimal DEFAULT_CONFIDENCE = new BigDecimal("0.300");
@@ -50,6 +56,12 @@ public class AiMemoryService {
     private static final BigDecimal DOWNVOTE_PENALTY = new BigDecimal("0.15");
     private static final BigDecimal ZERO = BigDecimal.ZERO;
     private static final BigDecimal ONE = BigDecimal.ONE;
+
+    /** RAG 检索质量门槛 */
+    private static final BigDecimal RETRIEVE_MIN_CONFIDENCE = new BigDecimal("0.30");
+    private static final int RETRIEVE_MAX_GRAMS = 8;
+    /** 连续 N 次执行失败 → 把 memory 降级 status='failed'，不再被 RAG 召回 */
+    private static final int FAILURE_DEMOTION_THRESHOLD = 2;
 
     /**
      * 保存或复用 SQL 模板。完全相同的 sql_template 视为同一条记忆，
@@ -131,6 +143,76 @@ public class AiMemoryService {
         feedbackMapper.insertOrUpdate(feedback);
 
         recomputeConfidence(memoryId);
+    }
+
+    /**
+     * RAG 检索：根据用户原始问题召回历史高质量 memory（最多 topK 条）。
+     *
+     * 质量门槛（在 mapper SQL 中硬约束）：
+     *   - confidence >= 0.30
+     *   - success_count >= 1 （必须有至少一次真实用户执行成功）
+     *   - status NOT IN ('failed','archived')
+     *
+     * 排序优先级：intent 命中 > 2-gram 命中数 > confidence > use_count > id
+     *
+     * @return 空列表表示无可用历史命中（首次问该类问题 / 库还没积累）
+     */
+    public List<AiSqlMemory> retrieveCandidates(String question, int topK) {
+        if (topK <= 0) return List.of();
+
+        String normalized = AiSqlNormalizer.normalize(question);
+        List<String> grams = toBigrams(normalized);
+        if (grams.isEmpty()) return List.of();
+
+        String intent = AiIntentTagger.tag(normalized);
+
+        // 多召一些再截 topK，给后续 Java 端如果想做二次重排留余量
+        int initialLimit = Math.max(topK * 3, topK + 5);
+        List<AiSqlMemory> raw = memoryMapper.searchCandidates(grams, intent, RETRIEVE_MIN_CONFIDENCE, initialLimit);
+
+        if (raw.size() <= topK) return raw;
+        return new ArrayList<>(raw.subList(0, topK));
+    }
+
+    /**
+     * 切 2-gram。跳过 __NUM__ / __TIME__ 占位符（避免捞回所有含数字的 memory）。
+     */
+    private static List<String> toBigrams(String normalized) {
+        if (normalized == null || normalized.isEmpty()) return List.of();
+        String stripped = normalized.replace("__num__", "").replace("__time__", "");
+        if (stripped.length() < 2) return List.of();
+
+        List<String> grams = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i + 1 < stripped.length(); i++) {
+            String g = stripped.substring(i, i + 2);
+            if (seen.add(g)) {
+                grams.add(g);
+                if (grams.size() >= RETRIEVE_MAX_GRAMS) break;
+            }
+        }
+        return grams;
+    }
+
+    /**
+     * 执行失败时调用：累计失败 >= FAILURE_DEMOTION_THRESHOLD 次，把 memory 降级为 'failed'，
+     * 不再被 RAG 召回。调用方应在执行链路捕获异常的 catch 块里调用本方法（exec_log 已记录失败）。
+     */
+    public void recordExecFailure(Long memoryId) {
+        if (memoryId == null) return;
+        try {
+            int failures = execLogMapper.countFailuresByMemoryId(memoryId);
+            if (failures >= FAILURE_DEMOTION_THRESHOLD) {
+                AiSqlMemory memory = memoryMapper.selectById(memoryId);
+                if (memory != null && !"failed".equals(memory.getStatus())) {
+                    memoryMapper.updateStatus(memoryId, "failed");
+                    log.info("memory id={} 累计失败 {} 次 >= {}，已降级为 failed",
+                            memoryId, failures, FAILURE_DEMOTION_THRESHOLD);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("recordExecFailure 失败（非致命）memoryId={}: {}", memoryId, e.getMessage());
+        }
     }
 
     /**

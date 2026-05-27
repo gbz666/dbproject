@@ -85,4 +85,37 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateStatus">
+        UPDATE ai_sql_memory
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <select id="searchCandidates" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ai_sql_memory
+        WHERE confidence &gt;= #{minConfidence}
+          AND success_count &gt;= 1
+          AND status NOT IN ('failed', 'archived')
+          AND (
+            <foreach collection="grams" item="g" separator=" OR ">
+                normalized_question LIKE CONCAT('%', #{g}, '%')
+            </foreach>
+            <if test="intent != null and intent != ''">
+                OR intent_tag = #{intent}
+            </if>
+          )
+        ORDER BY
+          (CASE WHEN intent_tag = #{intent} THEN 1 ELSE 0 END) DESC,
+          (
+            <foreach collection="grams" item="g" separator=" + ">
+                (CASE WHEN normalized_question LIKE CONCAT('%', #{g}, '%') THEN 1 ELSE 0 END)
+            </foreach>
+          ) DESC,
+          confidence DESC,
+          use_count DESC,
+          id DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

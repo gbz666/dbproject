@@ -189,6 +189,14 @@ public class AiAgentService {
             } catch (Exception e) {
                 log.warn("审计日志写入失败: {}", e.getMessage());
             }
+            // 失败时累计降级 memory，避免被 RAG 反复捞回（必须在 exec_log 插入之后）
+            if (memoryId != null && !"success".equals(auditLog.getStatus())) {
+                try {
+                    aiMemoryService.recordExecFailure(memoryId);
+                } catch (Exception e) {
+                    log.warn("recordExecFailure 失败（非致命）: {}", e.getMessage());
+                }
+            }
         }
     }
 

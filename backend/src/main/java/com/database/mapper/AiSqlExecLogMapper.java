@@ -30,4 +30,10 @@ public interface AiSqlExecLogMapper {
      * 根据 SQL 哈希查询（用于去重/统计）
      */
     List<AiSqlExecLog> selectBySqlHash(@Param("sqlHash") String sqlHash);
+
+    /**
+     * 统计指定 memory 累计的失败执行次数（status != 'success'）。
+     * 用于 RAG 质量门槛：累计失败 >= 阈值时把 memory 降级为 'failed'。
+     */
+    int countFailuresByMemoryId(@Param("memoryId") Long memoryId);
 }

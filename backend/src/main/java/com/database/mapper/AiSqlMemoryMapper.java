@@ -4,6 +4,7 @@ import com.database.pojo.AiSqlMemory;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 针对表【ai_sql_memory(AI SQL 模板记忆表)】的数据库操作 Mapper
@@ -46,4 +47,25 @@ public interface AiSqlMemoryMapper {
      * 更新置信度
      */
     void updateConfidence(@Param("id") Long id, @Param("confidence") BigDecimal confidence);
+
+    /**
+     * 更新 status（用于把 memory 降级为 'failed' 等）
+     */
+    void updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    /**
+     * RAG 检索：召回 normalized_question 命中任一 gram 或 intent 相同的高质量 memory。
+     * 质量门槛：success_count >= 1 且 status 不在 ('failed','archived')。
+     *
+     * @param grams         归一化问题切出的 2-gram 列表（至少 1 个）
+     * @param intent        当前问题的 intent_tag（可为空）
+     * @param minConfidence confidence 下限
+     * @param limit         返回上限
+     */
+    List<AiSqlMemory> searchCandidates(
+            @Param("grams") List<String> grams,
+            @Param("intent") String intent,
+            @Param("minConfidence") BigDecimal minConfidence,
+            @Param("limit") int limit
+    );
 }

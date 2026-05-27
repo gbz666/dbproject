@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
  * 把同义问题映射到接近的字符串。
  *
  * 例：
- *   "查询本季度销售额前 10 的产品"  → "__TIME__销售额前__NUM__产品"
- *   "看一下本季度营业额 top10 商品" → "__TIME__销售额top__NUM__产品"
+ *   "查询本季度销售额前 10 的产品"  → "__time__销售额前__num__产品"
+ *   "看一下本季度营业额 top10 商品" → "__time__销售额top__num__产品"
  */
 public final class AiSqlNormalizer {
 
@@ -70,12 +70,12 @@ public final class AiSqlNormalizer {
             s = s.replace(e.getKey(), e.getValue());
         }
 
-        // 2) 时间词 → __TIME__
-        s = TIME_PATTERN.matcher(s).replaceAll("__TIME__");
+        // 2) 时间词 → __time__
+        s = TIME_PATTERN.matcher(s).replaceAll("__time__");
 
-        // 3) 数字 → __NUM__（先中文再阿拉伯，二者不会冲突）
-        s = CN_NUM_PATTERN.matcher(s).replaceAll("__NUM__");
-        s = AR_NUM_PATTERN.matcher(s).replaceAll("__NUM__");
+        // 3) 数字 → __num__（先中文再阿拉伯，二者不会冲突）
+        s = CN_NUM_PATTERN.matcher(s).replaceAll("__num__");
+        s = AR_NUM_PATTERN.matcher(s).replaceAll("__num__");
 
         // 4) 去标点 / 去空白：只保留中文 + 字母 + 数字 + 下划线 + 百分号
         StringBuilder cleaned = new StringBuilder(s.length());
