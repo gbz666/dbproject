@@ -203,3 +203,45 @@ export interface SalesInvoiceDTO {
   amountExclusiveTax?: number;
   taxAmount?: number;
 }
+
+/** 收款记录查询条件 */
+export interface PaymentReceiptQuery {
+  pageNum: number;
+  pageSize: number;
+  customerName?: string;
+  receiptNo?: string;
+  method?: string;
+}
+
+/** 收款记录创建/更新 DTO */
+export interface PaymentReceiptDTO {
+  id?: number;
+  receiptNo?: string;
+  customerId?: number;
+  salesInvoiceId?: number;
+  amount?: number;
+  receiptDate?: string;
+  method?: string;
+  remark?: string;
+}
+
+/** 付款记录查询条件 */
+export interface PaymentExpenseQuery {
+  pageNum: number;
+  pageSize: number;
+  supplierName?: string;
+  paymentNo?: string;
+  method?: string;
+}
+
+/** 付款记录创建/更新 DTO */
+export interface PaymentExpenseDTO {
+  id?: number;
+  paymentNo?: string;
+  supplierId?: number;
+  purchaseInvoiceId?: number;
+  amount?: number;
+  paymentDate?: string;
+  method?: string;
+  remark?: string;
+}

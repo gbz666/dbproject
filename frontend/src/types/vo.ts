@@ -238,3 +238,35 @@ export interface SalesInvoiceVO {
   /** 按 id 查询时的完整明细列表（与 DTO 中 items 结构一致），用于编辑 */
   items?: SalesInvoiceDetailItemDTO[];
 }
+
+/** 收款记录 VO */
+export interface PaymentReceiptVO {
+  id: number;
+  receiptNo?: string;
+  customerId?: number;
+  customerName?: string;
+  salesInvoiceId?: number;
+  salesInvoiceNo?: string;
+  amount?: number;
+  receiptDate?: string;
+  method?: string;
+  remark?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** 付款记录 VO */
+export interface PaymentExpenseVO {
+  id: number;
+  paymentNo?: string;
+  supplierId?: number;
+  supplierName?: string;
+  purchaseInvoiceId?: number;
+  purchaseInvoiceNo?: string;
+  amount?: number;
+  paymentDate?: string;
+  method?: string;
+  remark?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
