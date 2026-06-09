@@ -1,0 +1,218 @@
+<template>
+  <div class="app-container" style="padding: 20px">
+    <el-card shadow="never" style="margin-bottom: 20px">
+      <el-form :inline="true" :model="store.queryParams">
+        <el-form-item label="付款单号">
+          <el-input
+            v-model="store.queryParams.paymentNo"
+            placeholder="付款单号"
+            clearable
+            @keyup.enter="store.fetchPageAction"
+          />
+        </el-form-item>
+        <el-form-item label="供应商名称">
+          <el-input
+            v-model="store.queryParams.supplierName"
+            placeholder="供应商名称"
+            clearable
+            style="width: 160px"
+          />
+        </el-form-item>
+        <el-form-item label="付款方式">
+          <el-select
+            v-model="store.queryParams.method"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="银行转账" value="bank" />
+            <el-option label="现金" value="cash" />
+            <el-option label="支票" value="check" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="store.fetchPageAction">查询</el-button>
+          <el-button @click="handleResetQuery">重置</el-button>
+        </el-form-item>
+        <el-form-item style="float: right">
+          <el-button type="success" @click="handleOpenDialog()">新增付款</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <el-table v-loading="store.loading" :data="store.list" border stripe style="width: 100%">
+      <el-table-column prop="paymentNo" label="付款单号" width="160" fixed />
+      <el-table-column prop="supplierName" label="供应商" min-width="160" show-overflow-tooltip />
+      <el-table-column prop="purchaseInvoiceNo" label="关联进项发票" width="160" show-overflow-tooltip />
+      <el-table-column label="付款金额" width="140" align="right">
+        <template #default="{ row }">¥{{ Number(row.amount ?? 0).toFixed(2) }}</template>
+      </el-table-column>
+      <el-table-column prop="paymentDate" label="付款日期" width="120">
+        <template #default="{ row }">{{ row.paymentDate?.substring(0, 10) }}</template>
+      </el-table-column>
+      <el-table-column label="付款方式" width="110" align="center">
+        <template #default="{ row }">
+          <el-tag :type="methodTagType(row.method)" size="small">{{ methodLabel(row.method) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+      <el-table-column label="操作" width="140" fixed="right" align="center">
+        <template #default="{ row }">
+          <el-button link type="primary" @click="handleOpenDialog(row)">编辑</el-button>
+          <el-popconfirm title="确定删除该付款记录吗？" @confirm="handleDelete(row.id)">
+            <template #reference>
+              <el-button link type="danger">删除</el-button>
+            </template>
+          </el-popconfirm>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end">
+      <el-pagination
+        v-model:current-page="store.queryParams.pageNum"
+        v-model:page-size="store.queryParams.pageSize"
+        :total="store.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="store.fetchPageAction"
+        @size-change="store.fetchPageAction"
+      />
+    </div>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="isEdit ? '修改付款' : '新增付款'"
+      width="600px"
+      destroy-on-close
+    >
+      <el-form :model="form" ref="formRef" :rules="formRules" label-width="110px">
+        <el-form-item label="付款单号" prop="paymentNo">
+          <el-input v-model="form.paymentNo" placeholder="付款单编号" />
+        </el-form-item>
+        <el-form-item label="供应商" prop="supplierId">
+          <el-input v-model.number="form.supplierId" placeholder="供应商ID" />
+        </el-form-item>
+        <el-form-item label="关联进项发票">
+          <el-input v-model.number="form.purchaseInvoiceId" placeholder="进项发票ID（选填）" />
+        </el-form-item>
+        <el-form-item label="付款金额" prop="amount">
+          <el-input-number v-model="form.amount" :precision="2" :min="0" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="付款日期" prop="paymentDate">
+          <el-date-picker v-model="form.paymentDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="付款方式" prop="method">
+          <el-select v-model="form.method" placeholder="请选择" style="width: 100%">
+            <el-option label="银行转账" value="bank" />
+            <el-option label="现金" value="cash" />
+            <el-option label="支票" value="check" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="选填" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSave">确认保存</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import type { FormInstance, FormRules } from "element-plus";
+import { usePaymentExpenseStore } from "@/stores/paymentExpenseStore";
+import type { PaymentExpenseDTO } from "@/types/dto";
+import type { PaymentExpenseVO } from "@/types/vo";
+
+const store = usePaymentExpenseStore();
+
+const dialogVisible = ref(false);
+const isEdit = ref(false);
+const submitLoading = ref(false);
+const formRef = ref<FormInstance>();
+
+const METHOD_MAP: Record<string, string> = { bank: "银行转账", cash: "现金", check: "支票", other: "其他" };
+const methodLabel = (m?: string) => (m ? METHOD_MAP[m] ?? m : "-");
+const methodTagType = (m?: string): "" | "success" | "warning" | "info" => {
+  if (m === "bank") return "";
+  if (m === "cash") return "success";
+  if (m === "check") return "warning";
+  return "info";
+};
+
+const createEmptyForm = (): PaymentExpenseDTO => ({
+  paymentNo: "",
+  supplierId: undefined,
+  purchaseInvoiceId: undefined,
+  amount: 0,
+  paymentDate: new Date().toISOString().split("T")[0],
+  method: "bank",
+  remark: "",
+});
+
+const form = reactive<PaymentExpenseDTO>(createEmptyForm());
+
+const formRules: FormRules = {
+  paymentNo: [{ required: true, message: "请输入付款单号", trigger: "blur" }],
+  supplierId: [{ required: true, message: "请输入供应商ID", trigger: "blur" }],
+  amount: [{ required: true, message: "请输入付款金额", trigger: "blur" }],
+  paymentDate: [{ required: true, message: "请选择付款日期", trigger: "change" }],
+  method: [{ required: true, message: "请选择付款方式", trigger: "change" }],
+};
+
+const handleResetQuery = () => {
+  store.queryParams.pageNum = 1;
+  store.queryParams.supplierName = "";
+  store.queryParams.paymentNo = "";
+  store.queryParams.method = "";
+  store.fetchPageAction();
+};
+
+const handleOpenDialog = (row?: PaymentExpenseVO) => {
+  isEdit.value = !!row;
+  if (row) {
+    form.id = row.id;
+    form.paymentNo = row.paymentNo ?? "";
+    form.supplierId = row.supplierId;
+    form.purchaseInvoiceId = row.purchaseInvoiceId;
+    form.amount = row.amount ?? 0;
+    form.paymentDate = row.paymentDate?.substring(0, 10) ?? "";
+    form.method = row.method ?? "bank";
+    form.remark = row.remark ?? "";
+  } else {
+    Object.assign(form, createEmptyForm());
+    form.id = undefined;
+  }
+  dialogVisible.value = true;
+};
+
+const handleSave = async () => {
+  if (!formRef.value) return;
+  try {
+    await formRef.value.validate();
+    submitLoading.value = true;
+    await store.submitAction({ ...form });
+    ElMessage.success(isEdit.value ? "修改成功" : "新增成功");
+    dialogVisible.value = false;
+  } catch (e: any) {
+    if (e?.message) ElMessage.error(e.message);
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+const handleDelete = async (id: number) => {
+  await store.deleteAction(id);
+  ElMessage.success("已删除");
+};
+
+onMounted(() => {
+  store.fetchPageAction();
+});
+</script>
