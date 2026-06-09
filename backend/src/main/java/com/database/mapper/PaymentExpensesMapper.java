@@ -1,13 +1,11 @@
 package com.database.mapper;
 
+import com.database.dto.PaymentExpenseQuery;
 import com.database.pojo.PaymentExpenses;
+import com.database.vo.PaymentExpenseVO;
 
-/**
-* @author 高柏舟
-* @description 针对表【payment_expenses(付款记录表)】的数据库操作Mapper
-* @createDate 2025-12-10 19:58:56
-* @Entity com.database.pojo.PaymentExpenses
-*/
+import java.util.List;
+
 public interface PaymentExpensesMapper {
 
     int deleteByPrimaryKey(Long id);
@@ -22,4 +20,5 @@ public interface PaymentExpensesMapper {
 
     int updateByPrimaryKey(PaymentExpenses record);
 
+    List<PaymentExpenseVO> selectPageList(PaymentExpenseQuery query);
 }

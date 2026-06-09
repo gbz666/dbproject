@@ -117,7 +117,7 @@
     </update>
     <update id="updateByPrimaryKey" parameterType="com.database.pojo.PaymentReceipts">
         update payment_receipts
-        set 
+        set
             receipt_no =  #{receiptNo},
             customer_id =  #{customerId},
             sales_invoice_id =  #{salesInvoiceId},
@@ -129,6 +129,32 @@
             created_by_id =  #{createdById},
             updated_at =  #{updatedAt},
             updated_by_id =  #{updatedById}
-        where   id = #{id} 
+        where   id = #{id}
     </update>
+
+    <select id="selectPageList" parameterType="com.database.dto.PaymentReceiptQuery"
+            resultType="com.database.vo.PaymentReceiptVO">
+        SELECT pr.id, pr.receipt_no AS receiptNo, pr.customer_id AS customerId,
+               c.customer_name AS customerName,
+               pr.sales_invoice_id AS salesInvoiceId,
+               si.invoice_no AS salesInvoiceNo,
+               pr.amount, pr.receipt_date AS receiptDate,
+               pr.method, pr.remark,
+               pr.created_at AS createdAt, pr.updated_at AS updatedAt
+        FROM payment_receipts pr
+        LEFT JOIN customers c ON c.id = pr.customer_id
+        LEFT JOIN sales_invoices si ON si.id = pr.sales_invoice_id
+        <where>
+            <if test="customerName != null and customerName != ''">
+                AND c.customer_name LIKE CONCAT('%', #{customerName}, '%')
+            </if>
+            <if test="receiptNo != null and receiptNo != ''">
+                AND pr.receipt_no LIKE CONCAT('%', #{receiptNo}, '%')
+            </if>
+            <if test="method != null and method != ''">
+                AND pr.method = #{method}
+            </if>
+        </where>
+        ORDER BY pr.created_at DESC
+    </select>
 </mapper>

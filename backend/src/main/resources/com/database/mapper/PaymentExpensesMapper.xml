@@ -117,7 +117,7 @@
     </update>
     <update id="updateByPrimaryKey" parameterType="com.database.pojo.PaymentExpenses">
         update payment_expenses
-        set 
+        set
             payment_no =  #{paymentNo},
             supplier_id =  #{supplierId},
             purchase_invoice_id =  #{purchaseInvoiceId},
@@ -129,6 +129,32 @@
             created_by_id =  #{createdById},
             updated_at =  #{updatedAt},
             updated_by_id =  #{updatedById}
-        where   id = #{id} 
+        where   id = #{id}
     </update>
+
+    <select id="selectPageList" parameterType="com.database.dto.PaymentExpenseQuery"
+            resultType="com.database.vo.PaymentExpenseVO">
+        SELECT pe.id, pe.payment_no AS paymentNo, pe.supplier_id AS supplierId,
+               s.supplier_name AS supplierName,
+               pe.purchase_invoice_id AS purchaseInvoiceId,
+               pi.invoice_no AS purchaseInvoiceNo,
+               pe.amount, pe.payment_date AS paymentDate,
+               pe.method, pe.remark,
+               pe.created_at AS createdAt, pe.updated_at AS updatedAt
+        FROM payment_expenses pe
+        LEFT JOIN suppliers s ON s.id = pe.supplier_id
+        LEFT JOIN purchase_invoices pi ON pi.id = pe.purchase_invoice_id
+        <where>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+            </if>
+            <if test="paymentNo != null and paymentNo != ''">
+                AND pe.payment_no LIKE CONCAT('%', #{paymentNo}, '%')
+            </if>
+            <if test="method != null and method != ''">
+                AND pe.method = #{method}
+            </if>
+        </where>
+        ORDER BY pe.created_at DESC
+    </select>
 </mapper>
