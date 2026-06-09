@@ -76,6 +76,21 @@
             </el-menu-item>
           </el-sub-menu>
 
+          <el-sub-menu index="finance">
+            <template #title>
+              <el-icon><Money /></el-icon>
+              <span>财务管理</span>
+            </template>
+            <el-menu-item index="/finance/payment-receipt">
+              <el-icon><Download /></el-icon>
+              收款管理
+            </el-menu-item>
+            <el-menu-item index="/finance/payment-expense">
+              <el-icon><Upload /></el-icon>
+              付款管理
+            </el-menu-item>
+          </el-sub-menu>
+
           <el-menu-item index="/ai-query">
             <el-icon><MagicStick /></el-icon>
             <span>AI 智能查询</span>

@@ -62,6 +62,18 @@ const router = createRouter({
           component: () => import("@/views/Inventory/InventoryList.vue"),
         },
         {
+          path: "/finance/payment-receipt",
+          name: "PaymentReceiptList",
+          component: () => import("@/views/paymentReceipt/PaymentReceiptList.vue"),
+          meta: { title: "收款管理" },
+        },
+        {
+          path: "/finance/payment-expense",
+          name: "PaymentExpenseList",
+          component: () => import("@/views/paymentExpense/PaymentExpenseList.vue"),
+          meta: { title: "付款管理" },
+        },
+        {
           path: "/profile",
           name: "Profile",
           component: () => import("@/views/profile/ProfileView.vue"),
