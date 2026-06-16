@@ -59,10 +59,10 @@ public final class ExcelRowReadHelper {
             if (s.contains("-")) {
                 return Date.from(LocalDate.parse(s.substring(0, Math.min(10, s.length())).trim()).atStartOfDay(ZoneId.systemDefault()).toInstant());
             }
-            // Excel 日期序列：1 = 1900-01-01
+            // Excel 1900 日期系统：serial 1 = 1900-01-01，但 Excel 误将 1900 当闰年（serial 60 = 不存在的 1900-02-29），所以 serial > 59 需减 2
             double serial = Double.parseDouble(s.trim());
             long days = (long) serial;
-            LocalDate d = LocalDate.of(1900, 1, 1).plusDays(days - 1);
+            LocalDate d = LocalDate.of(1900, 1, 1).plusDays(days > 59 ? days - 2 : days - 1);
             return Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant());
         } catch (Exception e) {
             return null;

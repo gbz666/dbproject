@@ -14,13 +14,13 @@ public class ExcelPurchaseInvoiceRowDto {
     @ExcelProperty(value = "采购订单号", index = 15)
     private String purchaseCode;
 
-    @ExcelProperty("日期")
+    @ExcelProperty("时间")
     private String invoiceDate;
 
     @ExcelProperty("公司名称")
     private String supplierName;
 
-    @ExcelProperty("货物或者应税劳务、服务名称")
+    @ExcelProperty("货物或者应税劳务，服务名称")
     private String itemName;
 
     @ExcelProperty("规格型号")
@@ -29,7 +29,7 @@ public class ExcelPurchaseInvoiceRowDto {
     @ExcelProperty("单位")
     private String unit;
 
-    @ExcelProperty("数量")
+    @ExcelProperty(value = "数量", index = 21)
     private String quantity;
 
     @ExcelProperty("单价")
@@ -47,9 +47,8 @@ public class ExcelPurchaseInvoiceRowDto {
     @ExcelProperty("含税总金额")
     private String amountInclusiveTax;
 
-    /** 进项行统一交给业务里做校验，这里一律认为“需要处理” */
     public boolean isValid() {
-        return true;
+        return trim(purchaseCode) != null;
     }
 
     public String resolvePurchaseCode() { return trim(purchaseCode); }

@@ -15,8 +15,8 @@ public class ExcelSalesInvoiceRowDto {
 
     // ====== 左侧：订单及统计汇总字段（目前仅作占位映射，不参与导入逻辑） ======
 
-    @ExcelProperty("销售订单号")
-    private String salesOrderCodeLeft;       // 左边订单信息区的销售订单号
+    @ExcelProperty(value = "销售订单号", index = 0)
+    private String salesOrderCodeLeft;
 
     @ExcelProperty("订单日期")
     private String orderDate;
@@ -60,7 +60,7 @@ public class ExcelSalesInvoiceRowDto {
 
     // ====== 右侧：实际销项发票明细字段（导入逻辑只依赖这一块） ======
 
-    @ExcelProperty("销售订单号")
+    @ExcelProperty(value = "销售订单号", index = 15)
     private String salesOrderCode;
 
     @ExcelProperty("开票时间")

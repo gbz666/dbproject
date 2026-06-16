@@ -55,6 +55,8 @@ public class ExcelImportService {
     private final InventoryMapper inventoryMapper;
     private final OutboundOrdersMapper outboundOrdersMapper;
     private final OutboundOrderItemsMapper outboundOrderItemsMapper;
+    private final PaymentExpensesMapper paymentExpensesMapper;
+    private final PaymentReceiptsMapper paymentReceiptsMapper;
     private final ProductCategoriesMapper productCategoriesMapper;
     private final StaffsMapper staffsMapper;
 
@@ -100,7 +102,8 @@ public class ExcelImportService {
             "产品", "供应商", "客户",
             "采购", "进项",
             "销售", "销项",
-            "入库", "出库"
+            "入库", "出库",
+            "付款", "收款"
     );
 
     /**
@@ -118,6 +121,8 @@ public class ExcelImportService {
         SHEET_HEAD_ROW.put("销售", 3);
         SHEET_HEAD_ROW.put("入库", 3);
         SHEET_HEAD_ROW.put("出库", 3);
+        SHEET_HEAD_ROW.put("付款", 3);
+        SHEET_HEAD_ROW.put("收款", 3);
     }
 
     /** 导入过程计数器、错误收集与编码→ID 缓存（减少重复查库，加速几千条导入） */
@@ -133,6 +138,8 @@ public class ExcelImportService {
         public final AtomicInteger salesCount = new AtomicInteger(0);
         public final AtomicInteger stockInCount = new AtomicInteger(0);
         public final AtomicInteger outboundCount = new AtomicInteger(0);
+        public final AtomicInteger paymentCount = new AtomicInteger(0);
+        public final AtomicInteger receiptCount = new AtomicInteger(0);
         public final List<String> errors = new ArrayList<>();
         /** 供应商编码 -> 实体（用于更新或取 id） */
         public final Map<String, Suppliers> supplierCache = new HashMap<>();
@@ -210,6 +217,8 @@ public class ExcelImportService {
                     case "销售" -> readSheet(bytes, sheetIndex, ExcelSalesRowDto.class, new SalesSheetListener(this, ctx), headRow);
                     case "入库" -> readSheet(bytes, sheetIndex, ExcelStockInRowDto.class, new StockInSheetListener(this, ctx), headRow);
                     case "出库" -> readSheet(bytes, sheetIndex, ExcelOutboundRowDto.class, new OutboundSheetListener(this, ctx), headRow);
+                    case "付款" -> readSheet(bytes, sheetIndex, ExcelPaymentRowDto.class, new PaymentSheetListener(this, ctx), headRow);
+                    case "收款" -> readSheet(bytes, sheetIndex, ExcelReceiptRowDto.class, new ReceiptSheetListener(this, ctx), headRow);
                     default -> { }
                 }
             } catch (Exception e) {
@@ -228,6 +237,8 @@ public class ExcelImportService {
         result.put("sales", ctx.salesCount.get());
         result.put("stockIns", ctx.stockInCount.get());
         result.put("outbounds", ctx.outboundCount.get());
+        result.put("payments", ctx.paymentCount.get());
+        result.put("receipts", ctx.receiptCount.get());
         // 聚合后的精简错误，用于前端友好展示
         result.put("errors", aggregateErrors(ctx.errors));
         // 原始逐行错误明细（含完整异常信息），便于排查导入异常
@@ -1104,6 +1115,89 @@ public class ExcelImportService {
         ctx.outboundCount.incrementAndGet();
     }
 
+    void importPayment(ExcelPaymentRowDto dto, ImportContext ctx, int row) {
+        if (dto == null || !dto.isValid()) return;
+        String pCode = dto.resolvePurchaseCode();
+
+        Long poId = ctx.purchaseOrderIdCache.get(pCode);
+        if (poId == null) {
+            poId = purchaseOrdersMapper.selectOrderIdByCode(pCode);
+            if (poId != null) ctx.purchaseOrderIdCache.put(pCode, poId);
+        }
+        if (poId == null) {
+            ctx.errors.add(String.format("[付款 第%d行] 采购订单号[%s]未匹配，已跳过", row, pCode));
+            return;
+        }
+
+        PurchaseOrders po = purchaseOrdersMapper.selectByPrimaryKey(poId);
+        if (po == null) {
+            ctx.errors.add(String.format("[付款 第%d行] 采购订单数据异常，已跳过", row));
+            return;
+        }
+
+        BigDecimal amount = parseDecimal(dto.getAmount());
+        java.util.Date paymentDate = ExcelRowReadHelper.parseDate(dto.resolvePaymentDate());
+
+        PaymentExpenses pe = new PaymentExpenses();
+        String paymentNo = "PE-" + pCode + "-" + row;
+        if (paymentNo.length() > 80) paymentNo = paymentNo.substring(0, 80);
+        pe.setPaymentNo(paymentNo);
+        pe.setSupplierId(po.getSupplierId());
+        pe.setPurchaseInvoiceId(null);
+        pe.setAmount(amount);
+        pe.setPaymentDate(paymentDate);
+        String methodRemark = dto.resolveMethodOrRemark();
+        pe.setMethod(methodRemark != null ? "bank" : null);
+        pe.setRemark(methodRemark);
+        pe.setCreatedById(DEFAULT_STAFF_ID);
+        pe.setUpdatedById(DEFAULT_STAFF_ID);
+        pe.setIsDeleted(0);
+        paymentExpensesMapper.insertSelective(pe);
+
+        ctx.paymentCount.incrementAndGet();
+    }
+
+    void importReceipt(ExcelReceiptRowDto dto, ImportContext ctx, int row) {
+        if (dto == null || !dto.isValid()) return;
+        String soCode = dto.resolveSalesOrderCode();
+
+        Long soId = ctx.salesOrderIdCache.get(soCode);
+        if (soId == null) {
+            soId = salesOrdersMapper.selectOrderIdByCode(soCode);
+            if (soId != null) ctx.salesOrderIdCache.put(soCode, soId);
+        }
+        if (soId == null) {
+            ctx.errors.add(String.format("[收款 第%d行] 销售订单号[%s]未匹配，已跳过", row, soCode));
+            return;
+        }
+
+        SalesOrders so = salesOrdersMapper.selectByPrimaryKey(soId);
+        if (so == null || so.getCustomerId() == null) {
+            ctx.errors.add(String.format("[收款 第%d行] 销售订单数据异常或客户缺失，已跳过", row));
+            return;
+        }
+
+        BigDecimal amount = parseDecimal(dto.getAmount());
+        java.util.Date receiptDate = ExcelRowReadHelper.parseDate(dto.resolveReceiptDate());
+
+        PaymentReceipts pr = new PaymentReceipts();
+        String receiptNo = "PR-" + soCode + "-" + row;
+        if (receiptNo.length() > 80) receiptNo = receiptNo.substring(0, 80);
+        pr.setReceiptNo(receiptNo);
+        pr.setCustomerId(so.getCustomerId());
+        pr.setSalesInvoiceId(null);
+        pr.setAmount(amount);
+        pr.setReceiptDate(receiptDate);
+        pr.setMethod("bank");
+        pr.setRemark(dto.resolveRemark());
+        pr.setCreatedById(DEFAULT_STAFF_ID);
+        pr.setUpdatedById(DEFAULT_STAFF_ID);
+        pr.setIsDeleted(0);
+        paymentReceiptsMapper.insertSelective(pr);
+
+        ctx.receiptCount.incrementAndGet();
+    }
+
     private static Object firstNonNull(Object... objs) {
         if (objs == null) return null;
         for (Object o : objs) if (o != null) return o;
@@ -1330,6 +1424,52 @@ public class ExcelImportService {
             } catch (Exception e) {
                 int row = context.readRowHolder().getRowIndex() + 1;
                 ctx.errors.add(String.format("[出库 第%d行] %s", row, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+            }
+        }
+
+        @Override
+        public void doAfterAllAnalysed(AnalysisContext context) {}
+    }
+
+    private static class PaymentSheetListener extends AnalysisEventListener<ExcelPaymentRowDto> {
+        private final ExcelImportService service;
+        private final ImportContext ctx;
+
+        PaymentSheetListener(ExcelImportService service, ImportContext ctx) {
+            this.service = service;
+            this.ctx = ctx;
+        }
+
+        @Override
+        public void invoke(ExcelPaymentRowDto data, AnalysisContext context) {
+            try {
+                if (data != null && data.isValid()) service.importPayment(data, ctx, context.readRowHolder().getRowIndex() + 1);
+            } catch (Exception e) {
+                int row = context.readRowHolder().getRowIndex() + 1;
+                ctx.errors.add(String.format("[付款 第%d行] %s", row, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+            }
+        }
+
+        @Override
+        public void doAfterAllAnalysed(AnalysisContext context) {}
+    }
+
+    private static class ReceiptSheetListener extends AnalysisEventListener<ExcelReceiptRowDto> {
+        private final ExcelImportService service;
+        private final ImportContext ctx;
+
+        ReceiptSheetListener(ExcelImportService service, ImportContext ctx) {
+            this.service = service;
+            this.ctx = ctx;
+        }
+
+        @Override
+        public void invoke(ExcelReceiptRowDto data, AnalysisContext context) {
+            try {
+                if (data != null && data.isValid()) service.importReceipt(data, ctx, context.readRowHolder().getRowIndex() + 1);
+            } catch (Exception e) {
+                int row = context.readRowHolder().getRowIndex() + 1;
+                ctx.errors.add(String.format("[收款 第%d行] %s", row, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
             }
         }
 
