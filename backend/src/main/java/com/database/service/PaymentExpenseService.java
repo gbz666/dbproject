@@ -58,6 +58,6 @@ public class PaymentExpenseService {
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long id) {
-        mapper.deleteByPrimaryKey(id);
+        mapper.softDelete(id);
     }
 }

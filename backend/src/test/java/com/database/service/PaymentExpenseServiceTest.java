@@ -107,7 +107,7 @@ class PaymentExpenseServiceTest {
 
         service.delete(id);
 
-        verify(mapper, times(1)).deleteByPrimaryKey(id);
+        verify(mapper, times(1)).softDelete(id);
     }
 
     // ===== findPage =====

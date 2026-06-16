@@ -6,6 +6,7 @@ import com.database.service.PaymentExpenseService;
 import com.database.vo.PaymentExpenseVO;
 import com.database.vo.Result;
 import com.github.pagehelper.PageInfo;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class PaymentExpenseController {
 
     @PostMapping
     public ResponseEntity<Result<Void>> create(
-            @RequestBody PaymentExpenseDTO dto,
+            @Valid @RequestBody PaymentExpenseDTO dto,
             @RequestAttribute Long currentStaffId) {
         service.create(dto, currentStaffId);
         return ResponseEntity.ok(Result.success("创建成功"));
@@ -34,7 +35,7 @@ public class PaymentExpenseController {
     @PutMapping("/{id}")
     public ResponseEntity<Result<Void>> update(
             @PathVariable Long id,
-            @RequestBody PaymentExpenseDTO dto,
+            @Valid @RequestBody PaymentExpenseDTO dto,
             @RequestAttribute Long currentStaffId) {
         service.update(id, dto, currentStaffId);
         return ResponseEntity.ok(Result.success("更新成功"));

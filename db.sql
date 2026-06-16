@@ -653,6 +653,7 @@ CREATE TABLE payment_receipts (
     -- 修正:添加 updated_at/updated_by_id 审计字段
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
     updated_by_id BIGINT NULL COMMENT '最后修改人(staffs.id)',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否软删除:0=正常,1=已删除',
 
     CONSTRAINT fk_payment_receipts_customer FOREIGN KEY (customer_id)
         REFERENCES customers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -680,6 +681,7 @@ CREATE TABLE payment_expenses (
     -- 修正:添加 updated_at/updated_by_id 审计字段
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
     updated_by_id BIGINT NULL COMMENT '最后修改人(staffs.id)',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否软删除:0=正常,1=已删除',
 
     CONSTRAINT fk_payment_expenses_supplier FOREIGN KEY (supplier_id)
         REFERENCES suppliers(id) ON UPDATE CASCADE ON DELETE RESTRICT,

@@ -6,6 +6,7 @@
 
     <select id="selectCustomerOptions" resultType="com.database.vo.BaseSelectVO">
         SELECT
+        id,
         customer_code AS code,
         customer_name AS name
         FROM customers
@@ -35,6 +36,7 @@
     </select>
     <select id="selectSupplierOptions" resultType="com.database.vo.BaseSelectVO">
         SELECT
+        id,
         supplier_code AS code,
         supplier_name AS name
         FROM suppliers

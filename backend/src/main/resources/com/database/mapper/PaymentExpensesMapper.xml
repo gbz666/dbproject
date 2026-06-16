@@ -142,9 +142,10 @@
                pe.method, pe.remark,
                pe.created_at AS createdAt, pe.updated_at AS updatedAt
         FROM payment_expenses pe
-        LEFT JOIN suppliers s ON s.id = pe.supplier_id
-        LEFT JOIN purchase_invoices pi ON pi.id = pe.purchase_invoice_id
+        LEFT JOIN suppliers s ON s.id = pe.supplier_id AND s.is_deleted = 0
+        LEFT JOIN purchase_invoices pi ON pi.id = pe.purchase_invoice_id AND pi.is_deleted = 0
         <where>
+            AND pe.is_deleted = 0
             <if test="supplierName != null and supplierName != ''">
                 AND s.supplier_name LIKE CONCAT('%', #{supplierName}, '%')
             </if>
@@ -157,4 +158,8 @@
         </where>
         ORDER BY pe.created_at DESC
     </select>
+
+    <update id="softDelete">
+        UPDATE payment_expenses SET is_deleted = 1 WHERE id = #{id}
+    </update>
 </mapper>

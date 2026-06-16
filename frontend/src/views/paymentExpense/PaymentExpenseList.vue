@@ -91,7 +91,23 @@
           <el-input v-model="form.paymentNo" placeholder="付款单编号" />
         </el-form-item>
         <el-form-item label="供应商" prop="supplierId">
-          <el-input v-model.number="form.supplierId" placeholder="供应商ID" />
+          <el-select
+            v-model="form.supplierId"
+            filterable
+            remote
+            reserve-keyword
+            placeholder="输入供应商名称搜索"
+            :remote-method="utilStore.searchSupplierAction"
+            :loading="utilStore.SupplierLoading"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in utilStore.SupplierList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="关联进项发票">
           <el-input v-model.number="form.purchaseInvoiceId" placeholder="进项发票ID（选填）" />
@@ -127,10 +143,12 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
 import { usePaymentExpenseStore } from "@/stores/paymentExpenseStore";
+import { useUtilStore } from "@/stores/utilStore";
 import type { PaymentExpenseDTO } from "@/types/dto";
 import type { PaymentExpenseVO } from "@/types/vo";
 
 const store = usePaymentExpenseStore();
+const utilStore = useUtilStore();
 
 const dialogVisible = ref(false);
 const isEdit = ref(false);
@@ -147,6 +165,7 @@ const methodTagType = (m?: string): "" | "success" | "warning" | "info" => {
 };
 
 const createEmptyForm = (): PaymentExpenseDTO => ({
+  id: undefined,
   paymentNo: "",
   supplierId: undefined,
   purchaseInvoiceId: undefined,
@@ -187,7 +206,6 @@ const handleOpenDialog = (row?: PaymentExpenseVO) => {
     form.remark = row.remark ?? "";
   } else {
     Object.assign(form, createEmptyForm());
-    form.id = undefined;
   }
   dialogVisible.value = true;
 };
@@ -201,7 +219,7 @@ const handleSave = async () => {
     ElMessage.success(isEdit.value ? "修改成功" : "新增成功");
     dialogVisible.value = false;
   } catch (e: any) {
-    if (e?.message) ElMessage.error(e.message);
+    if (e instanceof Error && e.message) ElMessage.error(e.message);
   } finally {
     submitLoading.value = false;
   }

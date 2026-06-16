@@ -106,6 +106,7 @@ export interface PageInfo<T> {
 
 
 export interface BaseSelectVO{
+  id?:number,
   code:string,
   name:string
 }

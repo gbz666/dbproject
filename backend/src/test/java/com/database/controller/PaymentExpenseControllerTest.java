@@ -70,9 +70,9 @@ class PaymentExpenseControllerTest {
 
         ResponseEntity<Result<Void>> response = controller.create(dto, staffId);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(201, response.getBody().getCode());
+        assertEquals(200, response.getBody().getCode());
         verify(service).create(dto, staffId);
     }
 

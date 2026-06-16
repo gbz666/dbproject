@@ -21,4 +21,6 @@ public interface PaymentReceiptsMapper {
     int updateByPrimaryKey(PaymentReceipts record);
 
     List<PaymentReceiptVO> selectPageList(PaymentReceiptQuery query);
+
+    void softDelete(Long id);
 }

@@ -113,7 +113,7 @@ class PaymentReceiptServiceTest {
 
         service.delete(id);
 
-        verify(mapper).deleteByPrimaryKey(id);
+        verify(mapper).softDelete(id);
     }
 
     // ===== findPage =====

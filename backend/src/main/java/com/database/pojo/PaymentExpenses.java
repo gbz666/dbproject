@@ -70,6 +70,11 @@ public class PaymentExpenses {
      */
     private Long updatedById;
 
+    /**
+     * 是否软删除:0=正常,1=已删除
+     */
+    private Integer isDeleted;
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {

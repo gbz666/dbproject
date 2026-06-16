@@ -21,4 +21,6 @@ public interface PaymentExpensesMapper {
     int updateByPrimaryKey(PaymentExpenses record);
 
     List<PaymentExpenseVO> selectPageList(PaymentExpenseQuery query);
+
+    void softDelete(Long id);
 }

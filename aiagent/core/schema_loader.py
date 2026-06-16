@@ -4,6 +4,7 @@ db.sql 解析器：把 CREATE TABLE 语句切成结构化的 TableInfo/ColumnInf
 
 向后兼容：load_db_schema_text() 仍然返回拼好的全量文本，老调用方不动。
 """
+import functools
 import logging
 import re
 from dataclasses import dataclass, field
@@ -88,7 +89,7 @@ _TABLE_BLOCK_PATTERN = re.compile(
 )
 
 _TABLE_COMMENT_INLINE_PATTERN = re.compile(
-    r"ENGINE\s*=\s*\w+\s*(?:DEFAULT\s+CHARSET\s*=\s*\w+\s*)?COMMENT\s*=\s*'([^']*)'",
+    r"ENGINE\s*=\s*\w+\s*(?:DEFAULT\s+CHARSET\s*=\s*\w+\s*(?:COLLATE\s*=\s*\w+\s*)?)?COMMENT\s*=\s*'([^']*)'",
     re.IGNORECASE,
 )
 
@@ -182,15 +183,22 @@ def _default_table_order(all_names: Iterable[str]) -> list[str]:
 
 # ─── 公开入口 ───────────────────────────────────────────────────────────────
 
+@functools.lru_cache(maxsize=1)
+def _load_and_parse(db_sql_path: str) -> dict[str, TableInfo]:
+    """缓存解析结果（db.sql 运行时不变）。参数用 str 以支持 lru_cache 哈希。"""
+    p = Path(db_sql_path)
+    if not p.exists():
+        logger.warning("db.sql 不存在: %s", db_sql_path)
+        return {}
+    raw = p.read_text(encoding="utf-8")
+    return parse_db_sql(raw)
+
+
 def load_db_schema_structured(db_sql_path: Path | None = None) -> dict[str, TableInfo]:
     """加载 db.sql 并返回结构化字典。供 schema_selector 调用。"""
     if db_sql_path is None:
         db_sql_path = get_default_db_sql_path()
-    if not db_sql_path.exists():
-        logger.warning("db.sql 不存在: %s", db_sql_path)
-        return {}
-    raw = db_sql_path.read_text(encoding="utf-8")
-    return parse_db_sql(raw)
+    return _load_and_parse(str(db_sql_path))
 
 
 def load_db_schema_text(db_sql_path: Path | None = None) -> str:

@@ -25,11 +25,10 @@ def generate_sql_payload(payload: GenerateSqlRequest) -> GenerateSqlResponse:
     all_tables = load_db_schema_structured(get_default_db_sql_path())
     schema_text = render_selected_schema(payload.question, all_tables)
     logger.info(
-        "Schema 注入：选 %d 张表，文本 %d 字符（全量 %d 张表共 %d 字符）",
+        "Schema 注入：选 %d 张表，文本 %d 字符（全量 %d 张表）",
         schema_text.count("TABLE "),
         len(schema_text),
         len(all_tables),
-        sum(len(t.render()) for t in all_tables.values()),
     )
     if not schema_text:
         logger.warning("db.sql schema 为空，LLM 无法生成有意义的 SQL")
